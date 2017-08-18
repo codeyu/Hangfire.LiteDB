@@ -1,0 +1,29 @@
+language: csharp
+
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode8.3
+      dotnet: 1.0.1
+      mono: none
+    - os: linux
+      dist: trusty
+      sudo: required
+      dotnet: 1.0.1
+      mono: none
+
+branches:
+  only:
+    - master
+script:
+  - ulimit -n 2048
+  - dotnet restore "src\Hangfire.LiteDB" 
+  - dotnet build "src\Hangfire.LiteDB"
+  - dotnet restore "test\Hangfire.LiteDB.Test"
+  - dotnet build "test\Hangfire.LiteDB.Test" -c Release
+  - dotnet test "test\Hangfire.LiteDB.Test\Hangfire.LiteDB.Test.csproj" --configuration Release --no-build
+  - dotnet restore "samples\ConsoleSample" 
+  - dotnet build "samples\ConsoleSample"
+  - dotnet restore "samples\MvcSample" 
+  - dotnet build "samples\MvcSample"
+  

@@ -1,5 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>1.0.0</Version>
+    <authors>codeyu</authors>
+    <AssemblyName>Hangfire.LiteDB</AssemblyName>
+    <PackageId>Hangfire.LiteDB</PackageId> 
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="LiteDB" Version="3.1.4" />
+  </ItemGroup>
 </Project>
