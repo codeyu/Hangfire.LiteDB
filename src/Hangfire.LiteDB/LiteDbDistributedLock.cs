@@ -1,4 +1,7 @@
-﻿$HEADER$namespace $NAMESPACE$
+﻿namespace Hangfire.LiteDB
 {
-  public class $CLASS$ {$END$}
+    public class LiteDbDistributedLock
+    {
+        
+    }
 }

@@ -1,4 +1,7 @@
-﻿$HEADER$namespace $NAMESPACE$
+﻿namespace Hangfire.LiteDB.Entities
 {
-  public class $CLASS$ {$END$}
+    public class ServerData
+    {
+        
+    }
 }

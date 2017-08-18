@@ -1,4 +1,7 @@
-﻿$HEADER$namespace $NAMESPACE$
+﻿namespace Hangfire.LiteDB
 {
-  public interface $INTERFACE$ {$END$}
+    public interface IPersistentJobQueueMonitoringApi
+    {
+        
+    }
 }

@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26124.0
+MinimumVisualStudioVersion = 15.0.26124.0
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.LiteDB", "src\Hangfire.LiteDB\Hangfire.LiteDB.csproj", "{410FCCB3-BB61-4864-8EE2-42EB950ADA8A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hangfire.LiteDB.Test", "test\Hangfire.LiteDB.Test\Hangfire.LiteDB.Test.csproj", "{886ED54A-01F2-49A8-A137-0D26BE2A7C98}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleSample", "samples\ConsoleSample\ConsoleSample.csproj", "{EAAA9E53-AC26-4E3A-8423-29F27296F96B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MvcSample", "samples\MvcSample\MvcSample.csproj", "{4AF2E2AF-D3E1-436C-97B5-A631357250F7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
