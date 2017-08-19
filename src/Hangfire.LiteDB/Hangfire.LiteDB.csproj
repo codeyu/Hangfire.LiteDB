@@ -4,9 +4,40 @@
     <Version>1.0.0</Version>
     <authors>codeyu</authors>
     <AssemblyName>Hangfire.LiteDB</AssemblyName>
-    <PackageId>Hangfire.LiteDB</PackageId> 
+    <PackageId>Hangfire.LiteDB</PackageId>
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+		<GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+		<GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+		<GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+		<GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Copyright>Copyright 2017 © codeyu</Copyright>
+		<title>Hangfire LiteDB Storage</title>
+		<owners>codeyu</owners>
+		<Description>LiteDB storage implementation for Hangfire (background job system for ASP.NET applications).</Description>
+		<PackageTags>Hangfire AspNet OWIN LiteDB Long-Running Background Fire-And-Forget Delayed Recurring Tasks Jobs Scheduler Threading Queues</PackageTags>
+		<PackageReleaseNotes>
+      1.0.0
+      - Initial public release
+    </PackageReleaseNotes>
+		<PackageLicenseUrl>https://github.com/codeyu/Hangfire.LiteDB/master/LICENSE</PackageLicenseUrl>
+		<PackageProjectUrl>https://github.com/codeyu/Hangfire.LiteDB</PackageProjectUrl> 
+    <RepositoryUrl>https://github.com/codeyu/Hangfire.LiteDB</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
   <ItemGroup>
+		<None Include="app.config" />
+	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="HangFire.Core" Version="1.6.15" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     <PackageReference Include="LiteDB" Version="3.1.4" />
   </ItemGroup>
 </Project>
