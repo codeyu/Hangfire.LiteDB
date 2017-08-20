@@ -1,17 +1,16 @@
-﻿using System;
+﻿using System.Collections.Generic;
 
 namespace Hangfire.LiteDB.Entities
 {
     /// <summary>
     /// 
     /// </summary>
-    public class LiteHash : LiteExpiringKeyValue
+    public class LiteSet : LiteExpiringKeyValue
     {
-
+        
         /// <summary>
         /// 
         /// </summary>
-        public string Field { get; set; }
-
+        public double Scores { get; set; }
     }
 }

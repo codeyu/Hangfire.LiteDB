@@ -1,7 +1,41 @@
-﻿namespace Hangfire.LiteDB
+﻿using System.Collections.Generic;
+
+namespace Hangfire.LiteDB
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public interface IPersistentJobQueueMonitoringApi
     {
-        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<string> GetQueues();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <param name="from"></param>
+        /// <param name="perPage"></param>
+        /// <returns></returns>
+        IEnumerable<string> GetEnqueuedJobIds(string queue, int from, int perPage);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <param name="from"></param>
+        /// <param name="perPage"></param>
+        /// <returns></returns>
+        IEnumerable<string> GetFetchedJobIds(string queue, int from, int perPage);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <returns></returns>
+        EnqueuedAndFetchedCountDto GetEnqueuedAndFetchedCount(string queue);
     }
 }

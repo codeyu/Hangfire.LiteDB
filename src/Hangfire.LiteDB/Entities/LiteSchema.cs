@@ -1,17 +1,16 @@
-﻿using System;
+﻿using LiteDB;
 
 namespace Hangfire.LiteDB.Entities
 {
     /// <summary>
     /// 
     /// </summary>
-    public class LiteHash : LiteExpiringKeyValue
+    public class LiteSchema
     {
-
         /// <summary>
         /// 
         /// </summary>
-        public string Field { get; set; }
-
+        [BsonId]
+        public int Version { get; set; }
     }
 }
