@@ -30,13 +30,15 @@ namespace Hangfire.LiteDB
         /// <param name="options"></param>
         /// <exception cref="ArgumentNullException"></exception>
         public LiteDbWriteOnlyTransaction(HangfireDbContext connection,
-            PersistentJobQueueProviderCollection queueProviders, LiteDbStorageOptions options)
+            PersistentJobQueueProviderCollection queueProviders, LiteDbStorageOptions options = null)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _queueProviders = queueProviders ?? throw new ArgumentNullException(nameof(queueProviders));
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
         public override void Dispose()
         {
         }
@@ -136,7 +138,7 @@ namespace Hangfire.LiteDB
         /// <param name="key"></param>
         public override void IncrementCounter(string key)
         {
-            QueueCommand(x => x.StateData.Insert(new Counter
+            QueueCommand(x => x.StateDataCounter.Insert(new Counter
             {
                 Id = ObjectId.NewObjectId(),
                 Key = key,
@@ -151,7 +153,7 @@ namespace Hangfire.LiteDB
         /// <param name="expireIn"></param>
         public override void IncrementCounter(string key, TimeSpan expireIn)
         {
-            QueueCommand(x => x.StateData.Insert(new Counter
+            QueueCommand(x => x.StateDataCounter.Insert(new Counter
             {
                 Id = ObjectId.NewObjectId(),
                 Key = key,
@@ -166,7 +168,7 @@ namespace Hangfire.LiteDB
         /// <param name="key"></param>
         public override void DecrementCounter(string key)
         {
-            QueueCommand(x => x.StateData.Insert(new Counter
+            QueueCommand(x => x.StateDataCounter.Insert(new Counter
             {
                 Id = ObjectId.NewObjectId(),
                 Key = key,
@@ -181,7 +183,7 @@ namespace Hangfire.LiteDB
         /// <param name="expireIn"></param>
         public override void DecrementCounter(string key, TimeSpan expireIn)
         {
-            QueueCommand(x => x.StateData.Insert(new Counter
+            QueueCommand(x => x.StateDataCounter.Insert(new Counter
             {
                 Id = ObjectId.NewObjectId(),
                 Key = key,
@@ -213,12 +215,12 @@ namespace Hangfire.LiteDB
             {
                 var liteSet = new LiteSet
                 {
-                    Scores = score,
+                    Score = score,
                     Key = key,
                     Value = value,
                     ExpireAt = null
                 };
-                x.StateData.Upsert(liteSet);
+                x.StateDataSet.Upsert(liteSet);
             });
             
         }
@@ -230,7 +232,7 @@ namespace Hangfire.LiteDB
         /// <param name="value"></param>
         public override void RemoveFromSet(string key, string value)
         {
-            QueueCommand(x => x.StateData.Delete(_ => _.Key == key & (string) _.Value == value));
+            QueueCommand(x => x.StateDataSet.Delete(_ => _.Key == key & (string) _.Value == value));
         }
 
         /// <summary>
@@ -240,7 +242,7 @@ namespace Hangfire.LiteDB
         /// <param name="value"></param>
         public override void InsertToList(string key, string value)
         {
-            QueueCommand(x => x.StateData.Insert(new LiteList
+            QueueCommand(x => x.StateDataList.Insert(new LiteList
             {
                 Id = ObjectId.NewObjectId(),
                 Key = key,
@@ -255,7 +257,7 @@ namespace Hangfire.LiteDB
         /// <param name="value"></param>
         public override void RemoveFromList(string key, string value)
         {
-            QueueCommand(x => x.StateData.Delete(_ => _.Key == key & (string) _.Value == value));
+            QueueCommand(x => x.StateDataList.Delete(_ => _.Key == key & (string) _.Value == value));
         }
 
         /// <summary>
@@ -276,8 +278,8 @@ namespace Hangfire.LiteDB
                 var start = keepStartingFrom + 1;
                 var end = keepEndingAt + 1;
 
-                var items = ((IEnumerable<LiteList>) x.StateData
-                        .Find(_ => _.Key == key))
+                var items =x.StateDataList
+                        .Find(_ => _.Key == key)
                     .Reverse()
                     .Select((data, i) => new {Index = i + 1, Data = data.Id})
                     .Where(_ => ((_.Index >= start) && (_.Index <= end)) == false)
@@ -285,7 +287,7 @@ namespace Hangfire.LiteDB
                     .ToList();
                 
                
-                x.StateData
+                x.StateDataList
                     .Delete(Query.And(Query.EQ("Key", key),
                         Query.In("Id", Convert(items))));
             });
@@ -320,7 +322,7 @@ namespace Hangfire.LiteDB
                         Value = value,
                         ExpireAt = null
                     };    
-                    x.StateData.Upsert(state);
+                    x.StateDataHash.Upsert(state);
                 });
             }
         }
@@ -335,7 +337,7 @@ namespace Hangfire.LiteDB
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            QueueCommand(x => x.StateData.Delete(_ => _.Key == key));
+            QueueCommand(x => x.StateDataHash.Delete(_ => _.Key == key));
         }
 
         /// <summary>
@@ -373,9 +375,9 @@ namespace Hangfire.LiteDB
             
             QueueCommand(x =>
             {
-                var state = (LiteSet)x.StateData.FindOne(_ => _.Key == key);
+                var state = x.StateDataSet.FindOne(_ => _.Key == key);
                 state.ExpireAt = DateTime.UtcNow.Add(expireIn);
-                x.StateData.Update(state);
+                x.StateDataSet.Update(state);
             });
             
         }
@@ -392,9 +394,9 @@ namespace Hangfire.LiteDB
          
             QueueCommand(x =>
             {
-                var state = (LiteList)x.StateData.FindOne(_ => _.Key == key);
+                var state = x.StateDataList.FindOne(_ => _.Key == key);
                 state.ExpireAt = DateTime.UtcNow.Add(expireIn);
-                x.StateData.Update(state);
+                x.StateDataList.Update(state);
             });
         }
 
@@ -410,9 +412,9 @@ namespace Hangfire.LiteDB
            
             QueueCommand(x =>
             {
-                var state = (LiteHash)x.StateData.FindOne(_ => _.Key == key);
+                var state = x.StateDataHash.FindOne(_ => _.Key == key);
                 state.ExpireAt = DateTime.UtcNow.Add(expireIn);
-                x.StateData.Update(state);
+                x.StateDataHash.Update(state);
             });
         }
 
@@ -426,9 +428,9 @@ namespace Hangfire.LiteDB
             if (key == null) throw new ArgumentNullException(nameof(key));
             QueueCommand(x =>
             {
-                var state = (LiteSet)x.StateData.FindOne(_ => _.Key == key);
+                var state = x.StateDataSet.FindOne(_ => _.Key == key);
                 state.ExpireAt = null;
-                x.StateData.Update(state);
+                x.StateDataSet.Update(state);
             });
         }
 
@@ -442,9 +444,9 @@ namespace Hangfire.LiteDB
             if (key == null) throw new ArgumentNullException(nameof(key));
             QueueCommand(x =>
             {
-                var state = (LiteList)x.StateData.FindOne(_ => _.Key == key);
+                var state = x.StateDataList.FindOne(_ => _.Key == key);
                 state.ExpireAt = null;
-                x.StateData.Update(state);
+                x.StateDataList.Update(state);
             });
         }
 
@@ -458,9 +460,9 @@ namespace Hangfire.LiteDB
             if (key == null) throw new ArgumentNullException(nameof(key));
             QueueCommand(x =>
             {
-                var state = (LiteHash)x.StateData.FindOne(_ => _.Key == key);
+                var state = x.StateDataHash.FindOne(_ => _.Key == key);
                 state.ExpireAt = null;
-                x.StateData.Update(state);
+                x.StateDataHash.Update(state);
             });
         }
 
@@ -484,10 +486,10 @@ namespace Hangfire.LiteDB
                         Key = key,
                         Value = item,
                         ExpireAt = null,
-                        Scores = 0.0
+                        Score = 0.0
                     };
                         
-                    x.StateData.Upsert(state);
+                    x.StateDataSet.Upsert(state);
                 });
             }
 
@@ -501,7 +503,7 @@ namespace Hangfire.LiteDB
         public override void RemoveSet(string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            QueueCommand(x => x.StateData.Delete(_ => _.Key == key));
+            QueueCommand(x => x.StateDataSet.Delete(_ => _.Key == key));
         }
     }
 }

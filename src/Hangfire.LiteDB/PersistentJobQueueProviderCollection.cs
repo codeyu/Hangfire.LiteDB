@@ -60,7 +60,10 @@ namespace Hangfire.LiteDB
                 ? _providersByQueue[queue]
                 : _defaultProvider;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public IEnumerator<IPersistentJobQueueProvider> GetEnumerator()
         {
             return _providers.GetEnumerator();

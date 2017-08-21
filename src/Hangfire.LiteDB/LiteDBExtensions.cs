@@ -24,7 +24,7 @@ namespace Hangfire.LiteDB
         /// 
         /// </summary>
         /// <param name="coll"></param>
-        public static void FindOneAndUpdate(this LiteCollection<T> coll)
+        public static void FindOneAndUpdate<T>(this LiteCollection<T> coll)
         {
             
         }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Threading;
-using Hangfire.LiteDB.Entities;
 using Hangfire.Logging;
 using Hangfire.Server;
 using LiteDB;
@@ -11,7 +10,7 @@ namespace Hangfire.LiteDB
     /// <summary>
     /// Represents Hangfire expiration manager for LiteDB database
     /// </summary>
-    public class ExpirationManager : IBackgroundProcess, IServerComponent
+    public class ExpirationManager : IBackgroundProcess
     {
         private static readonly ILog Logger = LogProvider.For<ExpirationManager>();
 
@@ -57,8 +56,8 @@ namespace Hangfire.LiteDB
             {
                 DateTime now = DateTime.UtcNow;
 
-                RemoveExpiredRecord(connection.Job, _ => _.ExpireAt, now);
-                RemoveExpiredRecord(connection.StateData.OfType<LiteExpiringKeyValue>(), _ => _.ExpireAt, now);
+                RemoveExpiredRecord(connection.Job, _ => _.ExpireAt < now);
+                RemoveExpiredRecord(connection.StateDataExpiringKeyValue, _ => _.ExpireAt==now);
             }
 
             cancellationToken.WaitHandle.WaitOne(_checkInterval);
@@ -72,11 +71,11 @@ namespace Hangfire.LiteDB
             return "LiteDB Expiration Manager";
         }
 
-        private static void RemoveExpiredRecord<TEntity, TField>(LiteCollection<TEntity> collection, Expression<Func<TEntity, TField>> expression, TField now)
+        private static void RemoveExpiredRecord<TEntity>(LiteCollection<TEntity> collection, Expression<Func<TEntity, bool>> expression)
         {
             Logger.DebugFormat("Removing outdated records from table '{0}'...", collection.Name);
 
-            collection.Delete(Query.LT(expression, now));
+            collection.Delete(expression);
         }
     }
 }

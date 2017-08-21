@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Hangfire.LiteDB.StateHandlers;
 using Hangfire.Logging;
-using Hangfire.Server;
 using Hangfire.States;
 using Hangfire.Storage;
 using LiteDB;
@@ -108,15 +107,7 @@ namespace Hangfire.LiteDB
         {
             return new LiteDbConnection(Connection, _storageOptions, QueueProviders);
         }
-        /// <summary>
-        /// Returns collection of server components
-        /// </summary>
-        /// <returns>Collection of server components</returns>
-        public override IEnumerable<IServerComponent> GetComponents()
-        {
-            yield return new ExpirationManager(this, _storageOptions.JobExpirationCheckInterval);
-            yield return new CountersAggregator(this, _storageOptions.CountersAggregateInterval);
-        }
+        
         /// <summary>
         /// 
         /// </summary>

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Hangfire.LiteDB.Entities;
@@ -12,7 +11,7 @@ namespace Hangfire.LiteDB
     /// <summary>
     /// Represents Counter collection aggregator for Mongo database
     /// </summary>
-    public class CountersAggregator : IBackgroundProcess, IServerComponent
+    public class CountersAggregator : IBackgroundProcess
     {
         private static readonly ILog Logger = LogProvider.For<CountersAggregator>();
 
@@ -58,9 +57,9 @@ namespace Hangfire.LiteDB
                 {
                     var database = storageConnection.Database;
 
-                    var recordsToAggregate = ((IEnumerable<Counter>)database
-                        .StateData
-                        .FindAll())
+                    var recordsToAggregate = database
+                        .StateDataCounter
+                        .FindAll()
                         .Take(NumberOfRecordsInSinglePass)
                         .ToList();
 
@@ -74,28 +73,28 @@ namespace Hangfire.LiteDB
 
                     foreach (var item in recordsToMerge)
                     {
-                        AggregatedCounter aggregatedItem = (AggregatedCounter)database
-                            .StateData
+                        AggregatedCounter aggregatedItem = database
+                            .StateDataAggregatedCounter
                             .Find(Query.EQ("Key", item.Key))
                             .FirstOrDefault();
 
                         if (aggregatedItem != null)
                         {
-                            var aggregatedCounters = (IEnumerable<AggregatedCounter>)database.StateData.Find(_ => _.Key == item.Key);
+                            var aggregatedCounters = database.StateDataAggregatedCounter.Find(_ => _.Key == item.Key);
                             foreach (var counter in aggregatedCounters)
                             {
                                 counter.Value = (long) counter.Value + item.Value;
                                 counter.ExpireAt = item.ExpireAt > aggregatedItem.ExpireAt
                                     ? item.ExpireAt
                                     : aggregatedItem.ExpireAt;
-                                database.StateData.Update(counter);
+                                database.StateDataAggregatedCounter.Update(counter);
                             }
                             
                         }
                         else
                         {
                             database
-                                .StateData
+                                .StateDataAggregatedCounter
                                 .Insert(new AggregatedCounter
                             {
                                 Id = ObjectId.NewObjectId(),
@@ -107,7 +106,7 @@ namespace Hangfire.LiteDB
                     }
 
                     removedCount = database
-                        .StateData
+                        .StateDataCounter
                         .Delete(Query.In("Id", recordsToAggregate.Select(_ => _.Id).ToBsonValueEnumerable()));
                 }
 

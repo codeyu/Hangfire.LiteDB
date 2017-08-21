@@ -11,6 +11,6 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public double Scores { get; set; }
+        public double Score { get; set; }
     }
 }

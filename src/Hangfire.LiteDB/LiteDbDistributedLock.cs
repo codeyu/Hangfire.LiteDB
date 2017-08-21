@@ -36,7 +36,7 @@ namespace Hangfire.LiteDB
 
 
         /// <summary>
-        /// Creates MongoDB distributed lock
+        /// Creates LiteDB distributed lock
         /// </summary>
         /// <param name="resource">Lock resource</param>
         /// <param name="timeout">Lock timeout</param>
@@ -127,16 +127,12 @@ namespace Hangfire.LiteDB
 
                 while ((lockTimeoutTime >= now))
                 {
-                    // Acquire the lock if it does not exist - Notice: ReturnDocument.Before
-                    var filter = Builders<DistributedLock>.Filter.Eq(_ => _.Resource, _resource);
-                    var update = Builders<DistributedLock>.Update.SetOnInsert(_ => _.ExpireAt, DateTime.UtcNow.Add(_storageOptions.DistributedLockLifetime));
-                    var options = new FindOneAndUpdateOptions<DistributedLock>
-                    {
-                        IsUpsert = true,
-                        ReturnDocument = ReturnDocument.Before
-                    };
-                    var result = _database.DistributedLock.FindOneAndUpdate(filter, update, options);
+                    var result = _database.DistributedLock.FindOne(x => x.Resource == _resource);
+                    var distributedLock = result??new DistributedLock();
+                    distributedLock.Resource = _resource;
+                    distributedLock.ExpireAt = DateTime.UtcNow.Add(_storageOptions.DistributedLockLifetime);
 
+                    _database.DistributedLock.Upsert(distributedLock);
                     // If result is null, then it means we acquired the lock
                     if (result == null)
                     {
@@ -192,8 +188,7 @@ namespace Hangfire.LiteDB
             try
             {
                 // Remove resource lock
-                _database.DistributedLock.DeleteOne(
-                    Builders<DistributedLock>.Filter.Eq(_ => _.Resource, _resource));
+                _database.DistributedLock.Delete(_ => _.Resource== _resource);
                 EventWaitHandle eventWaitHandler;
                 if (EventWaitHandle.TryOpenExisting(EventWaitHandleName, out eventWaitHandler))
                 {
@@ -220,9 +215,7 @@ namespace Hangfire.LiteDB
             try
             {
                 // Delete expired locks
-                _database.DistributedLock.DeleteOne(
-                    Builders<DistributedLock>.Filter.Eq(_ => _.Resource, _resource) &
-                    Builders<DistributedLock>.Filter.Lt(_ => _.ExpireAt, DateTime.UtcNow));
+                _database.DistributedLock.Delete(x => x.Resource == _resource && x.ExpireAt < DateTime.UtcNow);
             }
             catch (Exception ex)
             {
@@ -245,9 +238,10 @@ namespace Hangfire.LiteDB
                 {
                     try
                     {
-                        var filter = Builders<DistributedLock>.Filter.Eq(_ => _.Resource, _resource);
-                        var update = Builders<DistributedLock>.Update.Set(_ => _.ExpireAt, DateTime.UtcNow.Add(_storageOptions.DistributedLockLifetime));
-                        _database.DistributedLock.FindOneAndUpdate(filter, update);
+                        var distributedLock = _database.DistributedLock.FindOne(x => x.Resource == _resource);
+                        distributedLock.ExpireAt = DateTime.UtcNow.Add(_storageOptions.DistributedLockLifetime);
+
+                        _database.DistributedLock.Update(distributedLock);
                     }
                     catch (Exception ex)
                     {

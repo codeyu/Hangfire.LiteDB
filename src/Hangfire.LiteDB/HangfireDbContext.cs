@@ -68,8 +68,38 @@ namespace Hangfire.LiteDB
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
-        public LiteCollection<LiteKeyValue> StateData =>
-            Database.GetCollection<LiteKeyValue>(_prefix + ".stateData");
+        public LiteCollection<LiteKeyValue> StateDataKeyValue =>
+            Database.GetCollection<LiteKeyValue>(_prefix + $".{nameof(LiteKeyValue)}");
+        /// <summary>
+        /// Reference to collection which contains various state information
+        /// </summary>
+        public LiteCollection<LiteExpiringKeyValue> StateDataExpiringKeyValue =>
+            Database.GetCollection<LiteExpiringKeyValue>(_prefix + $".{nameof(StateDataExpiringKeyValue)}");
+        /// <summary>
+        /// Reference to collection which contains various state information
+        /// </summary>
+        public LiteCollection<LiteHash> StateDataHash =>
+            Database.GetCollection<LiteHash>(_prefix + $".{nameof(LiteHash)}");
+        /// <summary>
+        /// Reference to collection which contains various state information
+        /// </summary>
+        public LiteCollection<LiteList> StateDataList =>
+            Database.GetCollection<LiteList>(_prefix + $".{nameof(LiteList)}");
+        /// <summary>
+        /// Reference to collection which contains various state information
+        /// </summary>
+        public LiteCollection<LiteSet> StateDataSet =>
+            Database.GetCollection<LiteSet>(_prefix + $".{nameof(LiteSet)}");
+        /// <summary>
+        /// Reference to collection which contains various state information
+        /// </summary>
+        public LiteCollection<Counter> StateDataCounter =>
+            Database.GetCollection<Counter>(_prefix + $".{nameof(Counter)}");
+        /// <summary>
+        /// Reference to collection which contains various state information
+        /// </summary>
+        public LiteCollection<AggregatedCounter> StateDataAggregatedCounter =>
+            Database.GetCollection<AggregatedCounter>(_prefix + $".{nameof(AggregatedCounter)}");
 
         /// <summary>
         /// Reference to collection which contains distributed locks

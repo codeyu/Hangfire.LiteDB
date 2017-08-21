@@ -14,7 +14,7 @@ namespace Hangfire.LiteDB
     /// </summary>
     public class LiteDbConnection : JobStorageConnection
     {
-               private readonly LiteDbStorageOptions _storageOptions;
+        private readonly LiteDbStorageOptions _storageOptions;
 
         private readonly PersistentJobQueueProviderCollection _queueProviders;
 
@@ -105,21 +105,11 @@ namespace Hangfire.LiteDB
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
 
-            var filter = new BsonDocument("_id", id);
-            BsonValue bsonValue;
-            if (value == null)
-            {
-                bsonValue = BsonNull.Value;
-            }
-            else
-            {
-                bsonValue = value;
-            }
 
+            var liteJob = Database.Job.FindById(id);
+            liteJob.Parameters = new Dictionary<string, string> { { name, value } };
 
-            var update = new BsonDocument("$set", new BsonDocument($"{nameof(JobDto.Parameters)}.{name}", bsonValue));
-
-            Database.Job.FindOneAndUpdate(filter, update);
+            Database.Job.Update(liteJob);
         }
 
         public override string GetJobParameter(string id, string name)
@@ -133,7 +123,7 @@ namespace Hangfire.LiteDB
             var parameters = Database
                 .Job
                 .Find(j => j.Id == id)
-                .Project(job => job.Parameters)
+                .Select(job => job.Parameters)
                 .FirstOrDefault();
 
             string value = null;
@@ -149,7 +139,7 @@ namespace Hangfire.LiteDB
 
             var jobData = Database
                 .Job
-                .Find(Builders<JobDto>.Filter.Eq(_ => _.Id, jobId))
+                .Find(_ => _.Id == jobId)
                 .FirstOrDefault();
 
             if (jobData == null)
@@ -185,33 +175,22 @@ namespace Hangfire.LiteDB
             if (jobId == null)
                 throw new ArgumentNullException(nameof(jobId));
 
-            var projection = Builders<JobDto>
-                .Projection
-                .Include(j => j.StateHistory)
-                .Slice(j => j.StateHistory, -1);
-
             var latest = Database
                 .Job
                 .Find(j => j.Id == jobId)
-                .Project(projection)
+                .Select(x => x.StateHistory)
                 .FirstOrDefault();
 
-            if (latest == null)
-                return null;
-
-            var state = latest[nameof(JobDto.StateHistory)]
-                .AsBsonArray
-                .FirstOrDefault();
+            var state = latest?[0];
 
             if (state == null)
                 return null;
 
             return new StateData
             {
-                Name = state[nameof(StateDto.Name)] == BsonNull.Value ? null : state[nameof(StateDto.Name)].AsString,
-                Reason = state[nameof(StateDto.Reason)] == BsonNull.Value ? null : state[nameof(StateDto.Reason)].AsString,
-                Data = state[nameof(StateDto.Data)] == BsonNull.Value ? new Dictionary<string, string>() :
-                    state[nameof(StateDto.Data)].AsBsonDocument.Elements.ToDictionary(e => e.Name, e => e.Value.AsString)
+                Name = state.Name,
+                Reason = state.Reason,
+                Data = state.Data
             };
         }
 
@@ -223,17 +202,16 @@ namespace Hangfire.LiteDB
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
-            var data = new ServerDataDto
+            var data = new ServerData
             {
                 WorkerCount = context.WorkerCount,
                 Queues = context.Queues,
                 StartedAt = DateTime.UtcNow
             };
-
-            Database.Server.UpdateMany(Builders<ServerDto>.Filter.Eq(_ => _.Id, serverId),
-                Builders<ServerDto>.Update.Combine(Builders<ServerDto>.Update.Set(_ => _.Data, JobHelper.ToJson(data)),
-                    Builders<ServerDto>.Update.Set(_ => _.LastHeartbeat, DateTime.UtcNow)),
-                new UpdateOptions { IsUpsert = true });
+            var server = Database.Server.FindById(serverId);
+            server.LastHeartbeat = DateTime.UtcNow;
+            server.Data = JobHelper.ToJson(data);
+            Database.Server.Upsert(server);
         }
 
         public override void RemoveServer(string serverId)
@@ -243,7 +221,7 @@ namespace Hangfire.LiteDB
                 throw new ArgumentNullException(nameof(serverId));
             }
 
-            Database.Server.DeleteMany(Builders<ServerDto>.Filter.Eq(_ => _.Id, serverId));
+            Database.Server.Delete(_ => _.Id == serverId);
         }
 
         public override void Heartbeat(string serverId)
@@ -253,8 +231,9 @@ namespace Hangfire.LiteDB
                 throw new ArgumentNullException(nameof(serverId));
             }
 
-            Database.Server.UpdateMany(Builders<ServerDto>.Filter.Eq(_ => _.Id, serverId),
-                Builders<ServerDto>.Update.Set(_ => _.LastHeartbeat, DateTime.UtcNow));
+            var server = Database.Server.FindById(serverId);
+            server.LastHeartbeat = DateTime.UtcNow;
+            Database.Server.Update(server);
         }
 
         public override int RemoveTimedOutServers(TimeSpan timeOut)
@@ -264,10 +243,9 @@ namespace Hangfire.LiteDB
                 throw new ArgumentException("The `timeOut` value must be positive.", nameof(timeOut));
             }
 
-            return (int)Database
+            return Database
                 .Server
-                .DeleteMany(Builders<ServerDto>.Filter.Lt(_ => _.LastHeartbeat, DateTime.UtcNow.Add(timeOut.Negate())))
-                .DeletedCount;
+                .Delete(_ => _.LastHeartbeat < DateTime.UtcNow.Add(timeOut.Negate()));
         }
 
         public override HashSet<string> GetAllItemsFromSet(string key)
@@ -278,11 +256,10 @@ namespace Hangfire.LiteDB
             }
 
             var result = Database
-                .StateData
-                .OfType<SetDto>()
-                .Find(Builders<SetDto>.Filter.Eq(_ => _.Key, key))
-                .SortBy(_ => _.Id)
-                .Project(_ => _.Value)
+                .StateDataSet
+                .Find(_ => _.Key == key)
+                .OrderBy(_ => _.Id)
+                .Select(_ => _.Value)
                 .ToList();
 
             return new HashSet<string>(result.Cast<string>());
@@ -301,19 +278,18 @@ namespace Hangfire.LiteDB
             }
 
             return Database
-                .StateData
-                .OfType<SetDto>()
-                .Find(Builders<SetDto>.Filter.Eq(_ => _.Key, key) &
-                      Builders<SetDto>.Filter.Gte(_ => _.Score, fromScore) &
-                      Builders<SetDto>.Filter.Lte(_ => _.Score, toScore))
-                .SortBy(_ => _.Score)
-                .Project(_ => _.Value)
+                .StateDataSet
+                .Find(_ => _.Key == key &&
+                      _.Score == fromScore &&
+                       _.Score <= toScore)
+                .OrderBy(_ => _.Score)
+                .Select(_ => _.Value)
                 .FirstOrDefault() as string;
         }
 
         public override void SetRangeInHash(string key, IEnumerable<KeyValuePair<string, string>> keyValuePairs)
         {
-            using (var transaction = new MongoWriteOnlyTransaction(Database, _queueProviders, _storageOptions))
+            using (var transaction = new LiteDbWriteOnlyTransaction(Database, _queueProviders, _storageOptions))
             {
                 transaction.SetRangeInHash(key, keyValuePairs);
                 transaction.Commit();
@@ -328,9 +304,8 @@ namespace Hangfire.LiteDB
             }
 
             var result = Database
-                .StateData
-                .OfType<HashDto>()
-                .Find(Builders<HashDto>.Filter.Eq(_ => _.Key, key))
+                .StateDataHash
+                .Find(_ => _.Key == key)
                 .ToList()
                 .ToDictionary(x => x.Field, x => (string)x.Value);
 
@@ -345,9 +320,8 @@ namespace Hangfire.LiteDB
             }
 
             return Database
-                .StateData
-                .OfType<SetDto>()
-                .Find(Builders<SetDto>.Filter.Eq(_ => _.Key, key))
+                .StateDataSet
+                .Find(_ => _.Key == key)
                 .Count();
         }
 
@@ -359,13 +333,12 @@ namespace Hangfire.LiteDB
             }
 
             return Database
-                .StateData
-                .OfType<SetDto>()
-                .Find(Builders<SetDto>.Filter.Eq(_ => _.Key, key))
-                .SortBy(_ => _.Id)
+                .StateDataSet
+                .Find(_ => _.Key == key)
+                .OrderBy(_ => _.Id)
                 .Skip(startingFrom)
-                .Limit(endingAt - startingFrom + 1) // inclusive -- ensure the last element is included
-                .Project(dto => (string)dto.Value)
+                .Take(endingAt - startingFrom + 1) // inclusive -- ensure the last element is included
+                .Select(dto => (string)dto.Value)
                 .ToList();
         }
 
@@ -377,11 +350,10 @@ namespace Hangfire.LiteDB
             }
 
             var values = Database
-                .StateData
-                .OfType<SetDto>()
-                .Find(Builders<SetDto>.Filter.Eq(_ => _.Key, key) &
-                      Builders<SetDto>.Filter.Not(Builders<SetDto>.Filter.Eq(_ => _.ExpireAt, null)))
-                .Project(dto => dto.ExpireAt.Value)
+                .StateDataSet
+                .Find(_ => _.Key == key &&
+                       _.ExpireAt != null)
+                .Select(dto => dto.ExpireAt.Value)
                 .ToList();
 
             return values.Any() ? values.Min() - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
@@ -395,17 +367,15 @@ namespace Hangfire.LiteDB
             }
 
             var counterQuery = Database
-                .StateData
-                .OfType<CounterDto>()
-                .Find(Builders<CounterDto>.Filter.Eq(_ => _.Key, key))
-                .Project(_ => _.Value)
+                .StateDataCounter
+                .Find(_ => _.Key == key)
+                .Select(_ => _.Value)
                 .ToList();
 
             var aggregatedCounterQuery = Database
-                .StateData
-                .OfType<AggregatedCounterDto>()
-                .Find(Builders<AggregatedCounterDto>.Filter.Eq(_ => _.Key, key))
-                .Project(_ => _.Value)
+                .StateDataAggregatedCounter
+                .Find(_ => _.Key == key)
+                .Select(_ => _.Value)
                 .ToList();
 
             var values = counterQuery
@@ -424,9 +394,8 @@ namespace Hangfire.LiteDB
             }
 
             return Database
-                .StateData
-                .OfType<HashDto>()
-                .Find(Builders<HashDto>.Filter.Eq(_ => _.Key, key))
+                .StateDataHash
+                .Find(_ => _.Key == key)
                 .Count();
         }
 
@@ -438,11 +407,10 @@ namespace Hangfire.LiteDB
             }
 
             var result = Database
-                .StateData
-                .OfType<HashDto>()
-                .Find(Builders<HashDto>.Filter.Eq(_ => _.Key, key))
-                .SortBy(dto => dto.ExpireAt)
-                .Project(_ => _.ExpireAt)
+                .StateDataHash
+                .Find(_ => _.Key == key)
+                .OrderBy(dto => dto.ExpireAt)
+                .Select(_ => _.ExpireAt)
                 .FirstOrDefault();
 
             return result.HasValue ? result.Value - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
@@ -461,9 +429,8 @@ namespace Hangfire.LiteDB
             }
 
             var result = Database
-                .StateData
-                .OfType<HashDto>()
-                .Find(Builders<HashDto>.Filter.Eq(_ => _.Key, key) & Builders<HashDto>.Filter.Eq(_ => _.Field, name))
+                .StateDataHash
+                .Find(_ => _.Key == key && _.Field == name)
                 .FirstOrDefault();
 
             return result?.Value as string;
@@ -477,9 +444,8 @@ namespace Hangfire.LiteDB
             }
 
             return Database
-                .StateData
-                .OfType<ListDto>()
-                .Find(Builders<ListDto>.Filter.Eq(_ => _.Key, key))
+                .StateDataList
+                .Find(_ => _.Key == key)
                 .Count();
         }
 
@@ -491,13 +457,12 @@ namespace Hangfire.LiteDB
             }
 
             var result = Database
-                .StateData
-                .OfType<ListDto>()
-                .Find(Builders<ListDto>.Filter.Eq(_ => _.Key, key))
-                .SortBy(_ => _.ExpireAt)
-                .Project(_ => _.ExpireAt)
+                .StateDataList
+                .Find(_ => _.Key == key)
+                .OrderBy(_ => _.ExpireAt)
+                .Select(_ => _.ExpireAt)
                 .FirstOrDefault();
-                
+
             return result.HasValue ? result.Value - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
         }
 
@@ -509,13 +474,12 @@ namespace Hangfire.LiteDB
             }
 
             return Database
-                .StateData
-                .OfType<ListDto>()
-                .Find(Builders<ListDto>.Filter.Eq(_ => _.Key, key))
-                .SortByDescending(_ => _.Id)
+                .StateDataList
+                .Find(_ => _.Key == key)
+                .OrderByDescending(_ => _.Id)
                 .Skip(startingFrom)
-                .Limit(endingAt - startingFrom + 1) // inclusive -- ensure the last element is included
-                .Project(_ => (string)_.Value)
+                .Take(endingAt - startingFrom + 1) // inclusive -- ensure the last element is included
+                .Select(_ => (string)_.Value)
                 .ToList();
         }
 
@@ -527,11 +491,10 @@ namespace Hangfire.LiteDB
             }
 
             return Database
-                .StateData
-                .OfType<ListDto>()
-                .Find(Builders<ListDto>.Filter.Eq(_ => _.Key, key))
-                .SortByDescending(_ => _.Id)
-                .Project(_ => (string)_.Value)
+                .StateDataList
+                .Find(_ => _.Key == key)
+                .OrderByDescending(_ => _.Id)
+                .Select(_ => (string)_.Value)
                 .ToList();
         }
     }

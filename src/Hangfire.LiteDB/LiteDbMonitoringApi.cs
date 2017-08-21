@@ -127,9 +127,9 @@ namespace Hangfire.LiteDB
             {
                 var stats = new StatisticsDto();
 
-                var countByStates = ctx.Job.Aggregate()
-                    .Match(Builders<JobDto>.Filter.Ne(_ => _.StateName, null))
-                    .Group(dto => new { dto.StateName }, dtos => new { StateName = dtos.First().StateName, Count = dtos.Count() })
+                var countByStates = ctx.Job.Find(_ => _.StateName== null)
+                    .GroupBy(x=>x.StateName)
+                    .Select(k => new { StateName = k.Key, Count = k.Count() })
                     .ToList().ToDictionary(kv => kv.StateName, kv => kv.Count);
 
                 int GetCountIfExists(string name) => countByStates.ContainsKey(name) ? countByStates[name] : 0;
@@ -141,18 +141,18 @@ namespace Hangfire.LiteDB
 
                 stats.Servers = ctx.Server.Count(Query.All());
 
-                long[] succeededItems = ctx.StateData.OfType<Counter>().Find(Builders<CounterDto>.Filter.Eq(_ => _.Key, "stats:succeeded")).ToList().Select(_ => (long)_.Value)
-                    .Concat(ctx.StateData.OfType<AggregatedCounter>().Find(Builders<AggregatedCounterDto>.Filter.Eq(_ => _.Key, "stats:succeeded")).ToList().Select(_ => (long)_.Value))
+                long[] succeededItems = ctx.StateDataCounter.Find(_ => _.Key== "stats:succeeded").ToList().Select(_ => (long)_.Value)
+                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key== "stats:succeeded").ToList().Select(_ => (long)_.Value))
                     .ToArray();
 
                 stats.Succeeded = succeededItems.Any() ? succeededItems.Sum() : 0;
 
-                long[] deletedItems = ctx.StateData.OfType<CounterDto>().Find(Builders<CounterDto>.Filter.Eq(_ => _.Key, "stats:deleted")).ToList().Select(_ => (long)_.Value)
-                    .Concat(ctx.StateData.OfType<AggregatedCounterDto>().Find(Builders<AggregatedCounterDto>.Filter.Eq(_ => _.Key, "stats:deleted")).ToList().Select(_ => (long)_.Value))
+                long[] deletedItems = ctx.StateDataCounter.Find(_ => _.Key== "stats:deleted").ToList().Select(_ => (long)_.Value)
+                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key== "stats:deleted").ToList().Select(_ => (long)_.Value))
                     .ToArray();
                 stats.Deleted = deletedItems.Any() ? deletedItems.Sum() : 0;
 
-                stats.Recurring = ctx.StateData.OfType<SetDto>().Count(Builders<SetDto>.Filter.Eq(_ => _.Key, "recurring-jobs"));
+                stats.Recurring = ctx.StateDataSet.Count(Query.EQ("Key", "recurring-jobs"));
 
                 stats.Queues = _queueProviders
                     .SelectMany(x => x.GetJobQueueMonitoringApi(ctx).GetQueues())
@@ -413,13 +413,11 @@ namespace Hangfire.LiteDB
         private JobList<EnqueuedJobDto> EnqueuedJobs(HangfireDbContext connection, IEnumerable<string> jobIds)
         {
             var jobs = connection.Job
-                .Find(Query.In("Id", jobIds))
+                .Find(Query.In("Id", jobIds.ToBsonValueEnumerable()))
                 .ToList();
-
-            var filterBuilder = Builders<JobQueueDto>.Filter;
             var enqueuedJobs = connection.JobQueue
-                .Find(filterBuilder.In(_ => _.JobId, jobs.Select(job => job.Id)) &
-                      (filterBuilder.Not(filterBuilder.Exists(_ => _.FetchedAt)) | filterBuilder.Eq(_ => _.FetchedAt, null)))
+                .Find(Query.In("JobId", jobs.Select(job => job.Id).ToBsonValueEnumerable()))
+                .Where(x=>x.FetchedAt != null)
                 .ToList();
 
             var jobsFiltered = enqueuedJobs
@@ -497,13 +495,12 @@ namespace Hangfire.LiteDB
         private JobList<FetchedJobDto> FetchedJobs(HangfireDbContext connection, IEnumerable<string> jobIds)
         {
             var jobs = connection.Job
-                .Find(Query.In(_ => _.Id, jobIds))
+                .Find(Query.In("Id", jobIds.ToBsonValueEnumerable()))
                 .ToList();
 
             var jobIdToJobQueueMap = connection.JobQueue
-                .Find(Builders<JobQueueDto>.Filter.In(_ => _.JobId, jobs.Select(job => job.Id))
-                      & Builders<JobQueueDto>.Filter.Exists(_ => _.FetchedAt)
-                      & Builders<JobQueueDto>.Filter.Not(Builders<JobQueueDto>.Filter.Eq(_ => _.FetchedAt, null)))
+                .Find(Query.In("JobId", jobs.Select(job => job.Id).ToBsonValueEnumerable()))
+                .Where(x=>x.FetchedAt != null)
                 .ToList().ToDictionary(kv => kv.JobId, kv => kv);
 
             IEnumerable<LiteJob> jobsFiltered = jobs.Where(job => jobIdToJobQueueMap.ContainsKey(job.Id));
@@ -597,8 +594,8 @@ namespace Hangfire.LiteDB
             var stringDates = dates.Select(x => x.ToString("yyyy-MM-dd")).ToList();
             var keys = stringDates.Select(x => $"stats:{type}:{x}").ToList();
 
-            var valuesMap = connection.StateData.OfType<AggregatedCounter>()
-                .Find(Query.In("Key", keys.OfType<BsonValue>()))
+            var valuesMap = connection.StateDataAggregatedCounter
+                .Find(Query.In("Key", keys.ToBsonValueEnumerable()))
                 .ToList()
                 .GroupBy(x => x.Key)
                 .ToDictionary(x => x.Key, x => (long)x.Count());
@@ -630,7 +627,7 @@ namespace Hangfire.LiteDB
 
             var keys = dates.Select(x => $"stats:{type}:{x:yyyy-MM-dd-HH}").ToList();
 
-            var valuesMap = connection.StateData.OfType<Counter>().Find(Query.In("Key", keys))
+            var valuesMap = connection.StateDataCounter.Find(Query.In("Key", keys.ToBsonValueEnumerable()))
                 .ToList()
                 .GroupBy(x => x.Key, x => x)
                 .ToDictionary(x => x.Key, x => (long)x.Count());

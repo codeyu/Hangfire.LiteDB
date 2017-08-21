@@ -27,6 +27,12 @@ namespace Hangfire.LiteDB
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="queues"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [NotNull]
         public IFetchedJob Dequeue(string[] queues, CancellationToken cancellationToken)
         {
@@ -81,7 +87,11 @@ namespace Hangfire.LiteDB
 
             return new LiteDbFetchedJob(_connection, fetchedJob.Id, fetchedJob.JobId, fetchedJob.Queue);
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <param name="jobId"></param>
         public void Enqueue(string queue, string jobId)
         {
             _connection.JobQueue.Insert(new JobQueue
