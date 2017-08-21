@@ -2,37 +2,37 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Hangfire.Common;
+using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
 using Hangfire.States;
 using Hangfire.Storage;
+using Moq;
 using Xunit;
 
 namespace Hangfire.LiteDB.Test
 {
 #pragma warning disable 1591
     [Collection("Database")]
-    public class LiteDBMonitoringApiFacts
+    public class LiteDbMonitoringApiFacts
     {
         private const string DefaultQueue = "default";
         private const string FetchedStateName = "Fetched";
         private const int From = 0;
         private const int PerPage = 5;
-        private readonly Mock<IPersistentJobQueue> _queue;
-        private readonly Mock<IPersistentJobQueueProvider> _provider;
         private readonly Mock<IPersistentJobQueueMonitoringApi> _persistentJobQueueMonitoringApi;
         private readonly PersistentJobQueueProviderCollection _providers;
 
-        public LiteDBMonitoringApiFacts()
+        public LiteDbMonitoringApiFacts()
         {
-            _queue = new Mock<IPersistentJobQueue>();
+            var queue = new Mock<IPersistentJobQueue>();
             _persistentJobQueueMonitoringApi = new Mock<IPersistentJobQueueMonitoringApi>();
 
-            _provider = new Mock<IPersistentJobQueueProvider>();
-            _provider.Setup(x => x.GetJobQueue(It.IsNotNull<HangfireDbContext>())).Returns(_queue.Object);
-            _provider.Setup(x => x.GetJobQueueMonitoringApi(It.IsNotNull<HangfireDbContext>()))
+            var provider = new Mock<IPersistentJobQueueProvider>();
+            provider.Setup(x => x.GetJobQueue(It.IsNotNull<HangfireDbContext>())).Returns(queue.Object);
+            provider.Setup(x => x.GetJobQueueMonitoringApi(It.IsNotNull<HangfireDbContext>()))
                 .Returns(_persistentJobQueueMonitoringApi.Object);
 
-            _providers = new PersistentJobQueueProviderCollection(_provider.Object);
+            _providers = new PersistentJobQueueProviderCollection(provider.Object);
         }
 
         [Fact, CleanDatabase]
@@ -248,9 +248,9 @@ namespace Hangfire.LiteDB.Test
             {
                 var processingJob = CreateJobInState(database, 1.ToString(), ProcessingState.StateName);
 
-                var succeededJob = CreateJobInState(database, 2.ToString(), SucceededState.StateName, jobDto =>
+                var succeededJob = CreateJobInState(database, 2.ToString(), SucceededState.StateName, liteJob =>
                 {
-                    var processingState = new StateDto()
+                    var processingState = new LiteState()
                     {
                         Name = ProcessingState.StateName,
                         Reason = null,
@@ -262,9 +262,9 @@ namespace Hangfire.LiteDB.Test
                             JobHelper.SerializeDateTime(DateTime.UtcNow.Subtract(TimeSpan.FromMilliseconds(500)))
                         }
                     };
-                    var succeededState = jobDto.StateHistory[0];
-                    jobDto.StateHistory = new[] {processingState, succeededState};
-                    return jobDto;
+                    var succeededState = liteJob.StateHistory[0];
+                    liteJob.StateHistory = new[] {processingState, succeededState};
+                    return liteJob;
                 });
 
                 var enqueuedJob = CreateJobInState(database, 3.ToString(), EnqueuedState.StateName);
@@ -285,16 +285,16 @@ namespace Hangfire.LiteDB.Test
             Debug.WriteLine(arg);
         }
 
-        private void UseMonitoringApi(Action<HangfireDbContext, MongoMonitoringApi> action)
+        private void UseMonitoringApi(Action<HangfireDbContext, LiteDbMonitoringApi> action)
         {
             using (var database = ConnectionUtils.CreateConnection())
             {
-                var connection = new MongoMonitoringApi(database, _providers);
+                var connection = new LiteDbMonitoringApi(database, _providers);
                 action(database, connection);
             }
         }
 
-        private JobDto CreateJobInState(HangfireDbContext database, string jobId, string stateName, Func<JobDto, JobDto> visitor = null)
+        private LiteJob CreateJobInState(HangfireDbContext database, string jobId, string stateName, Func<LiteJob, LiteJob> visitor = null)
         {
             var job = Job.FromExpression(() => SampleMethod("wrong"));
             
@@ -316,7 +316,7 @@ namespace Hangfire.LiteDB.Test
                 stateData = new Dictionary<string, string>();
             }
 
-            var jobState = new StateDto()
+            var jobState = new LiteState()
             {
                 Name = stateName,
                 Reason = null,
@@ -324,7 +324,7 @@ namespace Hangfire.LiteDB.Test
                 Data = stateData
             };
 
-            var jobDto = new JobDto
+            var liteJob = new LiteJob
             {
                 Id = jobId,
                 InvocationData = JobHelper.ToJson(InvocationData.Serialize(job)),
@@ -335,11 +335,11 @@ namespace Hangfire.LiteDB.Test
             };
             if (visitor != null)
             {
-                jobDto = visitor(jobDto);
+                liteJob = visitor(liteJob);
             }
-            database.Job.InsertOne(jobDto);
+            database.Job.Insert(liteJob);
 
-            var jobQueueDto = new JobQueueDto
+            var jobQueueDto = new JobQueue
             {
                 FetchedAt = null,
                 JobId = jobId,
@@ -351,9 +351,9 @@ namespace Hangfire.LiteDB.Test
                 jobQueueDto.FetchedAt = DateTime.UtcNow;
             }
 
-            database.JobQueue.InsertOne(jobQueueDto);
+            database.JobQueue.Insert(jobQueueDto);
 
-            return jobDto;
+            return liteJob;
         }
     }
 #pragma warning restore 1591

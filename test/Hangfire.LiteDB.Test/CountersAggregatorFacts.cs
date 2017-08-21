@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
+using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
-using LiteDB;
 using Xunit;
 
 namespace Hangfire.LiteDB.Test
@@ -17,7 +17,7 @@ namespace Hangfire.LiteDB.Test
             using (var connection = (LiteDbConnection)storage.GetConnection())
             {
                 // Arrange
-                connection.Database.StateData.InsertOne(new CounterDto
+                connection.Database.StateDataCounter.Insert(new Counter
                 {
                     Key = "key",
                     Value = 1L,
@@ -32,7 +32,7 @@ namespace Hangfire.LiteDB.Test
                 aggregator.Execute(cts.Token);
 
                 // Assert
-                Assert.Equal(1, connection.Database.StateData.OfType<AggregatedCounterDto>().Count(new BsonDocument()));
+                Assert.Equal(1, connection.Database.StateDataAggregatedCounter.Count());
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Hangfire.LiteDB.Test.Utils;
 using Hangfire.Storage;
 using Xunit;
@@ -7,12 +8,12 @@ namespace Hangfire.LiteDB.Test
 {
 #pragma warning disable 1591
     [Collection("Database")]
-    public class LiteDBStorageFacts
+    public class LiteDbStorageFacts
     {
         [Fact]
         public void Ctor_ThrowsAnException_WhenConnectionStringIsEmpty()
         {
-            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage("", "database"));
+            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage(""));
 
             Assert.Equal("connectionString", exception.ParamName);
         }
@@ -20,7 +21,7 @@ namespace Hangfire.LiteDB.Test
         [Fact]
         public void Ctor_ThrowsAnException_WhenDatabaseNameIsNull()
         {
-            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage("localhost", null));
+            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage("lite.db", null));
 
             Assert.Equal("databaseName", exception.ParamName);
         }
@@ -28,7 +29,7 @@ namespace Hangfire.LiteDB.Test
         [Fact]
         public void Ctor_ThrowsAnException_WhenStorageOptionsValueIsNull()
         {
-            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage("localhost", "database", null));
+            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage("lite.db",  null));
 
             Assert.Equal("storageOptions", exception.ParamName);
         }

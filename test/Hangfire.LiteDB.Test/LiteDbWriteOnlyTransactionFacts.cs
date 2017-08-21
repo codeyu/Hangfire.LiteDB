@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
 using Hangfire.States;
-using LiteDB;
 using Moq;
 using Xunit;
 
@@ -11,11 +11,11 @@ namespace Hangfire.LiteDB.Test
 {
 #pragma warning disable 1591
     [Collection("Database")]
-    public class LiteDBWriteOnlyTransactionFacts
+    public class LiteDbWriteOnlyTransactionFacts
     {
         private readonly PersistentJobQueueProviderCollection _queueProviders;
 
-        public LiteDBWriteOnlyTransactionFacts()
+        public LiteDbWriteOnlyTransactionFacts()
         {
             Mock<IPersistentJobQueueProvider> defaultProvider = new Mock<IPersistentJobQueueProvider>();
             defaultProvider.Setup(x => x.GetJobQueue(It.IsNotNull<HangfireDbContext>()))
@@ -27,7 +27,7 @@ namespace Hangfire.LiteDB.Test
         [Fact]
         public void Ctor_ThrowsAnException_IfConnectionIsNull()
         {
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() => new MongoWriteOnlyTransaction(null, _queueProviders, new LiteDbStorageOptions()));
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() => new LiteDbWriteOnlyTransaction(null, _queueProviders, new LiteDbStorageOptions()));
 
             Assert.Equal("connection", exception.ParamName);
         }
@@ -35,7 +35,7 @@ namespace Hangfire.LiteDB.Test
         [Fact, CleanDatabase]
         public void Ctor_ThrowsAnException_IfProvidersCollectionIsNull()
         {
-            var exception = Assert.Throws<ArgumentNullException>(() => new MongoWriteOnlyTransaction(ConnectionUtils.CreateConnection(), null, new LiteDbStorageOptions()));
+            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbWriteOnlyTransaction(ConnectionUtils.CreateConnection(), null, new LiteDbStorageOptions()));
 
             Assert.Equal("queueProviders", exception.ParamName);
         }
@@ -43,7 +43,7 @@ namespace Hangfire.LiteDB.Test
         [Fact, CleanDatabase]
         public void Ctor_ThrowsAnException_IfMongoStorageOptionsIsNull()
         {
-            var exception = Assert.Throws<ArgumentNullException>(() => new MongoWriteOnlyTransaction(ConnectionUtils.CreateConnection(), _queueProviders, null));
+            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbWriteOnlyTransaction(ConnectionUtils.CreateConnection(), _queueProviders, null));
 
             Assert.Equal("options", exception.ParamName);
         }
@@ -53,23 +53,23 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                JobDto job = new JobDto
+                LiteJob job = new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(job);
+                database.Job.Insert(job);
 
-                JobDto anotherJob = new JobDto
+                LiteJob anotherJob = new LiteJob
                 {
                     Id = 2.ToString(),
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(anotherJob);
+                database.Job.Insert(anotherJob);
 
                 var jobId = job.Id;
                 var anotherJobId = anotherJob.Id;
@@ -89,7 +89,7 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                JobDto job = new JobDto
+                LiteJob job = new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = "",
@@ -97,9 +97,9 @@ namespace Hangfire.LiteDB.Test
                     CreatedAt = DateTime.UtcNow,
                     ExpireAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(job);
+                database.Job.Insert(job);
 
-                JobDto anotherJob = new JobDto
+                LiteJob anotherJob = new LiteJob
                 {
                     Id = 2.ToString(),
                     InvocationData = "",
@@ -107,7 +107,7 @@ namespace Hangfire.LiteDB.Test
                     CreatedAt = DateTime.UtcNow,
                     ExpireAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(anotherJob);
+                database.Job.Insert(anotherJob);
 
                 var jobId = job.Id;
                 var anotherJobId = anotherJob.Id;
@@ -127,23 +127,23 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                JobDto job = new JobDto
+                LiteJob job = new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(job);
+                database.Job.Insert(job);
 
-                JobDto anotherJob = new JobDto
+                LiteJob anotherJob = new LiteJob
                 {
                     Id = 2.ToString(),
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(anotherJob);
+                database.Job.Insert(anotherJob);
 
                 var jobId = job.Id;
                 var anotherJobId = anotherJob.Id;
@@ -164,7 +164,7 @@ namespace Hangfire.LiteDB.Test
                 Assert.Null(anotherTestJob.StateName);
                 Assert.Equal(0, anotherTestJob.StateHistory.Length);
 
-                var jobWithStates = database.Job.Find(new BsonDocument()).ToList().FirstOrDefault();
+                var jobWithStates = database.Job.FindAll().ToList().FirstOrDefault();
                 
                 var jobState = jobWithStates.StateHistory.Single();
                 Assert.Equal("State", jobState.Name);
@@ -179,14 +179,14 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                JobDto job = new JobDto
+                LiteJob job = new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(job);
+                database.Job.Insert(job);
 
                 var jobId = job.Id;
 	            var serializedData = new Dictionary<string, string> {{"Name", "Value"}};
@@ -201,7 +201,7 @@ namespace Hangfire.LiteDB.Test
                 var testJob = GetTestJob(database, jobId);
                 Assert.Null(testJob.StateName);
 
-                var jobWithStates = database.Job.Find(new BsonDocument()).ToList().Single();
+                var jobWithStates = database.Job.FindAll().ToList().Single();
                 var jobState = jobWithStates.StateHistory.Last();
                 Assert.Equal("State", jobState.Name);
                 Assert.Equal("Reason", jobState.Reason);
@@ -235,7 +235,7 @@ namespace Hangfire.LiteDB.Test
             {
                 Commit(database, x => x.IncrementCounter("my-key"));
 
-                CounterDto record = database.StateData.OfType<CounterDto>().Find(new BsonDocument()).ToList().Single();
+                Counter record = database.StateDataCounter.FindAll().ToList().Single();
 
                 Assert.Equal("my-key", record.Key);
                 Assert.Equal(1L, record.Value);
@@ -250,7 +250,7 @@ namespace Hangfire.LiteDB.Test
             {
                 Commit(database, x => x.IncrementCounter("my-key", TimeSpan.FromDays(1)));
 
-                CounterDto record = database.StateData.OfType<CounterDto>().Find(new BsonDocument()).ToList().Single();
+                Counter record = database.StateDataCounter.FindAll().ToList().Single();
 
                 Assert.Equal("my-key", record.Key);
                 Assert.Equal(1L, record.Value);
@@ -274,7 +274,7 @@ namespace Hangfire.LiteDB.Test
                     x.IncrementCounter("my-key");
                 });
 
-                var recordCount = database.StateData.OfType<CounterDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataCounter.Count();
 
                 Assert.Equal(2, recordCount);
             });
@@ -287,7 +287,7 @@ namespace Hangfire.LiteDB.Test
             {
                 Commit(database, x => x.DecrementCounter("my-key"));
 
-                CounterDto record = database.StateData.OfType<CounterDto>().Find(new BsonDocument()).ToList().Single();
+                Counter record = database.StateDataCounter.FindAll().ToList().Single();
 
                 Assert.Equal("my-key", record.Key);
                 Assert.Equal(-1L, record.Value);
@@ -302,7 +302,7 @@ namespace Hangfire.LiteDB.Test
             {
                 Commit(database, x => x.DecrementCounter("my-key", TimeSpan.FromDays(1)));
 
-                CounterDto record = database.StateData.OfType<CounterDto>().Find(new BsonDocument()).ToList().Single();
+                Counter record = database.StateDataCounter.FindAll().ToList().Single();
 
                 Assert.Equal("my-key", record.Key);
                 Assert.Equal(-1L, record.Value);
@@ -326,7 +326,7 @@ namespace Hangfire.LiteDB.Test
                     x.DecrementCounter("my-key");
                 });
 
-                var recordCount = database.StateData.OfType<CounterDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataCounter.Count();
 
                 Assert.Equal(2, recordCount);
             });
@@ -339,7 +339,7 @@ namespace Hangfire.LiteDB.Test
             {
                 Commit(database, x => x.AddToSet("my-key", "my-value"));
 
-                SetDto record = database.StateData.OfType<SetDto>().Find(new BsonDocument()).ToList().Single();
+                LiteSet record = database.StateDataSet.FindAll().ToList().Single();
 
                 Assert.Equal("my-key", record.Key);
                 Assert.Equal("my-value", record.Value);
@@ -358,7 +358,7 @@ namespace Hangfire.LiteDB.Test
                     x.AddToSet("my-key", "another-value");
                 });
 
-                var recordCount = database.StateData.OfType<SetDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataSet.Count();
 
                 Assert.Equal(2, recordCount);
             });
@@ -375,7 +375,7 @@ namespace Hangfire.LiteDB.Test
                     x.AddToSet("my-key", "my-value");
                 });
 
-                var recordCount = database.StateData.OfType<SetDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataSet.Count();
 
                 Assert.Equal(1, recordCount);
             });
@@ -388,7 +388,7 @@ namespace Hangfire.LiteDB.Test
             {
                 Commit(database, x => x.AddToSet("my-key", "my-value", 3.2));
 
-                SetDto record = database.StateData.OfType<SetDto>().Find(new BsonDocument()).ToList().Single();
+                LiteSet record = database.StateDataSet.FindAll().ToList().Single();
 
                 Assert.Equal("my-key", record.Key);
                 Assert.Equal("my-value", record.Value);
@@ -407,7 +407,7 @@ namespace Hangfire.LiteDB.Test
                     x.AddToSet("my-key", "my-value", 3.2);
                 });
 
-                SetDto record = database.StateData.OfType<SetDto>().Find(new BsonDocument()).ToList().Single();
+                LiteSet record = database.StateDataSet.FindAll().ToList().Single();
 
                 Assert.Equal(3.2, record.Score, 3);
             });
@@ -424,7 +424,7 @@ namespace Hangfire.LiteDB.Test
                     x.RemoveFromSet("my-key", "my-value");
                 });
 
-                var recordCount = database.StateData.OfType<SetDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataSet.Count();
 
                 Assert.Equal(0, recordCount);
             });
@@ -441,7 +441,7 @@ namespace Hangfire.LiteDB.Test
                     x.RemoveFromSet("my-key", "different-value");
                 });
 
-                var recordCount = database.StateData.OfType<SetDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataSet.Count();
 
                 Assert.Equal(1, recordCount);
             });
@@ -458,7 +458,7 @@ namespace Hangfire.LiteDB.Test
                     x.RemoveFromSet("different-key", "my-value");
                 });
 
-                var recordCount = database.StateData.OfType<SetDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataSet.Count();
 
                 Assert.Equal(1, recordCount);
             });
@@ -471,7 +471,7 @@ namespace Hangfire.LiteDB.Test
             {
                 Commit(database, x => x.InsertToList("my-key", "my-value"));
 
-                ListDto record = database.StateData.OfType<ListDto>().Find(new BsonDocument()).ToList().Single();
+                LiteList record = database.StateDataList.FindAll().ToList().Single();
 
                 Assert.Equal("my-key", record.Key);
                 Assert.Equal("my-value", record.Value);
@@ -489,7 +489,7 @@ namespace Hangfire.LiteDB.Test
                     x.InsertToList("my-key", "my-value");
                 });
 
-                var recordCount = database.StateData.OfType<ListDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataList.Count();
 
                 Assert.Equal(2, recordCount);
             });
@@ -507,7 +507,7 @@ namespace Hangfire.LiteDB.Test
                     x.RemoveFromList("my-key", "my-value");
                 });
 
-                var recordCount = database.StateData.OfType<ListDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataList.Count();
 
                 Assert.Equal(0, recordCount);
             });
@@ -524,7 +524,7 @@ namespace Hangfire.LiteDB.Test
                     x.RemoveFromList("my-key", "different-value");
                 });
 
-                var recordCount = database.StateData.OfType<ListDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataList.Count();
 
                 Assert.Equal(1, recordCount);
             });
@@ -541,7 +541,7 @@ namespace Hangfire.LiteDB.Test
                     x.RemoveFromList("different-key", "my-value");
                 });
 
-                var recordCount = database.StateData.OfType<ListDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataList.Count();
 
                 Assert.Equal(1, recordCount);
             });
@@ -561,7 +561,7 @@ namespace Hangfire.LiteDB.Test
                     x.TrimList("my-key", 1, 2);
                 });
 
-                ListDto[] records = database.StateData.OfType<ListDto>().Find(new BsonDocument()).ToList().ToArray();
+                LiteList[] records = database.StateDataList.FindAll().ToArray();
 
                 Assert.Equal(2, records.Length);
                 Assert.Equal("1", records[0].Value);
@@ -582,7 +582,7 @@ namespace Hangfire.LiteDB.Test
                     x.TrimList("my-key", 1, 100);
                 });
 
-                var recordCount = database.StateData.OfType<ListDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataList.Count();
 
                 Assert.Equal(2, recordCount);
             });
@@ -599,7 +599,7 @@ namespace Hangfire.LiteDB.Test
                     x.TrimList("my-key", 1, 100);
                 });
 
-                var recordCount = database.StateData.OfType<ListDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataList.Count();
 
                 Assert.Equal(0, recordCount);
             });
@@ -616,7 +616,7 @@ namespace Hangfire.LiteDB.Test
                     x.TrimList("my-key", 1, 0);
                 });
 
-                var recordCount = database.StateData.OfType<ListDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataList.Count();
 
                 Assert.Equal(0, recordCount);
             });
@@ -633,7 +633,7 @@ namespace Hangfire.LiteDB.Test
                     x.TrimList("another-key", 1, 0);
                 });
 
-                var recordCount = database.StateData.OfType<ListDto>().Count(new BsonDocument());
+                var recordCount = database.StateDataList.Count();
 
                 Assert.Equal(1, recordCount);
             });
@@ -674,7 +674,7 @@ namespace Hangfire.LiteDB.Test
                             { "Key2", "Value2" }
                         }));
 
-                var result = database.StateData.OfType<HashDto>().Find(Builders<HashDto>.Filter.Eq(_ => _.Key, "some-hash")).ToList()
+                var result = database.StateDataHash.Find(_ => _.Key== "some-hash").ToList()
                     .ToDictionary(x => x.Field, x => x.Value);
 
                 Assert.Equal("Value1", result["Key1"]);
@@ -708,7 +708,7 @@ namespace Hangfire.LiteDB.Test
                 Commit(database, x => x.RemoveHash("some-hash"));
 
                 // Assert
-                var count = database.StateData.OfType<HashDto>().Count(new BsonDocument());
+                var count = database.StateDataHash.Count();
                 Assert.Equal(0, count);
             });
         }
@@ -718,11 +718,11 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var set1 = new SetDto { Key = "Set1", Value = "value1" };
-                database.StateData.InsertOne(set1);
+                var set1 = new LiteSet { Key = "Set1", Value = "value1" };
+                database.StateDataSet.Insert(set1);
 
-                var set2 = new SetDto { Key = "Set2", Value = "value2" };
-                database.StateData.InsertOne(set2);
+                var set2 = new LiteSet { Key = "Set2", Value = "value2" };
+                database.StateDataSet.Insert(set2);
 
                 Commit(database, x => x.ExpireSet(set1.Key, TimeSpan.FromDays(1)));
 
@@ -740,11 +740,11 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var list1 = new ListDto { Key = "List1", Value = "value1" };
-                database.StateData.InsertOne(list1);
+                var list1 = new LiteList { Key = "List1", Value = "value1" };
+                database.StateDataList.Insert(list1);
 
-                var list2 = new ListDto { Key = "List2", Value = "value2" };
-                database.StateData.InsertOne(list2);
+                var list2 = new LiteList { Key = "List2", Value = "value2" };
+                database.StateDataList.Insert(list2);
 
                 Commit(database, x => x.ExpireList(list1.Key, TimeSpan.FromDays(1)));
 
@@ -761,11 +761,11 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var hash1 = new HashDto { Key = "Hash1", Value = "value1" };
-                database.StateData.InsertOne(hash1);
+                var hash1 = new LiteHash { Key = "Hash1", Value = "value1" };
+                database.StateDataHash.Insert(hash1);
 
-                var hash2 = new HashDto { Key = "Hash2", Value = "value2" };
-                database.StateData.InsertOne(hash2);
+                var hash2 = new LiteHash { Key = "Hash2", Value = "value2" };
+                database.StateDataHash.Insert(hash2);
 
                 Commit(database, x => x.ExpireHash(hash1.Key, TimeSpan.FromDays(1)));
 
@@ -783,11 +783,11 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var set1 = new SetDto { Key = "Set1", Value = "value1", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(set1);
+                var set1 = new LiteSet { Key = "Set1", Value = "value1", ExpireAt = DateTime.UtcNow };
+                database.StateDataSet.Insert(set1);
 
-                var set2 = new SetDto { Key = "Set2", Value = "value2", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(set2);
+                var set2 = new LiteSet { Key = "Set2", Value = "value2", ExpireAt = DateTime.UtcNow };
+                database.StateDataSet.Insert(set2);
 
                 Commit(database, x => x.PersistSet(set1.Key));
 
@@ -804,11 +804,11 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var list1 = new ListDto { Key = "List1", Value = "value1", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(list1);
+                var list1 = new LiteList { Key = "List1", Value = "value1", ExpireAt = DateTime.UtcNow };
+                database.StateDataList.Insert(list1);
 
-                var list2 = new ListDto { Key = "List2", Value = "value2", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(list2);
+                var list2 = new LiteList { Key = "List2", Value = "value2", ExpireAt = DateTime.UtcNow };
+                database.StateDataList.Insert(list2);
 
                 Commit(database, x => x.PersistList(list1.Key));
 
@@ -825,11 +825,11 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var hash1 = new HashDto { Key = "Hash1", Value = "value1", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(hash1);
+                var hash1 = new LiteHash { Key = "Hash1", Value = "value1", ExpireAt = DateTime.UtcNow };
+                database.StateDataHash.Insert(hash1);
 
-                var hash2 = new HashDto { Key = "Hash2", Value = "value2", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(hash2);
+                var hash2 = new LiteHash { Key = "Hash2", Value = "value2", ExpireAt = DateTime.UtcNow };
+                database.StateDataHash.Insert(hash2);
 
                 Commit(database, x => x.PersistHash(hash1.Key));
 
@@ -846,14 +846,14 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var set1Val1 = new SetDto { Key = "Set1", Value = "value1", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(set1Val1);
+                var set1Val1 = new LiteSet { Key = "Set1", Value = "value1", ExpireAt = DateTime.UtcNow };
+                database.StateDataSet.Insert(set1Val1);
 
-                var set1Val2 = new SetDto { Key = "Set1", Value = "value2", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(set1Val2);
+                var set1Val2 = new LiteSet { Key = "Set1", Value = "value2", ExpireAt = DateTime.UtcNow };
+                database.StateDataSet.Insert(set1Val2);
 
-                var set2 = new SetDto { Key = "Set2", Value = "value2", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(set2);
+                var set2 = new LiteSet { Key = "Set2", Value = "value2", ExpireAt = DateTime.UtcNow };
+                database.StateDataSet.Insert(set2);
 
                 var values = new[] { "test1", "test2", "test3" };
                 Commit(database, x => x.AddRangeToSet(set1Val1.Key, values));
@@ -878,14 +878,14 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var set1Val1 = new SetDto { Key = "Set1", Value = "value1", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(set1Val1);
+                var set1Val1 = new LiteSet { Key = "Set1", Value = "value1", ExpireAt = DateTime.UtcNow };
+                database.StateDataSet.Insert(set1Val1);
 
-                var set1Val2 = new SetDto { Key = "Set1", Value = "value2", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(set1Val2);
+                var set1Val2 = new LiteSet { Key = "Set1", Value = "value2", ExpireAt = DateTime.UtcNow };
+                database.StateDataSet.Insert(set1Val2);
 
-                var set2 = new SetDto { Key = "Set2", Value = "value2", ExpireAt = DateTime.UtcNow };
-                database.StateData.InsertOne(set2);
+                var set2 = new LiteSet { Key = "Set2", Value = "value2", ExpireAt = DateTime.UtcNow };
+                database.StateDataSet.Insert(set2);
 
                 Commit(database, x => x.RemoveSet(set1Val1.Key));
 
@@ -898,24 +898,24 @@ namespace Hangfire.LiteDB.Test
         }
 
 
-        private static JobDto GetTestJob(HangfireDbContext database, string jobId)
+        private static LiteJob GetTestJob(HangfireDbContext database, string jobId)
         {
-            return database.Job.Find(Builders<JobDto>.Filter.Eq(_ => _.Id, jobId)).FirstOrDefault();
+            return database.Job.FindById(jobId);
         }
 
-        private static IList<SetDto> GetTestSet(HangfireDbContext database, string key)
+        private static IList<LiteSet> GetTestSet(HangfireDbContext database, string key)
         {
-            return database.StateData.OfType<SetDto>().Find(Builders<SetDto>.Filter.Eq(_ => _.Key, key)).ToList();
+            return database.StateDataSet.Find(_ => _.Key==key).ToList();
         }
 
         private static dynamic GetTestList(HangfireDbContext database, string key)
         {
-            return database.StateData.OfType<ListDto>().Find(Builders<ListDto>.Filter.Eq(_ => _.Key, key)).FirstOrDefault();
+            return database.StateDataList.Find(_ => _.Key== key).FirstOrDefault();
         }
 
         private static dynamic GetTestHash(HangfireDbContext database, string key)
         {
-            return database.StateData.OfType<HashDto>().Find(Builders<HashDto>.Filter.Eq(_ => _.Key, key)).FirstOrDefault();
+            return database.StateDataHash.Find(_ => _.Key== key).FirstOrDefault();
         }
 
         private void UseConnection(Action<HangfireDbContext> action)
@@ -926,9 +926,9 @@ namespace Hangfire.LiteDB.Test
             }
         }
 
-        private void Commit(HangfireDbContext connection, Action<MongoWriteOnlyTransaction> action)
+        private void Commit(HangfireDbContext connection, Action<LiteDbWriteOnlyTransaction> action)
         {
-            using (MongoWriteOnlyTransaction transaction = new MongoWriteOnlyTransaction(connection, _queueProviders, new LiteDbStorageOptions()))
+            using (LiteDbWriteOnlyTransaction transaction = new LiteDbWriteOnlyTransaction(connection, _queueProviders, new LiteDbStorageOptions()))
             {
                 action(transaction);
                 transaction.Commit();

@@ -35,7 +35,7 @@ namespace Hangfire.LiteDB.Test.Utils
 
         public static LiteDbStorage CreateStorage(LiteDbStorageOptions storageOptions)
         {
-            return new LiteDbStorage(GetConnectionString(), GetDatabaseName(), storageOptions);
+            return new LiteDbStorage(GetConnectionString(), storageOptions);
         }
 
         public static HangfireDbContext CreateConnection()

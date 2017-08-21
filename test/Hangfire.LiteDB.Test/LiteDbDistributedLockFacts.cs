@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
+using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
 using Hangfire.Storage;
 using Xunit;
@@ -9,7 +11,7 @@ namespace Hangfire.LiteDB.Test
 #pragma warning disable 1591
 
     [Collection("Database")]
-    public class LiteDBDistributedLockFacts
+    public class LiteDbDistributedLockFacts
     {
         [Fact]
         public void Ctor_ThrowsAnException_WhenResourceIsNull()
@@ -17,7 +19,7 @@ namespace Hangfire.LiteDB.Test
             UseConnection(database =>
             {
                 var exception = Assert.Throws<ArgumentNullException>(
-                    () => new MongoDistributedLock(null, TimeSpan.Zero, database, new LiteDbStorageOptions()));
+                    () => new LiteDbDistributedLock(null, TimeSpan.Zero, database, new LiteDbStorageOptions()));
 
                 Assert.Equal("resource", exception.ParamName);
             });
@@ -27,7 +29,7 @@ namespace Hangfire.LiteDB.Test
         public void Ctor_ThrowsAnException_WhenConnectionIsNull()
         {
             var exception = Assert.Throws<ArgumentNullException>(
-                () => new MongoDistributedLock("resource1", TimeSpan.Zero, null, new LiteDbStorageOptions()));
+                () => new LiteDbDistributedLock("resource1", TimeSpan.Zero, null, new LiteDbStorageOptions()));
 
             Assert.Equal("database", exception.ParamName);
         }
@@ -38,11 +40,10 @@ namespace Hangfire.LiteDB.Test
             UseConnection(database =>
             {
                 using (
-                    new MongoDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
+                    new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
                 {
                     var locksCount =
-                        database.DistributedLock.Count(Builders<DistributedLockDto>.Filter.Eq(_ => _.Resource,
-                            "resource1"));
+                        database.DistributedLock.Count(_ => _.Resource== "resource1");
                     Assert.Equal(1, locksCount);
                 }
             });
@@ -53,13 +54,13 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                using (new MongoDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
+                using (new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
                 {
-                    var locksCount = database.DistributedLock.Count(Builders<DistributedLockDto>.Filter.Eq(_ => _.Resource, "resource1"));
+                    var locksCount = database.DistributedLock.Count(_ => _.Resource== "resource1");
                     Assert.Equal(1, locksCount);
                 }
 
-                var locksCountAfter = database.DistributedLock.Count(Builders<DistributedLockDto>.Filter.Eq(_ => _.Resource, "resource1"));
+                var locksCountAfter = database.DistributedLock.Count(_ => _.Resource=="resource1");
                 Assert.Equal(0, locksCountAfter);
             });
         }
@@ -69,14 +70,14 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                using (new MongoDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
+                using (new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
                 {
-                    var locksCount = database.DistributedLock.Count(Builders<DistributedLockDto>.Filter.Eq(_ => _.Resource, "resource1"));
+                    var locksCount = database.DistributedLock.Count(_ => _.Resource=="resource1");
                     Assert.Equal(1, locksCount);
 
-                    using (new MongoDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
+                    using (new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
                     {
-                        locksCount = database.DistributedLock.Count(Builders<DistributedLockDto>.Filter.Eq(_ => _.Resource, "resource1"));
+                        locksCount = database.DistributedLock.Count(_ => _.Resource== "resource1");
                         Assert.Equal(1, locksCount);
                     }
                 }
@@ -88,15 +89,15 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                using (new MongoDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
+                using (new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
                 {
-                    var locksCount = database.DistributedLock.Count(Builders<DistributedLockDto>.Filter.Eq(_ => _.Resource, "resource1"));
+                    var locksCount = database.DistributedLock.Count(_ => _.Resource== "resource1");
                     Assert.Equal(1, locksCount);
 
                     var t = new Thread(() =>
                     {
                         Assert.Throws<DistributedLockTimeoutException>(() =>
-                                new MongoDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()));
+                                new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()));
                     });
                     t.Start();
                     Assert.True(t.Join(5000), "Thread is hanging unexpected");
@@ -111,7 +112,7 @@ namespace Hangfire.LiteDB.Test
             {
                 var t = new Thread(() =>
                 {
-                    using (new MongoDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
+                    using (new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions()))
                     {
                         Thread.Sleep(TimeSpan.FromSeconds(3));
                     }
@@ -123,7 +124,7 @@ namespace Hangfire.LiteDB.Test
 
                 // Record when we try to aquire the lock
                 var startTime = DateTime.Now;
-                using (new MongoDistributedLock("resource1", TimeSpan.FromSeconds(10), database, new LiteDbStorageOptions()))
+                using (new LiteDbDistributedLock("resource1", TimeSpan.FromSeconds(10), database, new LiteDbStorageOptions()))
                 {
                     Assert.InRange(DateTime.Now - startTime, TimeSpan.Zero, TimeSpan.FromSeconds(5));
                 }
@@ -136,7 +137,7 @@ namespace Hangfire.LiteDB.Test
             UseConnection(database =>
             {
                 var exception = Assert.Throws<ArgumentNullException>(() =>
-                    new MongoDistributedLock("resource1", TimeSpan.Zero, database, null));
+                    new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, null));
 
                 Assert.Equal("storageOptions", exception.ParamName);
             });
@@ -147,12 +148,12 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                using (new MongoDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions() { DistributedLockLifetime = TimeSpan.FromSeconds(3) }))
+                using (new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions() { DistributedLockLifetime = TimeSpan.FromSeconds(3) }))
                 {
                     DateTime initialExpireAt = DateTime.UtcNow;
                     Thread.Sleep(TimeSpan.FromSeconds(5));
 
-                    DistributedLockDto lockEntry = database.DistributedLock.Find(Builders<DistributedLockDto>.Filter.Eq(_ => _.Resource, "resource1")).FirstOrDefault();
+                    DistributedLock lockEntry = database.DistributedLock.Find(_ => _.Resource=="resource1").FirstOrDefault();
                     Assert.NotNull(lockEntry);
                     Assert.True(lockEntry.ExpireAt > initialExpireAt);
                 }

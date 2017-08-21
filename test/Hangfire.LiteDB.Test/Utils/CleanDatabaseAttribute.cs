@@ -31,11 +31,16 @@ namespace Hangfire.LiteDB.Test.Utils
                 {
                     context.Init(new LiteDbStorageOptions());
 
-                    context.DistributedLock.DeleteMany(new BsonDocument());
-                    context.StateData.DeleteMany(new BsonDocument());
-                    context.Job.DeleteMany(new BsonDocument());
-                    context.JobQueue.DeleteMany(new BsonDocument());
-                    context.Server.DeleteMany(new BsonDocument());
+                    context.DistributedLock.Delete(new BsonDocument());
+                    context.StateDataExpiringKeyValue.Delete(new BsonDocument());
+                    context.StateDataHash.Delete(new BsonDocument());
+                    context.StateDataSet.Delete(new BsonDocument());
+                    context.StateDataList.Delete(new BsonDocument());
+                    context.StateDataCounter.Delete(new BsonDocument());
+                    context.StateDataAggregatedCounter.Delete(new BsonDocument());
+                    context.Job.Delete(new BsonDocument());
+                    context.JobQueue.Delete(new BsonDocument());
+                    context.Server.Delete(new BsonDocument());
 
                 }
                 catch (Exception ex)

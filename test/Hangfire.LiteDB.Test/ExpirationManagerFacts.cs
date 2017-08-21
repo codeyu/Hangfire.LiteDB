@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
+using LiteDB;
 using Xunit;
 
 namespace Hangfire.LiteDB.Test
@@ -78,9 +80,9 @@ namespace Hangfire.LiteDB.Test
             using (var connection = ConnectionUtils.CreateConnection())
             {
                 // Arrange
-                connection.StateData.InsertOne(new CounterDto
+                connection.StateDataCounter.Insert(new Counter
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "key",
                     Value = 1L,
                     ExpireAt = DateTime.UtcNow.AddMonths(-1)
@@ -92,7 +94,7 @@ namespace Hangfire.LiteDB.Test
                 manager.Execute(_token);
 
                 // Assert
-                var count = connection.StateData.OfType<CounterDto>().Count(new BsonDocument());
+                var count = connection.StateDataCounter.Count();
                 Assert.Equal(0, count);
             }
         }
@@ -103,7 +105,7 @@ namespace Hangfire.LiteDB.Test
             using (var connection = ConnectionUtils.CreateConnection())
             {
                 // Arrange
-                connection.Job.InsertOne(new JobDto
+                connection.Job.Insert(new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = "",
@@ -118,7 +120,7 @@ namespace Hangfire.LiteDB.Test
                 manager.Execute(_token);
 
                 // Assert
-                var count = connection.Job.Count(new BsonDocument());
+                var count = connection.Job.Count();
                 Assert.Equal(0, count);
             }
         }
@@ -129,9 +131,9 @@ namespace Hangfire.LiteDB.Test
             using (var connection = ConnectionUtils.CreateConnection())
             {
                 // Arrange
-                connection.StateData.InsertOne(new ListDto
+                connection.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "key",
                     ExpireAt = DateTime.UtcNow.AddMonths(-1)
                 });
@@ -143,9 +145,8 @@ namespace Hangfire.LiteDB.Test
 
                 // Assert
                 var count = connection
-                    .StateData
-                    .OfType<ListDto>()
-                    .Count(new BsonDocument());
+                    .StateDataList
+                    .Count();
                 Assert.Equal(0, count);
             }
         }
@@ -156,9 +157,9 @@ namespace Hangfire.LiteDB.Test
             using (var connection = ConnectionUtils.CreateConnection())
             {
                 // Arrange
-                connection.StateData.InsertOne(new SetDto
+                connection.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "key",
                     Score = 0,
                     Value = "",
@@ -172,9 +173,8 @@ namespace Hangfire.LiteDB.Test
 
                 // Assert
                 var count = connection
-                    .StateData
-                    .OfType<SetDto>()
-                    .Count(new BsonDocument());
+                    .StateDataSet
+                    .Count();
                 Assert.Equal(0, count);
             }
         }
@@ -185,9 +185,9 @@ namespace Hangfire.LiteDB.Test
             using (var connection = ConnectionUtils.CreateConnection())
             {
                 // Arrange
-                connection.StateData.InsertOne(new HashDto
+                connection.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "key",
                     Field = "field",
                     Value = "",
@@ -201,9 +201,8 @@ namespace Hangfire.LiteDB.Test
 
                 // Assert
                 var count = connection
-                    .StateData
-                    .OfType<HashDto>()
-                    .Count(new BsonDocument());
+                    .StateDataHash
+                    .Count();
                 Assert.Equal(0, count);
             }
         }
@@ -215,7 +214,7 @@ namespace Hangfire.LiteDB.Test
             using (var connection = ConnectionUtils.CreateConnection())
             {
                 // Arrange
-                connection.StateData.InsertOne(new AggregatedCounterDto
+                connection.StateDataAggregatedCounter.Insert(new AggregatedCounter
                 {
                     Key = "key",
                     Value = 1,
@@ -229,9 +228,8 @@ namespace Hangfire.LiteDB.Test
 
                 // Assert
                 Assert.Equal(0, connection
-                    .StateData
-                    .OfType<CounterDto>()
-                    .Find(new BsonDocument()).Count());
+                    .StateDataCounter
+                    .Count());
             }
         }
 
@@ -255,9 +253,8 @@ namespace Hangfire.LiteDB.Test
         private static bool IsEntryExpired(HangfireDbContext connection)
         {
             var count = connection
-                .StateData
-                .OfType<ExpiringKeyValueDto>()
-                .Count(new BsonDocument());
+                .StateDataExpiringKeyValue
+                .Count();
 
             return count == 0;
         }
@@ -267,9 +264,9 @@ namespace Hangfire.LiteDB.Test
             return new ExpirationManager(_storage);
         }
 
-        private static void Commit(HangfireDbContext connection, Action<MongoWriteOnlyTransaction> action)
+        private static void Commit(HangfireDbContext connection, Action<LiteDbWriteOnlyTransaction> action)
         {
-            using (MongoWriteOnlyTransaction transaction = new MongoWriteOnlyTransaction(connection, _queueProviders, new LiteDbStorageOptions()))
+            using (LiteDbWriteOnlyTransaction transaction = new LiteDbWriteOnlyTransaction(connection, _queueProviders, new LiteDbStorageOptions()))
             {
                 action(transaction);
                 transaction.Commit();

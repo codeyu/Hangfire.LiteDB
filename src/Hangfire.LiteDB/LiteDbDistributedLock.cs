@@ -10,7 +10,7 @@ namespace Hangfire.LiteDB
     /// <summary>
     /// Represents distibuted lock implementation for MongoDB
     /// </summary>
-    internal sealed class LiteDbDistributedLock : IDisposable
+    public sealed class LiteDbDistributedLock : IDisposable
     {
 
         private static readonly ILog Logger = LogProvider.For<LiteDbDistributedLock>();

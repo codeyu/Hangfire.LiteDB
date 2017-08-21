@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
+using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
 using Xunit;
 
@@ -7,7 +9,7 @@ namespace Hangfire.LiteDB.Test
 {
 #pragma warning disable 1591
     [Collection("Database")]
-    public class LiteDBJobQueueFacts
+    public class LiteDbJobQueueFacts
     {
         private static readonly string[] DefaultQueues = { "default" };
 
@@ -15,7 +17,7 @@ namespace Hangfire.LiteDB.Test
         public void Ctor_ThrowsAnException_WhenConnectionIsNull()
         {
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new MongoJobQueue(null, new LiteDbStorageOptions()));
+                new LiteDbJobQueue(null, new LiteDbStorageOptions()));
 
             Assert.Equal("connection", exception.ParamName);
         }
@@ -26,7 +28,7 @@ namespace Hangfire.LiteDB.Test
             UseConnection(connection =>
             {
                 var exception = Assert.Throws<ArgumentNullException>(() =>
-                    new MongoJobQueue(connection, null));
+                    new LiteDbJobQueue(connection, null));
 
                 Assert.Equal("storageOptions", exception.ParamName);
             });
@@ -93,18 +95,18 @@ namespace Hangfire.LiteDB.Test
             // Arrange
             UseConnection(connection =>
             {
-                var jobQueue = new JobQueueDto
+                var jobQueue = new JobQueue
                 {
                     JobId = 1.ToString(),
                     Queue = "default"
                 };
 
-                connection.JobQueue.InsertOne(jobQueue);
+                connection.JobQueue.Insert(jobQueue);
 
                 var queue = CreateJobQueue(connection);
 
                 // Act
-                MongoFetchedJob payload = (MongoFetchedJob)queue.Dequeue(DefaultQueues, CreateTimingOutCancellationToken());
+                LiteDbFetchedJob payload = (LiteDbFetchedJob)queue.Dequeue(DefaultQueues, CreateTimingOutCancellationToken());
 
                 // Assert
                 Assert.Equal("1", payload.JobId);
@@ -118,20 +120,20 @@ namespace Hangfire.LiteDB.Test
             // Arrange
             UseConnection(connection =>
             {
-                var job = new JobDto
+                var job = new LiteJob
                 {
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                connection.Job.InsertOne(job);
+                connection.Job.Insert(job);
 
-                var jobQueue = new JobQueueDto
+                var jobQueue = new JobQueue
                 {
                     JobId = job.Id,
                     Queue = "default"
                 };
-                connection.JobQueue.InsertOne(jobQueue);
+                connection.JobQueue.Insert(jobQueue);
 
                 var queue = CreateJobQueue(connection);
 
@@ -141,7 +143,7 @@ namespace Hangfire.LiteDB.Test
                 // Assert
                 Assert.NotNull(payload);
 
-                var fetchedAt = connection.JobQueue.Find(Builders<JobQueueDto>.Filter.Eq(_ => _.JobId, payload.JobId)).FirstOrDefault().FetchedAt;
+                var fetchedAt = connection.JobQueue.Find(_ => _.JobId== payload.JobId).FirstOrDefault().FetchedAt;
 
                 Assert.NotNull(fetchedAt);
                 Assert.True(fetchedAt > DateTime.UtcNow.AddMinutes(-1));
@@ -154,21 +156,21 @@ namespace Hangfire.LiteDB.Test
             // Arrange
             UseConnection(connection =>
             {
-                var job = new JobDto
+                var job = new LiteJob
                 {
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                connection.Job.InsertOne(job);
+                connection.Job.Insert(job);
 
-                var jobQueue = new JobQueueDto
+                var jobQueue = new JobQueue
                 {
                     JobId = job.Id,
                     Queue = "default",
                     FetchedAt = DateTime.UtcNow.AddDays(-1)
                 };
-                connection.JobQueue.InsertOne(jobQueue);
+                connection.JobQueue.Insert(jobQueue);
 
                 var queue = CreateJobQueue(connection);
 
@@ -186,29 +188,29 @@ namespace Hangfire.LiteDB.Test
             // Arrange
             UseConnection(connection =>
             {
-                var job1 = new JobDto
+                var job1 = new LiteJob
                 {
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                connection.Job.InsertOne(job1);
+                connection.Job.Insert(job1);
 
-                var job2 = new JobDto
+                var job2 = new LiteJob
                 {
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                connection.Job.InsertOne(job2);
+                connection.Job.Insert(job2);
 
-                connection.JobQueue.InsertOne(new JobQueueDto
+                connection.JobQueue.Insert(new JobQueue
                 {
                     JobId = job1.Id,
                     Queue = "default"
                 });
 
-                connection.JobQueue.InsertOne(new JobQueueDto
+                connection.JobQueue.Insert(new JobQueue
                 {
                     JobId = job2.Id,
                     Queue = "default"
@@ -220,7 +222,7 @@ namespace Hangfire.LiteDB.Test
                 var payload = queue.Dequeue(DefaultQueues, CreateTimingOutCancellationToken());
 
                 // Assert
-                var otherJobFetchedAt = connection.JobQueue.Find(Builders<JobQueueDto>.Filter.Ne(_ => _.JobId, payload.JobId)).FirstOrDefault().FetchedAt;
+                var otherJobFetchedAt = connection.JobQueue.Find(_ => _.JobId!= payload.JobId).FirstOrDefault().FetchedAt;
 
                 Assert.Null(otherJobFetchedAt);
             });
@@ -231,15 +233,15 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(connection =>
             {
-                var job1 = new JobDto
+                var job1 = new LiteJob
                 {
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                connection.Job.InsertOne(job1);
+                connection.Job.Insert(job1);
 
-                connection.JobQueue.InsertOne(new JobQueueDto
+                connection.JobQueue.Insert(new JobQueue
                 {
                     JobId = job1.Id,
                     Queue = "critical"
@@ -257,29 +259,29 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(connection =>
             {
-                var criticalJob = new JobDto
+                var criticalJob = new LiteJob
                 {
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                connection.Job.InsertOne(criticalJob);
+                connection.Job.Insert(criticalJob);
 
-                var defaultJob = new JobDto
+                var defaultJob = new LiteJob
                 {
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                connection.Job.InsertOne(defaultJob);
+                connection.Job.Insert(defaultJob);
 
-                connection.JobQueue.InsertOne(new JobQueueDto
+                connection.JobQueue.Insert(new JobQueue
                 {
                     JobId = defaultJob.Id,
                     Queue = "default"
                 });
 
-                connection.JobQueue.InsertOne(new JobQueueDto
+                connection.JobQueue.Insert(new JobQueue
                 {
                     JobId = criticalJob.Id,
                     Queue = "critical"
@@ -287,14 +289,14 @@ namespace Hangfire.LiteDB.Test
 
                 var queue = CreateJobQueue(connection);
 
-                var critical = (MongoFetchedJob)queue.Dequeue(
+                var critical = (LiteDbFetchedJob)queue.Dequeue(
                     new[] { "critical", "default" },
                     CreateTimingOutCancellationToken());
 
                 Assert.NotNull(critical.JobId);
                 Assert.Equal("critical", critical.Queue);
 
-                var @default = (MongoFetchedJob)queue.Dequeue(
+                var @default = (LiteDbFetchedJob)queue.Dequeue(
                     new[] { "critical", "default" },
                     CreateTimingOutCancellationToken());
 
@@ -312,7 +314,7 @@ namespace Hangfire.LiteDB.Test
 
                 queue.Enqueue("default", "1");
 
-                var record = connection.JobQueue.Find(new BsonDocument()).ToList().Single();
+                var record = connection.JobQueue.FindAll().ToList().Single();
                 Assert.Equal("1", record.JobId.ToString());
                 Assert.Equal("default", record.Queue);
                 Assert.Null(record.FetchedAt);
@@ -325,9 +327,9 @@ namespace Hangfire.LiteDB.Test
             return source.Token;
         }
 
-        private static MongoJobQueue CreateJobQueue(HangfireDbContext connection)
+        private static LiteDbJobQueue CreateJobQueue(HangfireDbContext connection)
         {
-            return new MongoJobQueue(connection, new LiteDbStorageOptions());
+            return new LiteDbJobQueue(connection, new LiteDbStorageOptions());
         }
 
         private static void UseConnection(Action<HangfireDbContext> action)

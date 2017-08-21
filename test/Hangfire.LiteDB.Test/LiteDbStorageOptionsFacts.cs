@@ -7,7 +7,7 @@ namespace Hangfire.LiteDB.Test
 {
 #pragma warning disable 1591
     [Collection("Database")]
-    public class LiteDBStorageOptionsFacts
+    public class LiteDbStorageOptionsFacts
     {
         [Fact]
         public void Ctor_SetsTheDefaultOptions()

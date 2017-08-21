@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
 using Xunit;
 
@@ -6,7 +8,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
 {
 #pragma warning disable 1591
     [Collection("Database")]
-    public class LiteDBJobQueueMonitoringApiFacts
+    public class LiteDbJobQueueMonitoringApiFacts
     {
         private const string QueueName1 = "queueName1";
         private const string QueueName2 = "queueName2";
@@ -24,9 +26,9 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
-                var queues = LiteDbJobQueueMonitoringApi.GetQueues();
+                var queues = liteDbJobQueueMonitoringApi.GetQueues();
 
                 Assert.Empty(queues);
             });
@@ -37,11 +39,11 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 CreateJobQueueDto(connection, QueueName1, false);
 
-                var queues = LiteDbJobQueueMonitoringApi.GetQueues().ToList();
+                var queues = liteDbJobQueueMonitoringApi.GetQueues().ToList();
 
                 Assert.Equal(1, queues.Count);
                 Assert.Equal(QueueName1, queues.First());
@@ -53,13 +55,13 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 CreateJobQueueDto(connection, QueueName1, false);
                 CreateJobQueueDto(connection, QueueName1, false);
                 CreateJobQueueDto(connection, QueueName2, false);
 
-                var queues = LiteDbJobQueueMonitoringApi.GetQueues().ToList();
+                var queues = liteDbJobQueueMonitoringApi.GetQueues().ToList();
 
                 Assert.Equal(2, queues.Count);
                 Assert.True(queues.Contains(QueueName1));
@@ -72,9 +74,9 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10);
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10);
 
                 Assert.Empty(enqueuedJobIds);
             });
@@ -85,11 +87,11 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 CreateJobQueueDto(connection, QueueName1, true);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Empty(enqueuedJobIds);
             });
@@ -100,11 +102,11 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, false);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Equal(1, enqueuedJobIds.Count);
                 Assert.Equal(jobQueueDto.JobId, enqueuedJobIds.First());
@@ -116,13 +118,13 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, false);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, false);
                 var jobQueueDto3 = CreateJobQueueDto(connection, QueueName1, false);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Equal(3, enqueuedJobIds.Count);
                 Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
@@ -136,13 +138,13 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, false);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, false);
                 CreateJobQueueDto(connection, QueueName2, false);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Equal(2, enqueuedJobIds.Count);
                 Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
@@ -155,13 +157,13 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, false);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, false);
                 CreateJobQueueDto(connection, QueueName1, false);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 2).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 2).ToList();
 
                 Assert.Equal(2, enqueuedJobIds.Count);
                 Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
@@ -174,9 +176,9 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10);
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10);
 
                 Assert.Empty(enqueuedJobIds);
             });
@@ -187,11 +189,11 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 CreateJobQueueDto(connection, QueueName1, false);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Empty(enqueuedJobIds);
             });
@@ -202,11 +204,11 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, true);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Equal(1, enqueuedJobIds.Count);
                 Assert.Equal(jobQueueDto.JobId, enqueuedJobIds.First());
@@ -218,13 +220,13 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, true);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, true);
                 var jobQueueDto3 = CreateJobQueueDto(connection, QueueName1, true);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Equal(3, enqueuedJobIds.Count);
                 Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
@@ -238,13 +240,13 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, true);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, true);
                 CreateJobQueueDto(connection, QueueName2, true);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Equal(2, enqueuedJobIds.Count);
                 Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
@@ -257,13 +259,13 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var LiteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, true);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, true);
                 CreateJobQueueDto(connection, QueueName1, true);
 
-                var enqueuedJobIds = LiteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 2).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 2).ToList();
 
                 Assert.Equal(2, enqueuedJobIds.Count);
                 Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
@@ -271,17 +273,17 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
             });
         }
 
-        private static JobQueueDto CreateJobQueueDto(HangfireDbContext connection, string queue, bool isFetched)
+        private static JobQueue CreateJobQueueDto(HangfireDbContext connection, string queue, bool isFetched)
         {
-            var job = new JobDto
+            var job = new LiteJob
             {
                 CreatedAt = DateTime.UtcNow,
-                StateHistory = new []{new StateDto()}
+                StateHistory = new []{new LiteState()}
             };
 
-            connection.Job.InsertOne(job);
+            connection.Job.Insert(job);
 
-            var jobQueue = new JobQueueDto
+            var jobQueue = new JobQueue
             {
                 Queue = queue,
                 JobId = job.Id
@@ -292,7 +294,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
                 jobQueue.FetchedAt = DateTime.UtcNow.AddDays(-1);
             }
 
-            connection.JobQueue.InsertOne(jobQueue);
+            connection.JobQueue.Insert(jobQueue);
 
             return jobQueue;
         }

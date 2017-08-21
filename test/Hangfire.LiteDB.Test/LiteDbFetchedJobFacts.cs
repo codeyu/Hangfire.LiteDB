@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
 using LiteDB;
 using Xunit;
@@ -7,7 +9,7 @@ namespace Hangfire.LiteDB.Test
 {
 #pragma warning disable 1591
     [Collection("Database")]
-    public class LiteDBFetchedJobFacts
+    public class LiteDbFetchedJobFacts
     {
         private const string JobId = "id";
         private const string Queue = "queue";
@@ -19,7 +21,7 @@ namespace Hangfire.LiteDB.Test
             UseConnection(connection =>
             {
                 var exception = Assert.Throws<ArgumentNullException>(
-                    () => new MongoFetchedJob(null, ObjectId.GenerateNewId(), JobId, Queue));
+                    () => new LiteDbFetchedJob(null, ObjectId.NewObjectId(), JobId, Queue));
 
                 Assert.Equal("connection", exception.ParamName);
             });
@@ -30,7 +32,7 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(connection =>
             {
-                var exception = Assert.Throws<ArgumentNullException>(() => new MongoFetchedJob(connection, ObjectId.GenerateNewId(), null, Queue));
+                var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbFetchedJob(connection, ObjectId.NewObjectId(), null, Queue));
 
                 Assert.Equal("jobId", exception.ParamName);
             });
@@ -42,7 +44,7 @@ namespace Hangfire.LiteDB.Test
             UseConnection(connection =>
             {
                 var exception = Assert.Throws<ArgumentNullException>(
-                    () => new MongoFetchedJob(connection, ObjectId.GenerateNewId(), JobId, null));
+                    () => new LiteDbFetchedJob(connection, ObjectId.NewObjectId(), JobId, null));
 
                 Assert.Equal("queue", exception.ParamName);
             });
@@ -53,7 +55,7 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(connection =>
             {
-                var fetchedJob = new MongoFetchedJob(connection, ObjectId.GenerateNewId(), JobId, Queue);
+                var fetchedJob = new LiteDbFetchedJob(connection, ObjectId.NewObjectId(), JobId, Queue);
 
                 Assert.Equal(JobId, fetchedJob.JobId);
                 Assert.Equal(Queue, fetchedJob.Queue);
@@ -67,15 +69,15 @@ namespace Hangfire.LiteDB.Test
             {
                 // Arrange
                 var queue = "default";
-                var jobId = ObjectId.GenerateNewId().ToString();
+                var jobId = ObjectId.NewObjectId().ToString();
                 var id = CreateJobQueueRecord(connection, jobId, queue);
-                var processingJob = new MongoFetchedJob(connection, id, jobId, queue);
+                var processingJob = new LiteDbFetchedJob(connection, id, jobId, queue);
 
                 // Act
                 processingJob.RemoveFromQueue();
 
                 // Assert
-                var count = connection.JobQueue.Count(new BsonDocument());
+                var count = connection.JobQueue.Count();
                 Assert.Equal(0, count);
             });
         }
@@ -90,13 +92,13 @@ namespace Hangfire.LiteDB.Test
                 CreateJobQueueRecord(connection, "2", "critical");
                 CreateJobQueueRecord(connection, "3", "default");
 
-                var fetchedJob = new MongoFetchedJob(connection, ObjectId.GenerateNewId(), "999", "default");
+                var fetchedJob = new LiteDbFetchedJob(connection, ObjectId.NewObjectId(), "999", "default");
 
                 // Act
                 fetchedJob.RemoveFromQueue();
 
                 // Assert
-                var count = connection.JobQueue.Count(new BsonDocument());
+                var count = connection.JobQueue.Count();
                 Assert.Equal(3, count);
             });
         }
@@ -108,15 +110,15 @@ namespace Hangfire.LiteDB.Test
             {
                 // Arrange
                 var queue = "default";
-                var jobId = ObjectId.GenerateNewId().ToString();
+                var jobId = ObjectId.NewObjectId().ToString();
                 var id = CreateJobQueueRecord(connection, jobId, queue);
-                var processingJob = new MongoFetchedJob(connection, id, jobId, queue);
+                var processingJob = new LiteDbFetchedJob(connection, id, jobId, queue);
 
                 // Act
                 processingJob.Requeue();
 
                 // Assert
-                var record = connection.JobQueue.Find(new BsonDocument()).ToList().Single();
+                var record = connection.JobQueue.FindAll().ToList().Single();
                 Assert.Null(record.FetchedAt);
             });
         }
@@ -128,30 +130,30 @@ namespace Hangfire.LiteDB.Test
             {
                 // Arrange
                 var queue = "default";
-                var jobId = ObjectId.GenerateNewId().ToString();
+                var jobId = ObjectId.NewObjectId().ToString();
                 var id = CreateJobQueueRecord(connection, jobId, queue);
-                var processingJob = new MongoFetchedJob(connection, id, jobId, queue);
+                var processingJob = new LiteDbFetchedJob(connection, id, jobId, queue);
 
                 // Act
                 processingJob.Dispose();
 
                 // Assert
-                var record = connection.JobQueue.Find(new BsonDocument()).ToList().Single();
+                var record = connection.JobQueue.FindAll().ToList().Single();
                 Assert.Null(record.FetchedAt);
             });
         }
 
         private static ObjectId CreateJobQueueRecord(HangfireDbContext connection, string jobId, string queue)
         {
-            var jobQueue = new JobQueueDto
+            var jobQueue = new JobQueue
             {
-                Id = ObjectId.GenerateNewId(),
+                Id = ObjectId.NewObjectId(),
                 JobId = jobId,
                 Queue = queue,
                 FetchedAt = DateTime.UtcNow
             };
 
-            connection.JobQueue.InsertOne(jobQueue);
+            connection.JobQueue.Insert(jobQueue);
 
             return jobQueue.Id;
         }

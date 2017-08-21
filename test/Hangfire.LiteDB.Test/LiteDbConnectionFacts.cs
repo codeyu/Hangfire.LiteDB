@@ -4,35 +4,31 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Hangfire.Common;
+using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
-using Hangfire.Mongo.Database;
-using Hangfire.Mongo.Dto;
-using Hangfire.Mongo.PersistentJobQueue;
 using Hangfire.Server;
 using Hangfire.Storage;
-using MongoDB.Bson;
-using MongoDB.Driver;
+using LiteDB;
 using Moq;
 using Xunit;
 
-namespace Hangfire.Mongo.Tests
+namespace Hangfire.LiteDB.Test
 {
 #pragma warning disable 1591
     [Collection("Database")]
-    public class LiteDBConnectionFacts
+    public class LiteDbConnectionFacts
     {
         private readonly Mock<IPersistentJobQueue> _queue;
-        private readonly Mock<IPersistentJobQueueProvider> _provider;
         private readonly PersistentJobQueueProviderCollection _providers;
 
-        public LiteDBConnectionFacts()
+        public LiteDbConnectionFacts()
         {
             _queue = new Mock<IPersistentJobQueue>();
 
-            _provider = new Mock<IPersistentJobQueueProvider>();
-            _provider.Setup(x => x.GetJobQueue(It.IsNotNull<HangfireDbContext>())).Returns(_queue.Object);
+            var provider = new Mock<IPersistentJobQueueProvider>();
+            provider.Setup(x => x.GetJobQueue(It.IsNotNull<HangfireDbContext>())).Returns(_queue.Object);
 
-            _providers = new PersistentJobQueueProviderCollection(_provider.Object);
+            _providers = new PersistentJobQueueProviderCollection(provider.Object);
         }
 
         [Fact]
@@ -148,7 +144,7 @@ namespace Hangfire.Mongo.Tests
                 Assert.NotNull(jobId);
                 Assert.NotEmpty(jobId);
 
-                var databaseJob = database.Job.Find(new BsonDocument()).ToList().Single();
+                var databaseJob = database.Job.FindAll().ToList().Single();
                 Assert.Equal(jobId, databaseJob.Id.ToString());
                 Assert.Equal(createdAt, databaseJob.CreatedAt);
                 Assert.Equal(null, databaseJob.StateName);
@@ -157,7 +153,7 @@ namespace Hangfire.Mongo.Tests
                 invocationData.Arguments = databaseJob.Arguments;
 
                 var job = invocationData.Deserialize();
-                Assert.Equal(typeof(LiteDBConnectionFacts), job.Type);
+                Assert.Equal(typeof(LiteDbConnectionFacts), job.Type);
                 Assert.Equal("SampleMethod", job.Method.Name);
                 Assert.Equal("Hello", job.Args[0]);
 
@@ -166,8 +162,8 @@ namespace Hangfire.Mongo.Tests
 
                 var parameters = database
                     .Job
-                    .Find(Builders<JobDto>.Filter.Eq(_ => _.Id, jobId))
-                    .Project(j => j.Parameters)
+                    .Find(_ => _.Id==jobId)
+                    .Select(j => j.Parameters)
                     .ToList()
                     .SelectMany(j => j)
                     .ToDictionary(p => p.Key, x => x.Value);
@@ -202,17 +198,17 @@ namespace Hangfire.Mongo.Tests
             {
                 var job = Job.FromExpression(() => SampleMethod("wrong"));
 
-                var jobDto = new JobDto
+                var liteJob = new LiteJob
                 {
-                    Id = ObjectId.GenerateNewId().ToString(),
+                    Id = ObjectId.NewObjectId().ToString(),
                     InvocationData = JobHelper.ToJson(InvocationData.Serialize(job)),
                     Arguments = "[\"\\\"Arguments\\\"\"]",
                     StateName = "Succeeded",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(jobDto);
+                database.Job.Insert(liteJob);
 
-                var result = connection.GetJobData(jobDto.Id);
+                var result = connection.GetJobData(liteJob.Id);
 
                 Assert.NotNull(result);
                 Assert.NotNull(result.Job);
@@ -252,12 +248,12 @@ namespace Hangfire.Mongo.Tests
                             { "Key", "Value" }
                         };
 
-                var state = new StateDto
+                var state = new LiteState
                 {
                     Name = "old-state",
                     CreatedAt = DateTime.UtcNow
                 };
-                var jobDto = new JobDto
+                var liteJob = new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = "",
@@ -267,13 +263,11 @@ namespace Hangfire.Mongo.Tests
                     StateHistory = new[] { state }
                 };
 
-                database.Job.InsertOne(jobDto);
-                var jobId = jobDto.Id;
-
-                var update = Builders<JobDto>
-                    .Update
-                    .Set(j => j.StateName, state.Name)
-                    .Push(j => j.StateHistory, new StateDto
+                database.Job.Insert(liteJob);
+                var jobId = liteJob.Id;
+                var job = database.Job.FindById(liteJob.Id);
+                job.StateName = state.Name;
+                job.StateHistory.Append(new LiteState
                     {
                         Name = "Name",
                         Reason = "Reason",
@@ -281,7 +275,7 @@ namespace Hangfire.Mongo.Tests
                         CreatedAt = DateTime.UtcNow
                     });
 
-                database.Job.UpdateOne(j => j.Id == jobId, update);
+                database.Job.Update(job);
 
                 var result = connection.GetStateData(jobId.ToString());
                 Assert.NotNull(result);
@@ -297,7 +291,7 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                var jobDto = new JobDto
+                var liteJob = new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = JobHelper.ToJson(new InvocationData(null, null, null, null)),
@@ -305,8 +299,8 @@ namespace Hangfire.Mongo.Tests
                     StateName = "Succeeded",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(jobDto);
-                var jobId = jobDto.Id;
+                database.Job.Insert(liteJob);
+                var jobId = liteJob.Id;
 
                 var result = connection.GetJobData(jobId.ToString());
 
@@ -343,22 +337,22 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                var jobDto = new JobDto
+                var liteJob = new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(jobDto);
-                string jobId = jobDto.Id.ToString();
+                database.Job.Insert(liteJob);
+                string jobId = liteJob.Id.ToString();
 
                 connection.SetJobParameter(jobId, "Name", "Value");
 
                 var parameters = database
                     .Job
                     .Find(j => j.Id == jobId)
-                    .Project(j => j.Parameters)
+                    .Select(j => j.Parameters)
                     .FirstOrDefault();
 
                 Assert.NotNull(parameters);
@@ -371,15 +365,15 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                var jobDto = new JobDto
+                var liteJob = new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(jobDto);
-                string jobId = jobDto.Id.ToString();
+                database.Job.Insert(liteJob);
+                string jobId = liteJob.Id.ToString();
 
                 connection.SetJobParameter(jobId, "Name", "Value");
                 connection.SetJobParameter(jobId, "Name", "AnotherValue");
@@ -387,7 +381,7 @@ namespace Hangfire.Mongo.Tests
                 var parameters = database
                     .Job
                     .Find(j => j.Id == jobId)
-                    .Project(j => j.Parameters)
+                    .Select(j => j.Parameters)
                     .FirstOrDefault();
 
                 Assert.NotNull(parameters);
@@ -400,22 +394,22 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                var jobDto = new JobDto
+                var liteJob = new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(jobDto);
-                string jobId = jobDto.Id.ToString();
+                database.Job.Insert(liteJob);
+                string jobId = liteJob.Id.ToString();
 
                 connection.SetJobParameter(jobId, "Name", null);
 
                 var parameters = database
                     .Job
                     .Find(j => j.Id == jobId)
-                    .Project(j => j.Parameters)
+                    .Select(j => j.Parameters)
                     .FirstOrDefault();
 
                 Assert.NotNull(parameters);
@@ -462,19 +456,19 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                var jobDto = new JobDto
+                var liteJob = new LiteJob
                 {
                     Id = 1.ToString(),
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
                 };
-                database.Job.InsertOne(jobDto);
+                database.Job.Insert(liteJob);
 
 
-                connection.SetJobParameter(jobDto.Id, "name", "value");
+                connection.SetJobParameter(liteJob.Id, "name", "value");
 
-                var value = connection.GetJobParameter(jobDto.Id, "name");
+                var value = connection.GetJobParameter(liteJob.Id, "name");
 
                 Assert.Equal("value", value);
             });
@@ -516,30 +510,30 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "key",
                     Score = 1.0,
                     Value = "1.0"
                 });
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "key",
                     Score = -1.0,
                     Value = "-1.0"
                 });
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "key",
                     Score = -5.0,
                     Value = "-5.0"
                 });
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "another-key",
                     Score = -2.0,
                     Value = "-2.0"
@@ -587,7 +581,7 @@ namespace Hangfire.Mongo.Tests
                 };
                 connection.AnnounceServer("server", context1);
 
-                var server = database.Server.Find(new BsonDocument()).Single();
+                var server = database.Server.FindAll().Single();
                 Assert.Equal("server", server.Id);
                 Assert.True(server.Data.StartsWith("{\"WorkerCount\":4,\"Queues\":[\"critical\",\"default\"],\"StartedAt\":", StringComparison.Ordinal),
                     server.Data);
@@ -599,7 +593,7 @@ namespace Hangfire.Mongo.Tests
                     WorkerCount = 1000
                 };
                 connection.AnnounceServer("server", context2);
-                var sameServer = database.Server.Find(new BsonDocument()).Single();
+                var sameServer = database.Server.FindAll().Single();
                 Assert.Equal("server", sameServer.Id);
                 Assert.Contains("1000", sameServer.Data);
             });
@@ -617,13 +611,13 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                database.Server.InsertOne(new ServerDto
+                database.Server.Insert(new Entities.Server
                 {
                     Id = "Server1",
                     Data = "",
                     LastHeartbeat = DateTime.UtcNow
                 });
-                database.Server.InsertOne(new ServerDto
+                database.Server.Insert(new Entities.Server
                 {
                     Id = "Server2",
                     Data = "",
@@ -632,7 +626,7 @@ namespace Hangfire.Mongo.Tests
 
                 connection.RemoveServer("Server1");
 
-                var server = database.Server.Find(new BsonDocument()).ToList().Single();
+                var server = database.Server.FindAll().ToList().Single();
                 Assert.NotEqual("Server1", server.Id, StringComparer.OrdinalIgnoreCase);
             });
         }
@@ -649,13 +643,13 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                database.Server.InsertOne(new ServerDto
+                database.Server.Insert(new Entities.Server
                 {
                     Id = "server1",
                     Data = "",
                     LastHeartbeat = new DateTime(2012, 12, 12, 12, 12, 12, DateTimeKind.Utc)
                 });
-                database.Server.InsertOne(new ServerDto
+                database.Server.Insert(new Entities.Server
                 {
                     Id = "server2",
                     Data = "",
@@ -664,11 +658,11 @@ namespace Hangfire.Mongo.Tests
 
                 connection.Heartbeat("server1");
 
-                var servers = database.Server.Find(new BsonDocument()).ToList()
+                var servers = database.Server.FindAll().ToList()
                     .ToDictionary(x => x.Id, x => x.LastHeartbeat);
 
-                Assert.NotEqual(2012, servers["server1"].Value.Year);
-                Assert.Equal(2012, servers["server2"].Value.Year);
+                Assert.NotEqual(2012, servers["server1"].Year);
+                Assert.Equal(2012, servers["server2"].Year);
             });
         }
 
@@ -684,13 +678,13 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                database.Server.InsertOne(new ServerDto
+                database.Server.Insert(new Entities.Server
                 {
                     Id = "server1",
                     Data = "",
                     LastHeartbeat = DateTime.UtcNow.AddDays(-1)
                 });
-                database.Server.InsertOne(new ServerDto
+                database.Server.Insert(new Entities.Server
                 {
                     Id = "server2",
                     Data = "",
@@ -699,7 +693,7 @@ namespace Hangfire.Mongo.Tests
 
                 connection.RemoveTimedOutServers(TimeSpan.FromHours(15));
 
-                var liveServer = database.Server.Find(new BsonDocument()).ToList().Single();
+                var liveServer = database.Server.FindAll().ToList().Single();
                 Assert.Equal("server2", liveServer.Id);
             });
         }
@@ -729,44 +723,44 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "some-set",
                     Score = 0.0,
                     Value = "1"
                 });
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "some-set",
                     Score = 0.0,
                     Value = "2"
                 });
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "another-set",
                     Score = 0.0,
                     Value = "3"
                 });
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "some-set",
                     Score = 0.0,
                     Value = "4"
                 });
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "some-set",
                     Score = 0.0,
                     Value = "5"
                 });
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "some-set",
                     Score = 0.0,
                     Value = "6"
@@ -817,7 +811,7 @@ namespace Hangfire.Mongo.Tests
                             { "Key2", "Value2" }
                         });
 
-                var result = database.StateData.OfType<HashDto>().Find(Builders<HashDto>.Filter.Eq(_ => _.Key, "some-hash")).ToList()
+                var result = database.StateDataHash.Find(_ => _.Key=="some-hash").ToList()
                     .ToDictionary(x => x.Field, x => x.Value);
 
                 Assert.Equal("Value1", result["Key1"]);
@@ -848,23 +842,23 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "some-hash",
                     Field = "Key1",
                     Value = "Value1"
                 });
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "some-hash",
                     Field = "Key2",
                     Value = "Value2"
                 });
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "another-hash",
                     Field = "Key3",
                     Value = "Value3"
@@ -906,21 +900,21 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-1",
                     Value = "value-1"
                 });
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-2",
                     Value = "value-1"
                 });
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-1",
                     Value = "value-2"
                 });
@@ -945,49 +939,49 @@ namespace Hangfire.Mongo.Tests
         {
             UseConnection((database, connection) =>
             {
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-1",
                     Value = "1",
                     Score = 0.0
                 });
 
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-1",
                     Value = "2",
                     Score = 0.0
                 });
 
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-1",
                     Value = "3",
                     Score = 0.0
                 });
 
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-1",
                     Value = "4",
                     Score = 0.0
                 });
 
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-2",
                     Value = "5",
                     Score = 0.0
                 });
 
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-1",
                     Value = "6",
                     Score = 0.0
@@ -1024,18 +1018,18 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-1",
                     Value = "1",
                     Score = 0.0,
                     ExpireAt = DateTime.UtcNow.AddMinutes(60)
                 });
 
-                database.StateData.InsertOne(new SetDto
+                database.StateDataSet.Insert(new LiteSet
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "set-2",
                     Value = "2",
                     Score = 0.0,
@@ -1077,21 +1071,21 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new CounterDto
+                database.StateDataCounter.Insert(new Counter
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "counter-1",
                     Value = 1L
                 });
-                database.StateData.InsertOne(new CounterDto
+                database.StateDataCounter.Insert(new Counter
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "counter-2",
                     Value = 1L
                 });
-                database.StateData.InsertOne(new CounterDto
+                database.StateDataCounter.Insert(new Counter
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "counter-1",
                     Value = 1L
                 });
@@ -1110,15 +1104,15 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new AggregatedCounterDto
+                database.StateDataAggregatedCounter.Insert(new AggregatedCounter
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "counter-1",
                     Value = 12L
                 });
-                database.StateData.InsertOne(new AggregatedCounterDto
+                database.StateDataAggregatedCounter.Insert(new AggregatedCounter
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "counter-2",
                     Value = 15L
                 });
@@ -1155,21 +1149,21 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "hash-1",
                     Field = "field-1"
                 });
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "hash-1",
                     Field = "field-2"
                 });
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "hash-2",
                     Field = "field-1"
                 });
@@ -1208,16 +1202,16 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "hash-1",
                     Field = "field",
                     ExpireAt = DateTime.UtcNow.AddHours(1)
                 });
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "hash-2",
                     Field = "field",
                     ExpireAt = null
@@ -1272,23 +1266,23 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "hash-1",
                     Field = "field-1",
                     Value = "1"
                 });
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "hash-1",
                     Field = "field-2",
                     Value = "2"
                 });
-                database.StateData.InsertOne(new HashDto
+                database.StateDataHash.Insert(new LiteHash
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "hash-2",
                     Field = "field-1",
                     Value = "3"
@@ -1328,19 +1322,19 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-2",
                 });
 
@@ -1378,15 +1372,15 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                     ExpireAt = DateTime.UtcNow.AddHours(1)
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-2",
                     ExpireAt = null
                 });
@@ -1428,33 +1422,33 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                     Value = "1"
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-2",
                     Value = "2"
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                     Value = "3"
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                     Value = "4"
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                     Value = "5"
                 });
@@ -1473,40 +1467,40 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                var listDtos = new List<ListDto>
+                var listDtos = new List<LiteList>
                 {
-                    new ListDto
+                    new LiteList
                     {
-                        Id = ObjectId.GenerateNewId(),
+                        Id = ObjectId.NewObjectId(),
                         Key = "list-1",
                         Value = "1"
                     },
-                    new ListDto
+                    new LiteList
                     {
-                        Id = ObjectId.GenerateNewId(),
+                        Id = ObjectId.NewObjectId(),
                         Key = "list-1",
                         Value = "2"
                     },
-                    new ListDto
+                    new LiteList
                     {
-                        Id = ObjectId.GenerateNewId(),
+                        Id = ObjectId.NewObjectId(),
                         Key = "list-1",
                         Value = "3"
                     },
-                    new ListDto
+                    new LiteList
                     {
-                        Id = ObjectId.GenerateNewId(),
+                        Id = ObjectId.NewObjectId(),
                         Key = "list-1",
                         Value = "4"
                     },
-                    new ListDto
+                    new LiteList
                     {
-                        Id = ObjectId.GenerateNewId(),
+                        Id = ObjectId.NewObjectId(),
                         Key = "list-1",
                         Value = "5"
                     }
                 };
-                database.StateData.InsertMany(listDtos);
+                database.StateDataList.Insert(listDtos);
 
                 // Act
                 var result = connection.GetRangeFromList("list-1", 1, 5);
@@ -1542,33 +1536,33 @@ namespace Hangfire.Mongo.Tests
             UseConnection((database, connection) =>
             {
                 // Arrange
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                     Value = "1"
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-2",
                     Value = "2"
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                     Value = "3"
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                     Value = "4"
                 });
-                database.StateData.InsertOne(new ListDto
+                database.StateDataList.Insert(new LiteList
                 {
-                    Id = ObjectId.GenerateNewId(),
+                    Id = ObjectId.NewObjectId(),
                     Key = "list-1",
                     Value = "5"
                 });
