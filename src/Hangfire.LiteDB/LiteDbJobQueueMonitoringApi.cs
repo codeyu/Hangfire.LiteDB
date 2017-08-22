@@ -40,7 +40,7 @@ namespace Hangfire.LiteDB
         /// <param name="from"></param>
         /// <param name="perPage"></param>
         /// <returns></returns>
-        public IEnumerable<string> GetEnqueuedJobIds(string queue, int from, int perPage)
+        public IEnumerable<int> GetEnqueuedJobIds(string queue, int from, int perPage)
         {
             var jobIds = _connection.JobQueue
                 .Find(_ => _.Queue== queue && _.FetchedAt==null)
@@ -48,8 +48,8 @@ namespace Hangfire.LiteDB
                 .Take(perPage)
                 .Select(_ => _.JobId)
                 .ToList();
-            var jobs = _connection.Job.Find(Query.In("IdString", jobIds.ToBsonValueEnumerable())).Where(x=>x.StateHistory.Length > 0);
-            return jobs.Select(_=>_.IdString);
+            var jobs = _connection.Job.Find(Query.In("Id", jobIds.ToBsonValueEnumerable())).Where(x=>x.StateHistory.Length > 0);
+            return jobs.Select(_=>_.Id);
             
         }
 
@@ -60,7 +60,7 @@ namespace Hangfire.LiteDB
         /// <param name="from"></param>
         /// <param name="perPage"></param>
         /// <returns></returns>
-        public IEnumerable<string> GetFetchedJobIds(string queue, int from, int perPage)
+        public IEnumerable<int> GetFetchedJobIds(string queue, int from, int perPage)
         {
             return _connection.JobQueue
                 .Find(_ => _.Queue== queue && _.FetchedAt!=null)
@@ -70,7 +70,7 @@ namespace Hangfire.LiteDB
                 .ToList()
                 .Where(jobQueueJobId =>
                 {
-                    var job = _connection.Job.Find(_ => _.IdString==jobQueueJobId).FirstOrDefault();
+                    var job = _connection.Job.Find(_ => _.Id==jobQueueJobId).FirstOrDefault();
                     return job != null;
                 }).ToArray();
         }

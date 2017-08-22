@@ -25,11 +25,11 @@ namespace Hangfire.LiteDB
         /// <param name="id">Identifier</param>
         /// <param name="jobId">Job ID</param>
         /// <param name="queue">Queue name</param>
-        public LiteDbFetchedJob(HangfireDbContext connection, ObjectId id, string jobId, string queue)
+        public LiteDbFetchedJob(HangfireDbContext connection, ObjectId id, int jobId, string queue)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _id = id;
-            JobId = jobId ?? throw new ArgumentNullException(nameof(jobId));
+            JobId = jobId.ToString() ?? throw new ArgumentNullException(nameof(jobId));
             Queue = queue ?? throw new ArgumentNullException(nameof(queue));
         }
 

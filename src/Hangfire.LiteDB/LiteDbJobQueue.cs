@@ -96,7 +96,7 @@ namespace Hangfire.LiteDB
         {
             _connection.JobQueue.Insert(new JobQueue
             {
-                JobId = jobId,
+                JobId = int.Parse(jobId),
                 Queue = queue
             });
         }

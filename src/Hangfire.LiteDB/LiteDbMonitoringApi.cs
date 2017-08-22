@@ -410,7 +410,7 @@ namespace Hangfire.LiteDB
             return result;
         }
 
-        private JobList<EnqueuedJobDto> EnqueuedJobs(HangfireDbContext connection, IEnumerable<string> jobIds)
+        private JobList<EnqueuedJobDto> EnqueuedJobs(HangfireDbContext connection, IEnumerable<int> jobIds)
         {
             var jobs = connection.Job
                 .Find(Query.In("Id", jobIds.ToBsonValueEnumerable()))
@@ -421,7 +421,7 @@ namespace Hangfire.LiteDB
                 .ToList();
 
             var jobsFiltered = enqueuedJobs
-                .Select(jq => jobs.FirstOrDefault(job => job.Id.ToString() == jq.JobId));
+                .Select(jq => jobs.FirstOrDefault(job => job.Id == jq.JobId));
 
             var joinedJobs = jobsFiltered
                 .Where(job => job != null)
@@ -430,7 +430,7 @@ namespace Hangfire.LiteDB
                     var state = job.StateHistory.LastOrDefault();
                     return new JobDetailedDto
                     {
-                        Id = job.Id.ToString(),
+                        Id = job.Id,
                         InvocationData = job.InvocationData,
                         Arguments = job.Arguments,
                         CreatedAt = job.CreatedAt,
@@ -463,7 +463,7 @@ namespace Hangfire.LiteDB
             {
                 var stateData = job.StateData;
                 var dto = selector(job, DeserializeJob(job.InvocationData, job.Arguments), stateData);
-                result.Add(new KeyValuePair<string, TDto>(job.Id, dto));
+                result.Add(new KeyValuePair<string, TDto>(job.Id.ToString(), dto));
             }
 
             return new JobList<TDto>(result);
@@ -492,7 +492,7 @@ namespace Hangfire.LiteDB
             return monitoringApi;
         }
 
-        private JobList<FetchedJobDto> FetchedJobs(HangfireDbContext connection, IEnumerable<string> jobIds)
+        private JobList<FetchedJobDto> FetchedJobs(HangfireDbContext connection, IEnumerable<int> jobIds)
         {
             var jobs = connection.Job
                 .Find(Query.In("Id", jobIds.ToBsonValueEnumerable()))
@@ -503,7 +503,7 @@ namespace Hangfire.LiteDB
                 .Where(x=>x.FetchedAt != null)
                 .ToList().ToDictionary(kv => kv.JobId, kv => kv);
 
-            IEnumerable<LiteJob> jobsFiltered = jobs.Where(job => jobIdToJobQueueMap.ContainsKey(job.Id.ToString()));
+            IEnumerable<LiteJob> jobsFiltered = jobs.Where(job => jobIdToJobQueueMap.ContainsKey(job.Id));
 
             List<JobDetailedDto> joinedJobs = jobsFiltered
                 .Select(job =>
@@ -511,7 +511,7 @@ namespace Hangfire.LiteDB
                     var state = job.StateHistory.FirstOrDefault(s => s.Name == job.StateName);
                     return new JobDetailedDto
                     {
-                        Id = job.Id.ToString(),
+                        Id = job.Id,
                         InvocationData = job.InvocationData,
                         Arguments = job.Arguments,
                         CreatedAt = job.CreatedAt,
@@ -529,7 +529,7 @@ namespace Hangfire.LiteDB
             foreach (var job in joinedJobs)
             {
                 result.Add(new KeyValuePair<string, FetchedJobDto>(
-                    job.Id,
+                    job.Id.ToString(),
                     new FetchedJobDto
                     {
                         Job = DeserializeJob(job.InvocationData, job.Arguments),
@@ -557,7 +557,7 @@ namespace Hangfire.LiteDB
 
                     return new JobDetailedDto
                     {
-                        Id = job.Id.ToString(),
+                        Id = job.Id,
                         InvocationData = job.InvocationData,
                         Arguments = job.Arguments,
                         CreatedAt = job.CreatedAt,
