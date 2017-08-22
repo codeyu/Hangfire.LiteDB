@@ -14,9 +14,13 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        [BsonId]
-        public string Id { get; set; }
+        public ObjectId Id { get; set; }
         
+        /// <summary>
+        /// 
+        /// </summary>
+        public string IdString => Id.ToString();
+
         /// <summary>
         /// 
         /// </summary>

@@ -130,7 +130,7 @@ namespace Hangfire.LiteDB.Test
 
                 var jobQueue = new JobQueue
                 {
-                    JobId = job.Id,
+                    JobId =  job.Id.ToString(),
                     Queue = "default"
                 };
                 connection.JobQueue.Insert(jobQueue);
@@ -166,7 +166,7 @@ namespace Hangfire.LiteDB.Test
 
                 var jobQueue = new JobQueue
                 {
-                    JobId = job.Id,
+                    JobId =  job.Id.ToString(),
                     Queue = "default",
                     FetchedAt = DateTime.UtcNow.AddDays(-1)
                 };
@@ -206,13 +206,13 @@ namespace Hangfire.LiteDB.Test
 
                 connection.JobQueue.Insert(new JobQueue
                 {
-                    JobId = job1.Id,
+                    JobId =  job1.Id.ToString(),
                     Queue = "default"
                 });
 
                 connection.JobQueue.Insert(new JobQueue
                 {
-                    JobId = job2.Id,
+                    JobId =  job2.Id.ToString(),
                     Queue = "default"
                 });
 
@@ -243,7 +243,7 @@ namespace Hangfire.LiteDB.Test
 
                 connection.JobQueue.Insert(new JobQueue
                 {
-                    JobId = job1.Id,
+                    JobId =  job1.Id.ToString(),
                     Queue = "critical"
                 });
 
@@ -277,13 +277,13 @@ namespace Hangfire.LiteDB.Test
 
                 connection.JobQueue.Insert(new JobQueue
                 {
-                    JobId = defaultJob.Id,
+                    JobId = defaultJob.Id.ToString(),
                     Queue = "default"
                 });
 
                 connection.JobQueue.Insert(new JobQueue
                 {
-                    JobId = criticalJob.Id,
+                    JobId = criticalJob.Id.ToString(),
                     Queue = "critical"
                 });
 
@@ -334,10 +334,8 @@ namespace Hangfire.LiteDB.Test
 
         private static void UseConnection(Action<HangfireDbContext> action)
         {
-            using (var connection = ConnectionUtils.CreateConnection())
-            {
-                action(connection);
-            }
+            var connection = ConnectionUtils.CreateConnection();
+            action(connection);
         }
     }
 #pragma warning restore 1591

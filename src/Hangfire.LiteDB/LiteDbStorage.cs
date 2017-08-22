@@ -4,7 +4,6 @@ using Hangfire.LiteDB.StateHandlers;
 using Hangfire.Logging;
 using Hangfire.States;
 using Hangfire.Storage;
-using LiteDB;
 namespace Hangfire.LiteDB
 {
     /// <summary>
@@ -13,11 +12,6 @@ namespace Hangfire.LiteDB
     public class LiteDbStorage : JobStorage
     {
         private readonly string _connectionString;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private ConnectionString LiteConnectionString { get; }
 
         private readonly LiteDbStorageOptions _storageOptions;
 
@@ -35,8 +29,7 @@ namespace Hangfire.LiteDB
         /// </summary>
         /// <param name="connectionString">LiteDB connection string</param>
         /// <param name="storageOptions">Storage options</param>
-        /// <param name="mapper"></param>
-        public LiteDbStorage(string connectionString, LiteDbStorageOptions storageOptions, BsonMapper mapper = null)
+        public LiteDbStorage(string connectionString, LiteDbStorageOptions storageOptions)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
             {
@@ -47,34 +40,8 @@ namespace Hangfire.LiteDB
             _connectionString = connectionString;
             _storageOptions = storageOptions ?? throw new ArgumentNullException(nameof(storageOptions));
 
-            Connection = new HangfireDbContext(connectionString, mapper, storageOptions.Prefix);
+            Connection = HangfireDbContext.Instance(connectionString, storageOptions.Prefix);
             Connection.Init(_storageOptions);
-            var defaultQueueProvider = new LiteDbJobQueueProvider(_storageOptions);
-            QueueProviders = new PersistentJobQueueProviderCollection(defaultQueueProvider);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="liteConnStr"></param>
-        public LiteDbStorage(ConnectionString liteConnStr)
-            : this(liteConnStr, new LiteDbStorageOptions())
-        {
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="liteConnStr"></param>
-        /// <param name="storageOptions">Storage options</param>
-        /// <param name="mapper"></param>
-        public LiteDbStorage(ConnectionString liteConnStr, LiteDbStorageOptions storageOptions, BsonMapper mapper = null)
-        {
-         
-            LiteConnectionString = liteConnStr ?? throw new ArgumentNullException(nameof(liteConnStr));
-            _storageOptions = storageOptions ?? throw new ArgumentNullException(nameof(storageOptions));
-
-            Connection = new HangfireDbContext(liteConnStr, mapper, _storageOptions.Prefix);
             var defaultQueueProvider = new LiteDbJobQueueProvider(_storageOptions);
             QueueProviders = new PersistentJobQueueProviderCollection(defaultQueueProvider);
         }
@@ -123,7 +90,9 @@ namespace Hangfire.LiteDB
         /// <returns>Database context</returns>
         public HangfireDbContext CreateAndOpenConnection()
         {
-            return _connectionString != null ? new HangfireDbContext(_connectionString, null, _storageOptions.Prefix) : new HangfireDbContext(LiteConnectionString, null, _storageOptions.Prefix);
+            return _connectionString != null
+                ? HangfireDbContext.Instance(_connectionString, _storageOptions.Prefix)
+                : null;
         }
 
         /// <summary>

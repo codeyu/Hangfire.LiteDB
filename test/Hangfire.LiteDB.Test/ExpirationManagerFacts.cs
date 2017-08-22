@@ -34,203 +34,141 @@ namespace Hangfire.LiteDB.Test
         [Fact, CleanDatabase]
         public void Execute_RemovesOutdatedRecords()
         {
-            using (var connection = ConnectionUtils.CreateConnection())
-            {
-                CreateExpirationEntries(connection, DateTime.UtcNow.AddMonths(-1));
-                var manager = CreateManager();
-
-                manager.Execute(_token);
-
-                Assert.True(IsEntryExpired(connection));
-            }
+            var connection = ConnectionUtils.CreateConnection();
+            CreateExpirationEntries(connection, DateTime.UtcNow.AddMonths(-1));
+            var manager = CreateManager();
+            manager.Execute(_token);
+            Assert.True(IsEntryExpired(connection));
         }
 
         [Fact, CleanDatabase]
         public void Execute_DoesNotRemoveEntries_WithNoExpirationTimeSet()
         {
-            using (var connection = ConnectionUtils.CreateConnection())
-            {
-                CreateExpirationEntries(connection, null);
-                var manager = CreateManager();
-
-                manager.Execute(_token);
-
-                Assert.False(IsEntryExpired(connection));
-            }
+            var connection = ConnectionUtils.CreateConnection();
+            CreateExpirationEntries(connection, null);
+            var manager = CreateManager();
+            manager.Execute(_token);
+            Assert.False(IsEntryExpired(connection));
         }
 
         [Fact, CleanDatabase]
         public void Execute_DoesNotRemoveEntries_WithFreshExpirationTime()
         {
-            using (var connection = ConnectionUtils.CreateConnection())
-            {
-                CreateExpirationEntries(connection, DateTime.Now.AddMonths(1));
-                var manager = CreateManager();
-
-                manager.Execute(_token);
-
-
-                Assert.False(IsEntryExpired(connection));
-            }
+            var connection = ConnectionUtils.CreateConnection();
+            CreateExpirationEntries(connection, DateTime.Now.AddMonths(1));
+            var manager = CreateManager();
+            manager.Execute(_token);
+            Assert.False(IsEntryExpired(connection));
         }
 
         [Fact, CleanDatabase]
         public void Execute_Processes_CounterTable()
         {
-            using (var connection = ConnectionUtils.CreateConnection())
+            var connection = ConnectionUtils.CreateConnection();
+            connection.StateDataCounter.Insert(new Counter
             {
-                // Arrange
-                connection.StateDataCounter.Insert(new Counter
-                {
-                    Id = ObjectId.NewObjectId(),
-                    Key = "key",
-                    Value = 1L,
-                    ExpireAt = DateTime.UtcNow.AddMonths(-1)
-                });
-
-                var manager = CreateManager();
-
-                // Act
-                manager.Execute(_token);
-
-                // Assert
-                var count = connection.StateDataCounter.Count();
-                Assert.Equal(0, count);
-            }
+                Id = ObjectId.NewObjectId(),
+                Key = "key",
+                Value = 1L,
+                ExpireAt = DateTime.UtcNow.AddMonths(-1)
+            });
+            var manager = CreateManager();
+            manager.Execute(_token);
+            var count = connection.StateDataCounter.Count();
+            Assert.Equal(0, count);
         }
 
         [Fact, CleanDatabase]
         public void Execute_Processes_JobTable()
         {
-            using (var connection = ConnectionUtils.CreateConnection())
+            var connection = ConnectionUtils.CreateConnection();
+            connection.Job.Insert(new LiteJob
             {
-                // Arrange
-                connection.Job.Insert(new LiteJob
-                {
-                    Id = 1.ToString(),
-                    InvocationData = "",
-                    Arguments = "",
-                    CreatedAt = DateTime.UtcNow,
-                    ExpireAt = DateTime.UtcNow.AddMonths(-1),
-                });
-
-                var manager = CreateManager();
-
-                // Act
-                manager.Execute(_token);
-
-                // Assert
-                var count = connection.Job.Count();
-                Assert.Equal(0, count);
-            }
+                InvocationData = "",
+                Arguments = "",
+                CreatedAt = DateTime.UtcNow,
+                ExpireAt = DateTime.UtcNow.AddMonths(-1),
+            });
+            var manager = CreateManager();
+            manager.Execute(_token);
+            var count = connection.Job.Count();
+            Assert.Equal(0, count);
         }
 
         [Fact, CleanDatabase]
         public void Execute_Processes_ListTable()
         {
-            using (var connection = ConnectionUtils.CreateConnection())
+            var connection = ConnectionUtils.CreateConnection();
+            connection.StateDataList.Insert(new LiteList
             {
-                // Arrange
-                connection.StateDataList.Insert(new LiteList
-                {
-                    Id = ObjectId.NewObjectId(),
-                    Key = "key",
-                    ExpireAt = DateTime.UtcNow.AddMonths(-1)
-                });
-
-                var manager = CreateManager();
-
-                // Act
-                manager.Execute(_token);
-
-                // Assert
-                var count = connection
-                    .StateDataList
-                    .Count();
-                Assert.Equal(0, count);
-            }
+                Id = ObjectId.NewObjectId(),
+                Key = "key",
+                ExpireAt = DateTime.UtcNow.AddMonths(-1)
+            });
+            var manager = CreateManager();
+            manager.Execute(_token);
+            var count = connection
+                .StateDataList
+                .Count();
+            Assert.Equal(0, count);
         }
 
         [Fact, CleanDatabase]
         public void Execute_Processes_SetTable()
         {
-            using (var connection = ConnectionUtils.CreateConnection())
+            var connection = ConnectionUtils.CreateConnection();
+            connection.StateDataSet.Insert(new LiteSet
             {
-                // Arrange
-                connection.StateDataSet.Insert(new LiteSet
-                {
-                    Id = ObjectId.NewObjectId(),
-                    Key = "key",
-                    Score = 0,
-                    Value = "",
-                    ExpireAt = DateTime.UtcNow.AddMonths(-1)
-                });
-
-                var manager = CreateManager();
-
-                // Act
-                manager.Execute(_token);
-
-                // Assert
-                var count = connection
-                    .StateDataSet
-                    .Count();
-                Assert.Equal(0, count);
-            }
+                Id = ObjectId.NewObjectId(),
+                Key = "key",
+                Score = 0,
+                Value = "",
+                ExpireAt = DateTime.UtcNow.AddMonths(-1)
+            });
+            var manager = CreateManager();
+            manager.Execute(_token);
+            var count = connection
+                .StateDataSet
+                .Count();
+            Assert.Equal(0, count);
         }
 
         [Fact, CleanDatabase]
         public void Execute_Processes_HashTable()
         {
-            using (var connection = ConnectionUtils.CreateConnection())
+            var connection = ConnectionUtils.CreateConnection();
+            connection.StateDataHash.Insert(new LiteHash
             {
-                // Arrange
-                connection.StateDataHash.Insert(new LiteHash
-                {
-                    Id = ObjectId.NewObjectId(),
-                    Key = "key",
-                    Field = "field",
-                    Value = "",
-                    ExpireAt = DateTime.UtcNow.AddMonths(-1)
-                });
-
-                var manager = CreateManager();
-
-                // Act
-                manager.Execute(_token);
-
-                // Assert
-                var count = connection
-                    .StateDataHash
-                    .Count();
-                Assert.Equal(0, count);
-            }
+                Id = ObjectId.NewObjectId(),
+                Key = "key",
+                Field = "field",
+                Value = "",
+                ExpireAt = DateTime.UtcNow.AddMonths(-1)
+            });
+            var manager = CreateManager();
+            manager.Execute(_token);
+            var count = connection
+                .StateDataHash
+                .Count();
+            Assert.Equal(0, count);
         }
 
 
         [Fact, CleanDatabase]
         public void Execute_Processes_AggregatedCounterTable()
         {
-            using (var connection = ConnectionUtils.CreateConnection())
+            var connection = ConnectionUtils.CreateConnection();
+            connection.StateDataAggregatedCounter.Insert(new AggregatedCounter
             {
-                // Arrange
-                connection.StateDataAggregatedCounter.Insert(new AggregatedCounter
-                {
-                    Key = "key",
-                    Value = 1,
-                    ExpireAt = DateTime.UtcNow.AddMonths(-1)
-                });
-
-                var manager = CreateManager();
-
-                // Act
-                manager.Execute(_token);
-
-                // Assert
-                Assert.Equal(0, connection
-                    .StateDataCounter
-                    .Count());
-            }
+                Key = "key",
+                Value = 1,
+                ExpireAt = DateTime.UtcNow.AddMonths(-1)
+            });
+            var manager = CreateManager();
+            manager.Execute(_token);
+            Assert.Equal(0, connection
+                .StateDataCounter
+                .Count());
         }
 
 

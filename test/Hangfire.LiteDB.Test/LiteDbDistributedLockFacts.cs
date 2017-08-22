@@ -162,10 +162,8 @@ namespace Hangfire.LiteDB.Test
 
         private static void UseConnection(Action<HangfireDbContext> action)
         {
-            using (var connection = ConnectionUtils.CreateConnection())
-            {
-                action(connection);
-            }
+            var connection = ConnectionUtils.CreateConnection();
+            action(connection);
         }
     }
 #pragma warning restore 1591

@@ -74,7 +74,7 @@ namespace Hangfire.LiteDB
 
             var jobId = jobDto.Id;
 
-            return jobId;
+            return jobId.ToString();
         }
 
         public override IFetchedJob FetchNextJob(string[] queues, CancellationToken cancellationToken)
@@ -122,7 +122,7 @@ namespace Hangfire.LiteDB
 
             var parameters = Database
                 .Job
-                .Find(j => j.Id == id)
+                .Find(j => j.Id.ToString() == id)
                 .Select(job => job.Parameters)
                 .FirstOrDefault();
 
@@ -139,7 +139,7 @@ namespace Hangfire.LiteDB
 
             var jobData = Database
                 .Job
-                .Find(_ => _.Id == jobId)
+                .Find(_ => _.Id.ToString() == jobId)
                 .FirstOrDefault();
 
             if (jobData == null)
@@ -177,7 +177,7 @@ namespace Hangfire.LiteDB
 
             var latest = Database
                 .Job
-                .Find(j => j.Id == jobId)
+                .Find(j => j.Id.ToString() == jobId)
                 .Select(x => x.StateHistory)
                 .FirstOrDefault();
 
@@ -221,7 +221,7 @@ namespace Hangfire.LiteDB
                 throw new ArgumentNullException(nameof(serverId));
             }
 
-            Database.Server.Delete(_ => _.Id == serverId);
+            Database.Server.Delete(_ => _.Id.ToString() == serverId);
         }
 
         public override void Heartbeat(string serverId)

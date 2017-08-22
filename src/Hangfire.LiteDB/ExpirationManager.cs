@@ -52,13 +52,10 @@ namespace Hangfire.LiteDB
         /// <param name="cancellationToken">Cancellation token</param>
         public void Execute(CancellationToken cancellationToken)
         {
-            using (HangfireDbContext connection = _storage.CreateAndOpenConnection())
-            {
-                DateTime now = DateTime.UtcNow;
-
-                RemoveExpiredRecord(connection.Job, _ => _.ExpireAt < now);
-                RemoveExpiredRecord(connection.StateDataExpiringKeyValue, _ => _.ExpireAt==now);
-            }
+            HangfireDbContext connection = _storage.CreateAndOpenConnection();
+            DateTime now = DateTime.UtcNow;
+            RemoveExpiredRecord(connection.Job, _ => _.ExpireAt < now);
+            RemoveExpiredRecord(connection.StateDataExpiringKeyValue, _ => _.ExpireAt==now);
 
             cancellationToken.WaitHandle.WaitOne(_checkInterval);
         }

@@ -52,7 +52,7 @@ namespace Hangfire.LiteDB
         {
             QueueCommand(x =>
             {
-                var job = x.Job.FindOne(_ => _.Id == jobId);
+                var job = x.Job.FindOne(_ => _.Id.ToString() == jobId);
                 job.ExpireAt = DateTime.UtcNow.Add(expireIn);
                 x.Job.Update(job);
             });
@@ -66,7 +66,7 @@ namespace Hangfire.LiteDB
         {
             QueueCommand(x =>
             {
-                var job = x.Job.FindOne(_ => _.Id == jobId);
+                var job = x.Job.FindOne(_ => _.Id.ToString() == jobId);
                 job.ExpireAt = null;
                 x.Job.Update(job);
             });
@@ -82,7 +82,7 @@ namespace Hangfire.LiteDB
             QueueCommand(x =>
             {
                 
-                var job = x.Job.FindOne(_ => _.Id == jobId);
+                var job = x.Job.FindOne(_ => _.Id.ToString() == jobId);
                 job.StateName = state.Name;
                 job.StateHistory.Append(new LiteState
                 {
@@ -104,7 +104,7 @@ namespace Hangfire.LiteDB
         {
             QueueCommand(x =>
             {
-                var job = x.Job.FindOne(_ => _.Id == jobId);
+                var job = x.Job.FindOne(_ => _.Id.ToString() == jobId);
                 job.StateHistory.Append(new LiteState
                 {
                     Name = state.Name,
@@ -257,7 +257,7 @@ namespace Hangfire.LiteDB
         /// <param name="value"></param>
         public override void RemoveFromList(string key, string value)
         {
-            QueueCommand(x => x.StateDataList.Delete(_ => _.Key == key & (string) _.Value == value));
+            QueueCommand(x => x.StateDataList.Delete(Query.And(Query.EQ("Key", key), Query.EQ("Value", value))));
         }
 
         /// <summary>

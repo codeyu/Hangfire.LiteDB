@@ -162,7 +162,7 @@ namespace Hangfire.LiteDB.Test
 
                 var parameters = database
                     .Job
-                    .Find(_ => _.Id==jobId)
+                    .Find(_ => _.Id.ToString()==jobId)
                     .Select(j => j.Parameters)
                     .ToList()
                     .SelectMany(j => j)
@@ -200,7 +200,7 @@ namespace Hangfire.LiteDB.Test
 
                 var liteJob = new LiteJob
                 {
-                    Id = ObjectId.NewObjectId().ToString(),
+                    Id = ObjectId.NewObjectId(),
                     InvocationData = JobHelper.ToJson(InvocationData.Serialize(job)),
                     Arguments = "[\"\\\"Arguments\\\"\"]",
                     StateName = "Succeeded",
@@ -208,7 +208,7 @@ namespace Hangfire.LiteDB.Test
                 };
                 database.Job.Insert(liteJob);
 
-                var result = connection.GetJobData(liteJob.Id);
+                var result = connection.GetJobData(liteJob.Id.ToString());
 
                 Assert.NotNull(result);
                 Assert.NotNull(result.Job);
@@ -255,7 +255,7 @@ namespace Hangfire.LiteDB.Test
                 };
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = "",
                     Arguments = "",
                     StateName = "",
@@ -264,8 +264,8 @@ namespace Hangfire.LiteDB.Test
                 };
 
                 database.Job.Insert(liteJob);
-                var jobId = liteJob.Id;
-                var job = database.Job.FindById(liteJob.Id);
+                var jobId = liteJob.Id.ToString();
+                var job = database.Job.FindById(liteJob.Id.ToString());
                 job.StateName = state.Name;
                 job.StateHistory.Append(new LiteState
                     {
@@ -293,14 +293,14 @@ namespace Hangfire.LiteDB.Test
             {
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = JobHelper.ToJson(new InvocationData(null, null, null, null)),
                     Arguments = "[\"\\\"Arguments\\\"\"]",
                     StateName = "Succeeded",
                     CreatedAt = DateTime.UtcNow
                 };
                 database.Job.Insert(liteJob);
-                var jobId = liteJob.Id;
+                var jobId = liteJob.Id.ToString();
 
                 var result = connection.GetJobData(jobId.ToString());
 
@@ -339,7 +339,7 @@ namespace Hangfire.LiteDB.Test
             {
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
@@ -351,7 +351,7 @@ namespace Hangfire.LiteDB.Test
 
                 var parameters = database
                     .Job
-                    .Find(j => j.Id == jobId)
+                    .Find(j =>  j.Id.ToString() == jobId)
                     .Select(j => j.Parameters)
                     .FirstOrDefault();
 
@@ -367,7 +367,7 @@ namespace Hangfire.LiteDB.Test
             {
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
@@ -380,7 +380,7 @@ namespace Hangfire.LiteDB.Test
 
                 var parameters = database
                     .Job
-                    .Find(j => j.Id == jobId)
+                    .Find(j =>  j.Id.ToString() == jobId)
                     .Select(j => j.Parameters)
                     .FirstOrDefault();
 
@@ -396,7 +396,7 @@ namespace Hangfire.LiteDB.Test
             {
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
@@ -408,7 +408,7 @@ namespace Hangfire.LiteDB.Test
 
                 var parameters = database
                     .Job
-                    .Find(j => j.Id == jobId)
+                    .Find(j =>  j.Id.ToString() == jobId)
                     .Select(j => j.Parameters)
                     .FirstOrDefault();
 
@@ -458,7 +458,7 @@ namespace Hangfire.LiteDB.Test
             {
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = "",
                     Arguments = "",
                     CreatedAt = DateTime.UtcNow
@@ -466,9 +466,9 @@ namespace Hangfire.LiteDB.Test
                 database.Job.Insert(liteJob);
 
 
-                connection.SetJobParameter(liteJob.Id, "name", "value");
+                connection.SetJobParameter(liteJob.Id.ToString(), "name", "value");
 
-                var value = connection.GetJobParameter(liteJob.Id, "name");
+                var value = connection.GetJobParameter(liteJob.Id.ToString(), "name");
 
                 Assert.Equal("value", value);
             });
@@ -1576,12 +1576,10 @@ namespace Hangfire.LiteDB.Test
         }
         private void UseConnection(Action<HangfireDbContext, LiteDbConnection> action)
         {
-            using (var database = ConnectionUtils.CreateConnection())
+            var database = ConnectionUtils.CreateConnection();
+            using (var connection = new LiteDbConnection(database, _providers))
             {
-                using (var connection = new LiteDbConnection(database, _providers))
-                {
-                    action(database, connection);
-                }
+                action(database, connection);
             }
         }
 

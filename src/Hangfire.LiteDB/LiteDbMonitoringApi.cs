@@ -75,7 +75,7 @@ namespace Hangfire.LiteDB
                     let data = JobHelper.FromJson<ServerData>(server.Data)
                     select new ServerDto
                     {
-                        Name = server.Id,
+                        Name = server.Id.ToString(),
                         Heartbeat = server.LastHeartbeat,
                         Queues = data.Queues.ToList(),
                         StartedAt = data.StartedAt ?? DateTime.MinValue,
@@ -421,7 +421,7 @@ namespace Hangfire.LiteDB
                 .ToList();
 
             var jobsFiltered = enqueuedJobs
-                .Select(jq => jobs.FirstOrDefault(job => job.Id == jq.JobId));
+                .Select(jq => jobs.FirstOrDefault(job => job.Id.ToString() == jq.JobId));
 
             var joinedJobs = jobsFiltered
                 .Where(job => job != null)
@@ -430,7 +430,7 @@ namespace Hangfire.LiteDB
                     var state = job.StateHistory.LastOrDefault();
                     return new JobDetailedDto
                     {
-                        Id = job.Id,
+                        Id = job.Id.ToString(),
                         InvocationData = job.InvocationData,
                         Arguments = job.Arguments,
                         CreatedAt = job.CreatedAt,
@@ -503,7 +503,7 @@ namespace Hangfire.LiteDB
                 .Where(x=>x.FetchedAt != null)
                 .ToList().ToDictionary(kv => kv.JobId, kv => kv);
 
-            IEnumerable<LiteJob> jobsFiltered = jobs.Where(job => jobIdToJobQueueMap.ContainsKey(job.Id));
+            IEnumerable<LiteJob> jobsFiltered = jobs.Where(job => jobIdToJobQueueMap.ContainsKey(job.Id.ToString()));
 
             List<JobDetailedDto> joinedJobs = jobsFiltered
                 .Select(job =>
@@ -511,7 +511,7 @@ namespace Hangfire.LiteDB
                     var state = job.StateHistory.FirstOrDefault(s => s.Name == job.StateName);
                     return new JobDetailedDto
                     {
-                        Id = job.Id,
+                        Id = job.Id.ToString(),
                         InvocationData = job.InvocationData,
                         Arguments = job.Arguments,
                         CreatedAt = job.CreatedAt,
@@ -557,7 +557,7 @@ namespace Hangfire.LiteDB
 
                     return new JobDetailedDto
                     {
-                        Id = job.Id,
+                        Id = job.Id.ToString(),
                         InvocationData = job.InvocationData,
                         Arguments = job.Arguments,
                         CreatedAt = job.CreatedAt,

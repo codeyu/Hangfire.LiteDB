@@ -1,5 +1,4 @@
-﻿using LiteDB;
-
+﻿
 namespace Hangfire.LiteDB
 {
     /// <summary>
@@ -40,38 +39,8 @@ namespace Hangfire.LiteDB
             return storage;
         }
 
-        /// <summary>
-        /// Configure Hangfire to use MongoDB storage
-        /// </summary>
-        /// <param name="configuration">Configuration</param>
         
-        /// <param name="liteConnStr"></param>
+
         
-        /// <returns></returns>
-        public static LiteDbStorage LiteDbStorage(this IGlobalConfiguration configuration,
-            ConnectionString liteConnStr)
-        {
-            return LiteDbStorage(configuration, liteConnStr, new LiteDbStorageOptions());
-        }
-
-        /// <summary>
-        /// Configure Hangfire to use MongoDB storage
-        /// </summary>
-        /// <param name="configuration">Configuration</param>
-       
-        /// <param name="liteConnStr"></param>
-
-        /// <param name="storageOptions">Storage options</param>
-        /// <returns></returns>
-        public static LiteDbStorage LiteDbStorage(this IGlobalConfiguration configuration,
-            ConnectionString liteConnStr,
-            LiteDbStorageOptions storageOptions)
-        {
-            var storage = new LiteDbStorage(liteConnStr, storageOptions);
-
-            configuration.UseStorage(storage);
-
-            return storage;
-        }
     }
 }
