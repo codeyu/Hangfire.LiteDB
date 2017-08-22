@@ -1,29 +1,16 @@
 ﻿using System;
+using System.IO;
 
 namespace Hangfire.LiteDB.Test.Utils
 {
 #pragma warning disable 1591
     public static class ConnectionUtils
     {
-        private const string DatabaseVariable = "Hangfire_Mongo_DatabaseName";
-        private const string ConnectionStringTemplateVariable = "Hangfire_Mongo_ConnectionStringTemplate";
-
-        private const string DefaultDatabaseName = @"Hangfire-Mongo-Tests";
-        private const string DefaultConnectionStringTemplate = @"mongodb://localhost";
-
-        private static string GetDatabaseName()
-        {
-            return Environment.GetEnvironmentVariable(DatabaseVariable) ?? DefaultDatabaseName;
-        }
-
+        private const string Ext = "db";
+        
         private static string GetConnectionString()
         {
-            return string.Format(GetConnectionStringTemplate(), GetDatabaseName());
-        }
-
-        private static string GetConnectionStringTemplate()
-        {
-            return Environment.GetEnvironmentVariable(ConnectionStringTemplateVariable) ?? DefaultConnectionStringTemplate;
+            return Path.GetFullPath(string.Format("Hangfire-LiteDB-Tests.{0}", Ext));
         }
 
         public static LiteDbStorage CreateStorage()

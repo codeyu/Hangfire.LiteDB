@@ -5,7 +5,7 @@ using LiteDB;
 namespace Hangfire.LiteDB
 {
     /// <summary>
-    /// Represents Mongo database context for Hangfire
+    /// Represents LiteDB database context for Hangfire
     /// </summary>
     public sealed class HangfireDbContext : IDisposable
     {
@@ -69,64 +69,64 @@ namespace Hangfire.LiteDB
         /// Reference to collection which contains various state information
         /// </summary>
         public LiteCollection<LiteKeyValue> StateDataKeyValue =>
-            Database.GetCollection<LiteKeyValue>(_prefix + $".{nameof(LiteKeyValue)}");
+            Database.GetCollection<LiteKeyValue>(_prefix + $"_{nameof(LiteKeyValue)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
         public LiteCollection<LiteExpiringKeyValue> StateDataExpiringKeyValue =>
-            Database.GetCollection<LiteExpiringKeyValue>(_prefix + $".{nameof(StateDataExpiringKeyValue)}");
+            Database.GetCollection<LiteExpiringKeyValue>(_prefix + $"_{nameof(StateDataExpiringKeyValue)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
         public LiteCollection<LiteHash> StateDataHash =>
-            Database.GetCollection<LiteHash>(_prefix + $".{nameof(LiteHash)}");
+            Database.GetCollection<LiteHash>(_prefix + $"_{nameof(LiteHash)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
         public LiteCollection<LiteList> StateDataList =>
-            Database.GetCollection<LiteList>(_prefix + $".{nameof(LiteList)}");
+            Database.GetCollection<LiteList>(_prefix + $"_{nameof(LiteList)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
         public LiteCollection<LiteSet> StateDataSet =>
-            Database.GetCollection<LiteSet>(_prefix + $".{nameof(LiteSet)}");
+            Database.GetCollection<LiteSet>(_prefix + $"_{nameof(LiteSet)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
         public LiteCollection<Counter> StateDataCounter =>
-            Database.GetCollection<Counter>(_prefix + $".{nameof(Counter)}");
+            Database.GetCollection<Counter>(_prefix + $"_{nameof(Counter)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
         public LiteCollection<AggregatedCounter> StateDataAggregatedCounter =>
-            Database.GetCollection<AggregatedCounter>(_prefix + $".{nameof(AggregatedCounter)}");
+            Database.GetCollection<AggregatedCounter>(_prefix + $"_{nameof(AggregatedCounter)}");
 
         /// <summary>
         /// Reference to collection which contains distributed locks
         /// </summary>
         public LiteCollection<DistributedLock> DistributedLock => Database
-            .GetCollection<DistributedLock>(_prefix + ".locks");
+            .GetCollection<DistributedLock>(_prefix + "_locks");
 
         /// <summary>
         /// Reference to collection which contains jobs
         /// </summary>
-        public LiteCollection<LiteJob> Job => Database.GetCollection<LiteJob>(_prefix + ".job");
+        public LiteCollection<LiteJob> Job => Database.GetCollection<LiteJob>(_prefix + "_job");
 
         /// <summary>
         /// Reference to collection which contains jobs queues
         /// </summary>
         public LiteCollection<JobQueue> JobQueue =>
-            Database.GetCollection<JobQueue>(_prefix + ".jobQueue");
+            Database.GetCollection<JobQueue>(_prefix + "_jobQueue");
 
         /// <summary>
         /// Reference to collection which contains schemas
         /// </summary>
-        public LiteCollection<LiteSchema> Schema => Database.GetCollection<LiteSchema>(_prefix + ".schema");
+        public LiteCollection<LiteSchema> Schema => Database.GetCollection<LiteSchema>(_prefix + "_schema");
 
         /// <summary>
         /// Reference to collection which contains servers information
         /// </summary>
-        public LiteCollection<Entities.Server> Server => Database.GetCollection<Entities.Server>(_prefix + ".server");
+        public LiteCollection<Entities.Server> Server => Database.GetCollection<Entities.Server>(_prefix + "_server");
 
         /// <summary>
         /// Initializes intial collections schema for Hangfire
@@ -138,11 +138,43 @@ namespace Hangfire.LiteDB
         }
 
 
+
+        private bool _disposed;
         /// <summary>
         /// Disposes the object
         /// </summary>
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        ~HangfireDbContext()
+        {
+            Dispose(false);
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="disposing"></param>
+         void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                // free other managed objects that implement
+                // IDisposable only
+            }
+
+            Database.Dispose();
+
+            _disposed = true;
         }
     }
 }
