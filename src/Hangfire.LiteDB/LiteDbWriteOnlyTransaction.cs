@@ -20,21 +20,17 @@ namespace Hangfire.LiteDB
 
         private readonly PersistentJobQueueProviderCollection _queueProviders;
 
-        private readonly LiteDbStorageOptions _options;
-
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="connection"></param>
         /// <param name="queueProviders"></param>
-        /// <param name="options"></param>
         /// <exception cref="ArgumentNullException"></exception>
         public LiteDbWriteOnlyTransaction(HangfireDbContext connection,
-            PersistentJobQueueProviderCollection queueProviders, LiteDbStorageOptions options = null)
+            PersistentJobQueueProviderCollection queueProviders)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _queueProviders = queueProviders ?? throw new ArgumentNullException(nameof(queueProviders));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            
         }
         /// <summary>
         /// 
@@ -88,6 +84,7 @@ namespace Hangfire.LiteDB
                 job.StateName = state.Name;
                 job.StateHistory.Append(new LiteState
                 {
+                    JobId = iJobId,
                     Name = state.Name,
                     Reason = state.Reason,
                     CreatedAt = DateTime.UtcNow,
@@ -110,6 +107,7 @@ namespace Hangfire.LiteDB
                 var job = x.Job.FindOne(_ => _.Id == iJobId);
                 job.StateHistory.Append(new LiteState
                 {
+                    JobId = iJobId,
                     Name = state.Name,
                     Reason = state.Reason,
                     CreatedAt = DateTime.UtcNow,
@@ -335,7 +333,7 @@ namespace Hangfire.LiteDB
                         Value = value,
                         ExpireAt = null
                     };
-                    var oldHash = x.StateDataHash.Find(Query.EQ("Key", key)).FirstOrDefault();
+                    var oldHash = x.StateDataHash.Find(Query.And(Query.EQ("Key", key),Query.EQ("Field",field))).FirstOrDefault();
                     if (oldHash == null)
                     {
                         x.StateDataHash.Insert(state);

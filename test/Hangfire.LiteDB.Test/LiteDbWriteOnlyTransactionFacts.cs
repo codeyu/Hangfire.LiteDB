@@ -27,7 +27,7 @@ namespace Hangfire.LiteDB.Test
         [Fact]
         public void Ctor_ThrowsAnException_IfConnectionIsNull()
         {
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() => new LiteDbWriteOnlyTransaction(null, _queueProviders, new LiteDbStorageOptions()));
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() => new LiteDbWriteOnlyTransaction(null, _queueProviders));
 
             Assert.Equal("connection", exception.ParamName);
         }
@@ -35,13 +35,13 @@ namespace Hangfire.LiteDB.Test
         [Fact, CleanDatabase]
         public void Ctor_ThrowsAnException_IfProvidersCollectionIsNull()
         {
-            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbWriteOnlyTransaction(ConnectionUtils.CreateConnection(), null, new LiteDbStorageOptions()));
+            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbWriteOnlyTransaction(ConnectionUtils.CreateConnection(), null));
 
             Assert.Equal("queueProviders", exception.ParamName);
         }
 
         [Fact, CleanDatabase]
-        public void Ctor_ThrowsAnException_IfMongoStorageOptionsIsNull()
+        public void Ctor_ThrowsAnException_IfLiteDBStorageOptionsIsNull()
         {
             var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbWriteOnlyTransaction(ConnectionUtils.CreateConnection(), _queueProviders));
 
@@ -74,12 +74,12 @@ namespace Hangfire.LiteDB.Test
                 var jobId = job.Id.ToString();
                 var anotherJobId = anotherJob.Id;
 
-                Commit(database, x => x.ExpireJob(jobId.ToString(), TimeSpan.FromDays(1)));
+                Commit(database, x => x.ExpireJob(jobId, TimeSpan.FromDays(1)));
 
-                var testJob = GetTestJob(database, jobId);
+                var testJob = GetTestJob(database, job.Id);
                 Assert.True(DateTime.UtcNow.AddMinutes(-1) < testJob.ExpireAt && testJob.ExpireAt <= DateTime.UtcNow.AddDays(1));
 
-                var anotherTestJob = GetTestJob(database, anotherJobId.ToString());
+                var anotherTestJob = GetTestJob(database, anotherJobId);
                 Assert.Null(anotherTestJob.ExpireAt);
             });
         }
@@ -110,12 +110,12 @@ namespace Hangfire.LiteDB.Test
                 var jobId = job.Id.ToString();
                 var anotherJobId = anotherJob.Id;
 
-                Commit(database, x => x.PersistJob(jobId.ToString()));
+                Commit(database, x => x.PersistJob(jobId));
 
-                var testjob = GetTestJob(database, jobId);
+                var testjob = GetTestJob(database, job.Id);
                 Assert.Null(testjob.ExpireAt);
 
-                var anotherTestJob = GetTestJob(database, anotherJobId.ToString());
+                var anotherTestJob = GetTestJob(database, anotherJobId);
                 Assert.NotNull(anotherTestJob.ExpireAt);
             });
         }
@@ -144,7 +144,6 @@ namespace Hangfire.LiteDB.Test
                 database.Job.Insert(anotherJob);
 
                 var jobId = job.Id.ToString();
-                var anotherJobId = anotherJob.Id.ToString();
 	            var serializedData = new Dictionary<string, string> {{"Name", "Value"}};
 
 				var state = new Mock<IState>();
@@ -152,13 +151,13 @@ namespace Hangfire.LiteDB.Test
                 state.Setup(x => x.Reason).Returns("Reason");
                 state.Setup(x => x.SerializeData()).Returns(serializedData);
 
-                Commit(database, x => x.SetJobState(jobId.ToString(), state.Object));
+                Commit(database, x => x.SetJobState(jobId, state.Object));
 
-                var testJob = GetTestJob(database, jobId);
+                var testJob = GetTestJob(database, job.Id);
                 Assert.Equal("State", testJob.StateName);
                 Assert.Equal(1, testJob.StateHistory.Length);
 
-                var anotherTestJob = GetTestJob(database, anotherJobId);
+                var anotherTestJob = GetTestJob(database, anotherJob.Id);
                 Assert.Null(anotherTestJob.StateName);
                 Assert.Equal(0, anotherTestJob.StateHistory.Length);
 
@@ -186,7 +185,7 @@ namespace Hangfire.LiteDB.Test
                 };
                 database.Job.Insert(job);
 
-                var jobId = job.Id;
+                var jobId = job.IdString;
 	            var serializedData = new Dictionary<string, string> {{"Name", "Value"}};
 
 				var state = new Mock<IState>();
@@ -194,9 +193,9 @@ namespace Hangfire.LiteDB.Test
                 state.Setup(x => x.Reason).Returns("Reason");
                 state.Setup(x => x.SerializeData()).Returns(serializedData);
 
-                Commit(database, x => x.AddJobState(jobId.ToString(), state.Object));
+                Commit(database, x => x.AddJobState(jobId, state.Object));
 
-                var testJob = GetTestJob(database, jobId.ToString());
+                var testJob = GetTestJob(database, job.Id);
                 Assert.Null(testJob.StateName);
 
                 var jobWithStates = database.Job.FindAll().ToList().Single();
@@ -896,7 +895,7 @@ namespace Hangfire.LiteDB.Test
         }
 
 
-        private static LiteJob GetTestJob(HangfireDbContext database, string jobId)
+        private static LiteJob GetTestJob(HangfireDbContext database, int jobId)
         {
             return database.Job.FindById(jobId);
         }
@@ -924,7 +923,7 @@ namespace Hangfire.LiteDB.Test
 
         private void Commit(HangfireDbContext connection, Action<LiteDbWriteOnlyTransaction> action)
         {
-            using (LiteDbWriteOnlyTransaction transaction = new LiteDbWriteOnlyTransaction(connection, _queueProviders, new LiteDbStorageOptions()))
+            using (LiteDbWriteOnlyTransaction transaction = new LiteDbWriteOnlyTransaction(connection, _queueProviders))
             {
                 action(transaction);
                 transaction.Commit();

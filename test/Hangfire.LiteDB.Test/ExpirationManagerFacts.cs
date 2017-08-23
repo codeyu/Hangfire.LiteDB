@@ -4,6 +4,7 @@ using System.Threading;
 using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
 using LiteDB;
+using Microsoft.Win32.SafeHandles;
 using Xunit;
 
 namespace Hangfire.LiteDB.Test
@@ -190,11 +191,14 @@ namespace Hangfire.LiteDB.Test
 
         private static bool IsEntryExpired(HangfireDbContext connection)
         {
-            var count = connection
-                .StateDataExpiringKeyValue
+            var countSet = connection
+                .StateDataSet
+                .Count();
+            var countHash = connection
+                .StateDataHash
                 .Count();
 
-            return count == 0;
+            return countHash == 0 && countSet == 0;
         }
 
         private ExpirationManager CreateManager()
@@ -204,7 +208,7 @@ namespace Hangfire.LiteDB.Test
 
         private static void Commit(HangfireDbContext connection, Action<LiteDbWriteOnlyTransaction> action)
         {
-            using (LiteDbWriteOnlyTransaction transaction = new LiteDbWriteOnlyTransaction(connection, _queueProviders, new LiteDbStorageOptions()))
+            using (LiteDbWriteOnlyTransaction transaction = new LiteDbWriteOnlyTransaction(connection, _queueProviders))
             {
                 action(transaction);
                 transaction.Commit();

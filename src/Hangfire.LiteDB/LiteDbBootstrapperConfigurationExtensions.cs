@@ -8,10 +8,10 @@ namespace Hangfire.LiteDB
     {
        
         /// <summary>
-        /// Configure Hangfire to use MongoDB storage
+        /// Configure Hangfire to use LiteDB storage
         /// </summary>
         /// <param name="configuration">Configuration</param>
-        /// <param name="connectionString">Connection string for Mongo database, for example 'mongodb://username:password@host:port'</param>
+        /// <param name="connectionString">Connection string for LiteDB database, for example 'LiteDB://username:password@host:port'</param>
       
         /// <returns></returns>
         public static LiteDbStorage LiteDbStorage(this IGlobalConfiguration configuration,
@@ -21,10 +21,10 @@ namespace Hangfire.LiteDB
         }
 
         /// <summary>
-        /// Configure Hangfire to use MongoDB storage
+        /// Configure Hangfire to use LiteDB storage
         /// </summary>
         /// <param name="configuration">Configuration</param>
-        /// <param name="connectionString">Connection string for Mongo database, for example 'mongodb://username:password@host:port'</param>
+        /// <param name="connectionString">Connection string for LiteDB database, for example 'LiteDB://username:password@host:port'</param>
         
         /// <param name="storageOptions">Storage options</param>
         /// <returns></returns>

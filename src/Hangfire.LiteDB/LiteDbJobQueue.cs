@@ -64,9 +64,13 @@ namespace Hangfire.LiteDB
                 {
                     fetchedJob = _connection.JobQueue.FindOne(Query.And(
                         fetchCondition, Query.EQ("Queue", queue)));
-                    fetchedJob.FetchedAt = DateTime.UtcNow;
-                    _connection.JobQueue.Update(fetchedJob);
-                    break;
+                    if (fetchedJob != null)
+                    {
+                        fetchedJob.FetchedAt = DateTime.UtcNow;
+                        _connection.JobQueue.Update(fetchedJob);
+                        break;
+                    }
+                    
                 }
 
                 if (fetchedJob == null)

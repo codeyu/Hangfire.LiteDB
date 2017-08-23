@@ -264,8 +264,8 @@ namespace Hangfire.LiteDB.Test
                 };
 
                 database.Job.Insert(liteJob);
-                var jobId = liteJob.Id.ToString();
-                var job = database.Job.FindById(liteJob.Id.ToString());
+                var jobId = liteJob.Id;
+                var job = database.Job.FindById(liteJob.Id);
                 job.StateName = state.Name;
                 job.StateHistory.Append(new LiteState
                     {
@@ -300,9 +300,9 @@ namespace Hangfire.LiteDB.Test
                     CreatedAt = DateTime.UtcNow
                 };
                 database.Job.Insert(liteJob);
-                var jobId = liteJob.Id.ToString();
+                var jobId = liteJob.IdString;
 
-                var result = connection.GetJobData(jobId.ToString());
+                var result = connection.GetJobData(jobId);
 
                 Assert.NotNull(result.LoadException);
             });
@@ -345,13 +345,13 @@ namespace Hangfire.LiteDB.Test
                     CreatedAt = DateTime.UtcNow
                 };
                 database.Job.Insert(liteJob);
-                string jobId = liteJob.Id.ToString();
+                string jobId = liteJob.IdString;
 
                 connection.SetJobParameter(jobId, "Name", "Value");
 
                 var parameters = database
                     .Job
-                    .Find(j =>  j.Id.ToString() == jobId)
+                    .Find(j =>  j.Id == liteJob.Id)
                     .Select(j => j.Parameters)
                     .FirstOrDefault();
 
@@ -373,14 +373,14 @@ namespace Hangfire.LiteDB.Test
                     CreatedAt = DateTime.UtcNow
                 };
                 database.Job.Insert(liteJob);
-                string jobId = liteJob.Id.ToString();
+                string jobId = liteJob.IdString;
 
                 connection.SetJobParameter(jobId, "Name", "Value");
                 connection.SetJobParameter(jobId, "Name", "AnotherValue");
 
                 var parameters = database
                     .Job
-                    .Find(j =>  j.Id.ToString() == jobId)
+                    .Find(j =>  j.Id == liteJob.Id)
                     .Select(j => j.Parameters)
                     .FirstOrDefault();
 
@@ -402,13 +402,13 @@ namespace Hangfire.LiteDB.Test
                     CreatedAt = DateTime.UtcNow
                 };
                 database.Job.Insert(liteJob);
-                string jobId = liteJob.Id.ToString();
+                string jobId = liteJob.IdString;
 
                 connection.SetJobParameter(jobId, "Name", null);
 
                 var parameters = database
                     .Job
-                    .Find(j =>  j.Id.ToString() == jobId)
+                    .Find(j =>  j.Id == liteJob.Id)
                     .Select(j => j.Parameters)
                     .FirstOrDefault();
 
@@ -466,9 +466,9 @@ namespace Hangfire.LiteDB.Test
                 database.Job.Insert(liteJob);
 
 
-                connection.SetJobParameter(liteJob.Id.ToString(), "name", "value");
+                connection.SetJobParameter(liteJob.IdString, "name", "value");
 
-                var value = connection.GetJobParameter(liteJob.Id.ToString(), "name");
+                var value = connection.GetJobParameter(liteJob.IdString, "name");
 
                 Assert.Equal("value", value);
             });

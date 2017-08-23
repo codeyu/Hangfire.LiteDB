@@ -6,6 +6,7 @@ using Hangfire.Common;
 using Hangfire.LiteDB.Entities;
 using Hangfire.Server;
 using Hangfire.Storage;
+using LiteDB;
 
 namespace Hangfire.LiteDB
 {
@@ -42,7 +43,7 @@ namespace Hangfire.LiteDB
 
         public override IWriteOnlyTransaction CreateWriteTransaction()
         {
-            return new LiteDbWriteOnlyTransaction(Database, _queueProviders, _storageOptions);
+            return new LiteDbWriteOnlyTransaction(Database, _queueProviders);
         }
 
         public override IDisposable AcquireDistributedLock(string resource, TimeSpan timeout)
@@ -105,8 +106,8 @@ namespace Hangfire.LiteDB
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
 
-
-            var liteJob = Database.Job.FindById(id);
+            var iJobId = int.Parse(id);
+            var liteJob = Database.Job.FindById(iJobId);
             liteJob.Parameters = new Dictionary<string, string> { { name, value } };
 
             Database.Job.Update(liteJob);
@@ -119,10 +120,10 @@ namespace Hangfire.LiteDB
 
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
-
+            var iJobId = int.Parse(id);
             var parameters = Database
                 .Job
-                .Find(j => j.Id.ToString() == id)
+                .Find(j => j.Id == iJobId)
                 .Select(job => job.Parameters)
                 .FirstOrDefault();
 
@@ -136,10 +137,10 @@ namespace Hangfire.LiteDB
         {
             if (jobId == null)
                 throw new ArgumentNullException(nameof(jobId));
-
+            var iJobId = int.Parse(jobId);
             var jobData = Database
                 .Job
-                .Find(_ => _.Id.ToString() == jobId)
+                .Find(_ => _.Id == iJobId)
                 .FirstOrDefault();
 
             if (jobData == null)
@@ -175,9 +176,10 @@ namespace Hangfire.LiteDB
             if (jobId == null)
                 throw new ArgumentNullException(nameof(jobId));
 
+            var iJobId = int.Parse(jobId);
             var latest = Database
                 .Job
-                .Find(j => j.Id.ToString() == jobId)
+                .Find(j => j.Id == iJobId)
                 .Select(x => x.StateHistory)
                 .FirstOrDefault();
 
@@ -208,10 +210,26 @@ namespace Hangfire.LiteDB
                 Queues = context.Queues,
                 StartedAt = DateTime.UtcNow
             };
-            var server = Database.Server.FindById(serverId);
-            server.LastHeartbeat = DateTime.UtcNow;
-            server.Data = JobHelper.ToJson(data);
-            Database.Server.Upsert(server);
+
+            var server = Database.Server.FindOne(Query.EQ("Id", serverId));
+            if (server == null)
+            {
+                server = new Entities.Server
+                {
+                    Id = serverId,
+                    Data = JobHelper.ToJson(data),
+                    LastHeartbeat = DateTime.UtcNow
+                };
+                Database.Server.Insert(server);
+            }
+            else
+            {
+                server.LastHeartbeat = DateTime.UtcNow;
+                server.Data = JobHelper.ToJson(data);
+                Database.Server.Update(server);
+            }
+            
+            
         }
 
         public override void RemoveServer(string serverId)
@@ -221,7 +239,7 @@ namespace Hangfire.LiteDB
                 throw new ArgumentNullException(nameof(serverId));
             }
 
-            Database.Server.Delete(_ => _.Id.ToString() == serverId);
+            Database.Server.Delete(_ => _.Id == serverId);
         }
 
         public override void Heartbeat(string serverId)
@@ -289,7 +307,7 @@ namespace Hangfire.LiteDB
 
         public override void SetRangeInHash(string key, IEnumerable<KeyValuePair<string, string>> keyValuePairs)
         {
-            using (var transaction = new LiteDbWriteOnlyTransaction(Database, _queueProviders, _storageOptions))
+            using (var transaction = new LiteDbWriteOnlyTransaction(Database, _queueProviders))
             {
                 transaction.SetRangeInHash(key, keyValuePairs);
                 transaction.Commit();

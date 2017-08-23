@@ -18,7 +18,7 @@ namespace Hangfire.LiteDB
         /// <summary>
         /// Constructs Job Storage by database connection string
         /// </summary>
-        /// <param name="connectionString">MongoDB connection string</param>
+        /// <param name="connectionString">LiteDB connection string</param>
         public LiteDbStorage(string connectionString)
             : this(connectionString,  new LiteDbStorageOptions())
         {

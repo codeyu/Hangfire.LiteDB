@@ -9,7 +9,7 @@ using LiteDB;
 namespace Hangfire.LiteDB
 {
     /// <summary>
-    /// Represents Counter collection aggregator for Mongo database
+    /// Represents Counter collection aggregator for LiteDB database
     /// </summary>
     public class CountersAggregator : IBackgroundProcess
     {

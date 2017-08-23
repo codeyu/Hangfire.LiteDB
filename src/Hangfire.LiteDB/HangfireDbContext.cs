@@ -61,7 +61,7 @@ namespace Hangfire.LiteDB
         
 
         /// <summary>
-        /// Mongo database connection identifier
+        /// LiteDB database connection identifier
         /// </summary>
         public string ConnectionId { get; }
 
