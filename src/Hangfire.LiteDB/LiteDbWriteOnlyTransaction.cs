@@ -52,7 +52,8 @@ namespace Hangfire.LiteDB
         {
             QueueCommand(x =>
             {
-                var job = x.Job.FindOne(_ => _.Id.ToString() == jobId);
+                var iJobId = int.Parse(jobId);
+                var job = x.Job.FindOne(_ => _.Id == iJobId);
                 job.ExpireAt = DateTime.UtcNow.Add(expireIn);
                 x.Job.Update(job);
             });
@@ -66,7 +67,8 @@ namespace Hangfire.LiteDB
         {
             QueueCommand(x =>
             {
-                var job = x.Job.FindOne(_ => _.Id.ToString() == jobId);
+                var iJobId = int.Parse(jobId);
+                var job = x.Job.FindOne(_ => _.Id == iJobId);
                 job.ExpireAt = null;
                 x.Job.Update(job);
             });
@@ -81,8 +83,8 @@ namespace Hangfire.LiteDB
         {
             QueueCommand(x =>
             {
-                
-                var job = x.Job.FindOne(_ => _.Id.ToString() == jobId);
+                var iJobId = int.Parse(jobId);
+                var job = x.Job.FindOne(_ => _.Id == iJobId);
                 job.StateName = state.Name;
                 job.StateHistory.Append(new LiteState
                 {
@@ -104,7 +106,8 @@ namespace Hangfire.LiteDB
         {
             QueueCommand(x =>
             {
-                var job = x.Job.FindOne(_ => _.Id.ToString() == jobId);
+                var iJobId = int.Parse(jobId);
+                var job = x.Job.FindOne(_ => _.Id == iJobId);
                 job.StateHistory.Append(new LiteState
                 {
                     Name = state.Name,
@@ -220,7 +223,17 @@ namespace Hangfire.LiteDB
                     Value = value,
                     ExpireAt = null
                 };
-                x.StateDataSet.Upsert(liteSet);
+                var oldSet = x.StateDataSet.Find(Query.And(Query.EQ("Key", key), Query.EQ("Value", value))).FirstOrDefault();
+                if (oldSet == null)
+                {
+                    x.StateDataSet.Insert(liteSet);
+                }
+                else
+                {
+                    liteSet.Id = oldSet.Id;
+                    x.StateDataSet.Update(liteSet);
+                }
+                
             });
             
         }
@@ -232,7 +245,7 @@ namespace Hangfire.LiteDB
         /// <param name="value"></param>
         public override void RemoveFromSet(string key, string value)
         {
-            QueueCommand(x => x.StateDataSet.Delete(_ => _.Key == key & (string) _.Value == value));
+            QueueCommand(x => x.StateDataSet.Delete(Query.And(Query.EQ("Key", key), Query.EQ("Value", value))));
         }
 
         /// <summary>
@@ -321,8 +334,18 @@ namespace Hangfire.LiteDB
                         Field = field,
                         Value = value,
                         ExpireAt = null
-                    };    
-                    x.StateDataHash.Upsert(state);
+                    };
+                    var oldHash = x.StateDataHash.Find(Query.EQ("Key", key)).FirstOrDefault();
+                    if (oldHash == null)
+                    {
+                        x.StateDataHash.Insert(state);
+                    }
+                    else
+                    {
+                        state.Id = oldHash.Id;
+                        x.StateDataHash.Update(state);
+                    }
+                    
                 });
             }
         }
@@ -488,8 +511,17 @@ namespace Hangfire.LiteDB
                         ExpireAt = null,
                         Score = 0.0
                     };
-                        
-                    x.StateDataSet.Upsert(state);
+                    var oldSet = x.StateDataSet.Find(Query.And(Query.EQ("Key", key), Query.EQ("Value", item))).FirstOrDefault();
+                    if (oldSet == null)
+                    {
+                        x.StateDataSet.Insert(state);
+                    }
+                    else
+                    {
+                        state.Id = oldSet.Id;
+                        x.StateDataSet.Update(state);
+                    }    
+                    
                 });
             }
 

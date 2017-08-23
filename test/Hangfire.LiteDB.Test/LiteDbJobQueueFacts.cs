@@ -97,7 +97,7 @@ namespace Hangfire.LiteDB.Test
             {
                 var jobQueue = new JobQueue
                 {
-                    JobId = 1.ToString(),
+                    JobId = 1,
                     Queue = "default"
                 };
 
@@ -130,7 +130,7 @@ namespace Hangfire.LiteDB.Test
 
                 var jobQueue = new JobQueue
                 {
-                    JobId =  job.Id.ToString(),
+                    JobId =  job.Id,
                     Queue = "default"
                 };
                 connection.JobQueue.Insert(jobQueue);
@@ -139,11 +139,11 @@ namespace Hangfire.LiteDB.Test
 
                 // Act
                 var payload = queue.Dequeue(DefaultQueues, CreateTimingOutCancellationToken());
-
+                var payloadJobId = int.Parse(payload.JobId);
                 // Assert
                 Assert.NotNull(payload);
 
-                var fetchedAt = connection.JobQueue.Find(_ => _.JobId== payload.JobId).FirstOrDefault().FetchedAt;
+                var fetchedAt = connection.JobQueue.Find(_ => _.JobId== payloadJobId).FirstOrDefault().FetchedAt;
 
                 Assert.NotNull(fetchedAt);
                 Assert.True(fetchedAt > DateTime.UtcNow.AddMinutes(-1));
@@ -166,7 +166,7 @@ namespace Hangfire.LiteDB.Test
 
                 var jobQueue = new JobQueue
                 {
-                    JobId =  job.Id.ToString(),
+                    JobId =  job.Id,
                     Queue = "default",
                     FetchedAt = DateTime.UtcNow.AddDays(-1)
                 };
@@ -206,13 +206,13 @@ namespace Hangfire.LiteDB.Test
 
                 connection.JobQueue.Insert(new JobQueue
                 {
-                    JobId =  job1.Id.ToString(),
+                    JobId =  job1.Id,
                     Queue = "default"
                 });
 
                 connection.JobQueue.Insert(new JobQueue
                 {
-                    JobId =  job2.Id.ToString(),
+                    JobId =  job2.Id,
                     Queue = "default"
                 });
 
@@ -220,9 +220,10 @@ namespace Hangfire.LiteDB.Test
 
                 // Act
                 var payload = queue.Dequeue(DefaultQueues, CreateTimingOutCancellationToken());
+                var payloadJobId = int.Parse(payload.JobId);
 
                 // Assert
-                var otherJobFetchedAt = connection.JobQueue.Find(_ => _.JobId!= payload.JobId).FirstOrDefault().FetchedAt;
+                var otherJobFetchedAt = connection.JobQueue.Find(_ => _.JobId!= payloadJobId).FirstOrDefault().FetchedAt;
 
                 Assert.Null(otherJobFetchedAt);
             });
@@ -243,7 +244,7 @@ namespace Hangfire.LiteDB.Test
 
                 connection.JobQueue.Insert(new JobQueue
                 {
-                    JobId =  job1.Id.ToString(),
+                    JobId =  job1.Id,
                     Queue = "critical"
                 });
 
@@ -277,13 +278,13 @@ namespace Hangfire.LiteDB.Test
 
                 connection.JobQueue.Insert(new JobQueue
                 {
-                    JobId = defaultJob.Id.ToString(),
+                    JobId = defaultJob.Id,
                     Queue = "default"
                 });
 
                 connection.JobQueue.Insert(new JobQueue
                 {
-                    JobId = criticalJob.Id.ToString(),
+                    JobId = criticalJob.Id,
                     Queue = "critical"
                 });
 

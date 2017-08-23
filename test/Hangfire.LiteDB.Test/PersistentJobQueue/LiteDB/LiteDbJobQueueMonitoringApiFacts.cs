@@ -286,7 +286,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
             var jobQueue = new JobQueue
             {
                 Queue = queue,
-                JobId = job.Id.ToString()
+                JobId = job.Id
             };
 
             if (isFetched)

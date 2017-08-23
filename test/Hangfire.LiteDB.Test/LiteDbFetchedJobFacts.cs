@@ -11,7 +11,7 @@ namespace Hangfire.LiteDB.Test
     [Collection("Database")]
     public class LiteDbFetchedJobFacts
     {
-        private const string JobId = "id";
+        private const int JobId = 0;
         private const string Queue = "queue";
 
 
@@ -57,7 +57,7 @@ namespace Hangfire.LiteDB.Test
             {
                 var fetchedJob = new LiteDbFetchedJob(connection, ObjectId.NewObjectId(), JobId, Queue);
 
-                Assert.Equal(JobId, fetchedJob.JobId);
+                Assert.Equal(JobId.ToString(), fetchedJob.JobId);
                 Assert.Equal(Queue, fetchedJob.Queue);
             });
         }
@@ -69,7 +69,7 @@ namespace Hangfire.LiteDB.Test
             {
                 // Arrange
                 var queue = "default";
-                var jobId = ObjectId.NewObjectId().ToString();
+                var jobId = 1;
                 var id = CreateJobQueueRecord(connection, jobId, queue);
                 var processingJob = new LiteDbFetchedJob(connection, id, jobId, queue);
 
@@ -88,11 +88,11 @@ namespace Hangfire.LiteDB.Test
             UseConnection(connection =>
             {
                 // Arrange
-                CreateJobQueueRecord(connection, "1", "default");
-                CreateJobQueueRecord(connection, "2", "critical");
-                CreateJobQueueRecord(connection, "3", "default");
+                CreateJobQueueRecord(connection, 1, "default");
+                CreateJobQueueRecord(connection, 2, "critical");
+                CreateJobQueueRecord(connection, 3, "default");
 
-                var fetchedJob = new LiteDbFetchedJob(connection, ObjectId.NewObjectId(), "999", "default");
+                var fetchedJob = new LiteDbFetchedJob(connection, ObjectId.NewObjectId(), 999, "default");
 
                 // Act
                 fetchedJob.RemoveFromQueue();
@@ -110,7 +110,7 @@ namespace Hangfire.LiteDB.Test
             {
                 // Arrange
                 var queue = "default";
-                var jobId = ObjectId.NewObjectId().ToString();
+                var jobId = 1;
                 var id = CreateJobQueueRecord(connection, jobId, queue);
                 var processingJob = new LiteDbFetchedJob(connection, id, jobId, queue);
 
@@ -130,7 +130,7 @@ namespace Hangfire.LiteDB.Test
             {
                 // Arrange
                 var queue = "default";
-                var jobId = ObjectId.NewObjectId().ToString();
+                var jobId = 1;
                 var id = CreateJobQueueRecord(connection, jobId, queue);
                 var processingJob = new LiteDbFetchedJob(connection, id, jobId, queue);
 
@@ -143,7 +143,7 @@ namespace Hangfire.LiteDB.Test
             });
         }
 
-        private static ObjectId CreateJobQueueRecord(HangfireDbContext connection, string jobId, string queue)
+        private static ObjectId CreateJobQueueRecord(HangfireDbContext connection, int jobId, string queue)
         {
             var jobQueue = new JobQueue
             {

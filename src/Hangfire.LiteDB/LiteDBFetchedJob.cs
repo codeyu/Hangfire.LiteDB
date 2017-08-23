@@ -25,7 +25,7 @@ namespace Hangfire.LiteDB
         /// <param name="id">Identifier</param>
         /// <param name="jobId">Job ID</param>
         /// <param name="queue">Queue name</param>
-        public LiteDbFetchedJob(HangfireDbContext connection, ObjectId id, int jobId, string queue)
+        public LiteDbFetchedJob(HangfireDbContext connection, ObjectId id, int? jobId, string queue)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _id = id;
