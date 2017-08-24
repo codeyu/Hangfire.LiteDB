@@ -42,14 +42,17 @@ namespace Hangfire.LiteDB
         /// <returns></returns>
         public IEnumerable<int> GetEnqueuedJobIds(string queue, int from, int perPage)
         {
-            var jobIds = _connection.JobQueue
+            return _connection.JobQueue
                 .Find(_ => _.Queue== queue && _.FetchedAt==null)
                 .Skip(from)
                 .Take(perPage)
                 .Select(_ => _.JobId)
-                .ToList();
-            var jobs = _connection.Job.Find(Query.In("Id", jobIds.ToBsonValueEnumerable())).Where(x=>x.StateHistory.Length > 0);
-            return jobs.Select(_=>_.Id);
+                .ToList().Where(jobQueueJobId =>
+                {
+                    var job = _connection.Job.Find(_ => _.Id==jobQueueJobId).FirstOrDefault();
+                    return job != null && job.StateHistory.Length > 0;
+                }).ToArray();;
+            
             
         }
 
