@@ -52,16 +52,16 @@ namespace Hangfire.LiteDB.Test
             }
         }
 
-        [Fact]
-        public void GetComponents_ReturnsAllNeededComponents()
-        {
-            LiteDbStorage storage = ConnectionUtils.CreateStorage();
-
-            var components = storage.GetComponents();
-
-            Type[] componentTypes = components.Select(x => x.GetType()).ToArray();
-            Assert.Contains(typeof(ExpirationManager), componentTypes);
-        }
+        //[Fact]
+        //public void GetComponents_ReturnsAllNeededComponents()
+        //{
+        //    LiteDbStorage storage = ConnectionUtils.CreateStorage();
+        //
+        //   var components = storage.GetComponents();
+        //
+        //    Type[] componentTypes = components.Select(x => x.GetType()).ToArray();
+        //    Assert.Contains(typeof(ExpirationManager), componentTypes);
+        //}
 
     }
 #pragma warning restore 1591
