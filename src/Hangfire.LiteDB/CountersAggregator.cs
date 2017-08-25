@@ -49,7 +49,7 @@ namespace Hangfire.LiteDB
         {
             Logger.DebugFormat("Aggregating records in 'Counter' table...");
 
-            long removedCount;
+            long removedCount = 0;
 
             do
             {
@@ -104,10 +104,14 @@ namespace Hangfire.LiteDB
                             });
                         }
                     }
-
-                    removedCount = database
+                    foreach(var id in recordsToAggregate.Select(_ => _.Id))
+                    {
+                        database
                         .StateDataCounter
-                        .Delete(Query.In("Id", recordsToAggregate.Select(_ => _.Id).ToBsonValueEnumerable()));
+                        .Delete(id);
+                        removedCount++;
+                    }
+                    
                 }
 
                 if (removedCount >= NumberOfRecordsInSinglePass)

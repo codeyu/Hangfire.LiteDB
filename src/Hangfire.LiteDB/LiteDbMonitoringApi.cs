@@ -410,14 +410,15 @@ namespace Hangfire.LiteDB
             return result;
         }
 
+        //TODO: need test Query.In method
         private JobList<EnqueuedJobDto> EnqueuedJobs(HangfireDbContext connection, IEnumerable<int> jobIds)
         {
             var jobs = connection.Job
-                .Find(Query.In("Id", jobIds.ToBsonValueEnumerable()))
+                .FindAll().Where(x=>jobIds.Contains(x.Id))
                 .ToList();
             var enqueuedJobs = connection.JobQueue
-                .Find(Query.In("JobId", jobs.Select(job => job.Id).ToBsonValueEnumerable()))
-                .Where(x=>x.FetchedAt != null)
+                .FindAll()
+                .Where(x=>jobs.Select(_=>_.Id).Contains(x.JobId) && x.FetchedAt != null)
                 .ToList();
 
             var jobsFiltered = enqueuedJobs
@@ -495,12 +496,12 @@ namespace Hangfire.LiteDB
         private JobList<FetchedJobDto> FetchedJobs(HangfireDbContext connection, IEnumerable<int> jobIds)
         {
             var jobs = connection.Job
-                .Find(Query.In("Id", jobIds.ToBsonValueEnumerable()))
+                .FindAll().Where(x=>jobIds.Contains(x.Id))
                 .ToList();
 
             var jobIdToJobQueueMap = connection.JobQueue
-                .Find(Query.In("JobId", jobs.Select(job => job.Id).ToBsonValueEnumerable()))
-                .Where(x=>x.FetchedAt != null)
+                .FindAll()
+                .Where(x=>jobs.Select(_=>_.Id).Contains(x.JobId) && x.FetchedAt != null)
                 .ToList().ToDictionary(kv => kv.JobId, kv => kv);
 
             IEnumerable<LiteJob> jobsFiltered = jobs.Where(job => jobIdToJobQueueMap.ContainsKey(job.Id));
@@ -595,7 +596,8 @@ namespace Hangfire.LiteDB
             var keys = stringDates.Select(x => $"stats:{type}:{x}").ToList();
 
             var valuesMap = connection.StateDataAggregatedCounter
-                .Find(Query.In("Key", keys.ToBsonValueEnumerable()))
+                .FindAll()
+                .Where(x=>keys.Contains(x.Key))
                 .ToList()
                 .GroupBy(x => x.Key)
                 .ToDictionary(x => x.Key, x => (long)x.Count());
@@ -627,7 +629,8 @@ namespace Hangfire.LiteDB
 
             var keys = dates.Select(x => $"stats:{type}:{x:yyyy-MM-dd-HH}").ToList();
 
-            var valuesMap = connection.StateDataCounter.Find(Query.In("Key", keys.ToBsonValueEnumerable()))
+            var valuesMap = connection.StateDataCounter.FindAll()
+                .Where(x=>keys.Contains(x.Key))
                 .ToList()
                 .GroupBy(x => x.Key, x => x)
                 .ToDictionary(x => x.Key, x => (long)x.Count());

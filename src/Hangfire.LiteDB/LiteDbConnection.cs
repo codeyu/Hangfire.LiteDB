@@ -211,7 +211,7 @@ namespace Hangfire.LiteDB
                 StartedAt = DateTime.Now
             };
 
-            var server = Database.Server.FindOne(Query.EQ("Id", serverId));
+            var server = Database.Server.FindById(serverId);
             if (server == null)
             {
                 server = new Entities.Server

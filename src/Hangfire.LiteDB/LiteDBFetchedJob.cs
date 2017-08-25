@@ -29,7 +29,7 @@ namespace Hangfire.LiteDB
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _id = id;
-            JobId = jobId.ToString() ?? throw new ArgumentNullException(nameof(jobId));
+            JobId = jobId.HasValue ? jobId.Value.ToString() : throw new ArgumentNullException(nameof(jobId));
             Queue = queue ?? throw new ArgumentNullException(nameof(queue));
         }
 
@@ -49,8 +49,8 @@ namespace Hangfire.LiteDB
         public void RemoveFromQueue()
         {
             _connection
-               .JobQueue
-               .Delete(Query.EQ("Id", _id));
+                .JobQueue
+                .Delete(_id);
 
             _removedFromQueue = true;
         }

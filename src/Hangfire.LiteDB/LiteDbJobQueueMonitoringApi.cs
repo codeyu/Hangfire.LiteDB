@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using LiteDB;
 namespace Hangfire.LiteDB
 {
     /// <summary>
@@ -50,8 +49,8 @@ namespace Hangfire.LiteDB
                 .ToList().Where(jobQueueJobId =>
                 {
                     var job = _connection.Job.Find(_ => _.Id==jobQueueJobId).FirstOrDefault();
-                    return job != null && job.StateHistory.Count > 0;
-                }).ToArray();;
+                    return job?.StateHistory != null;
+                }).ToArray();
             
             
         }

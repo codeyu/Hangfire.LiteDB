@@ -18,13 +18,13 @@ namespace Hangfire.LiteDB.Test
             Assert.Equal("connectionString", exception.ParamName);
         }
 
-        [Fact]
-        public void Ctor_ThrowsAnException_WhenDatabaseNameIsNull()
-        {
-            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage("lite.db", null));
-
-            Assert.Equal("databaseName", exception.ParamName);
-        }
+        //[Fact]
+        //public void Ctor_ThrowsAnException_WhenDatabaseNameIsNull()
+        //{
+        //    var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage("lite.db", null));
+        //
+        //    Assert.Equal("databaseName", exception.ParamName);
+        //}
 
         [Fact]
         public void Ctor_ThrowsAnException_WhenStorageOptionsValueIsNull()

@@ -134,7 +134,8 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection((database, connection) =>
             {
-                var createdAt = new DateTime(2012, 12, 12, 0, 0, 0, 0, DateTimeKind.Utc);
+                //LiteDB always return local time.
+                var createdAt = new DateTime(2012, 12, 12, 0, 0, 0, 0, DateTimeKind.Local);
                 var jobId = connection.CreateExpiredJob(
                     Job.FromExpression(() => SampleMethod("Hello")),
                     new Dictionary<string, string> { { "Key1", "Value1" }, { "Key2", "Value2" } },
@@ -145,8 +146,8 @@ namespace Hangfire.LiteDB.Test
                 Assert.NotEmpty(jobId);
 
                 var databaseJob = database.Job.FindAll().ToList().Single();
-                Assert.Equal(jobId, databaseJob.Id.ToString());
-                Assert.Equal(createdAt, databaseJob.CreatedAt.ToUniversalTime()); //LiteDB always return local time.
+                Assert.Equal(jobId, databaseJob.IdString);
+                Assert.Equal(createdAt, databaseJob.CreatedAt); 
                 Assert.Equal(null, databaseJob.StateName);
 
                 var invocationData = JobHelper.FromJson<InvocationData>(databaseJob.InvocationData);
