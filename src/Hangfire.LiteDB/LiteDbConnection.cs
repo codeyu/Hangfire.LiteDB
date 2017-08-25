@@ -208,7 +208,7 @@ namespace Hangfire.LiteDB
             {
                 WorkerCount = context.WorkerCount,
                 Queues = context.Queues,
-                StartedAt = DateTime.UtcNow
+                StartedAt = DateTime.Now
             };
 
             var server = Database.Server.FindOne(Query.EQ("Id", serverId));
@@ -218,13 +218,13 @@ namespace Hangfire.LiteDB
                 {
                     Id = serverId,
                     Data = JobHelper.ToJson(data),
-                    LastHeartbeat = DateTime.UtcNow
+                    LastHeartbeat = DateTime.Now
                 };
                 Database.Server.Insert(server);
             }
             else
             {
-                server.LastHeartbeat = DateTime.UtcNow;
+                server.LastHeartbeat = DateTime.Now;
                 server.Data = JobHelper.ToJson(data);
                 Database.Server.Update(server);
             }
@@ -250,7 +250,7 @@ namespace Hangfire.LiteDB
             }
 
             var server = Database.Server.FindById(serverId);
-            server.LastHeartbeat = DateTime.UtcNow;
+            server.LastHeartbeat = DateTime.Now;
             Database.Server.Update(server);
         }
 
@@ -263,7 +263,7 @@ namespace Hangfire.LiteDB
 
             return Database
                 .Server
-                .Delete(_ => _.LastHeartbeat < DateTime.UtcNow.Add(timeOut.Negate()));
+                .Delete(_ => _.LastHeartbeat < DateTime.Now.Add(timeOut.Negate()));
         }
 
         public override HashSet<string> GetAllItemsFromSet(string key)
@@ -374,7 +374,7 @@ namespace Hangfire.LiteDB
                 .Select(dto => dto.ExpireAt.Value)
                 .ToList();
 
-            return values.Any() ? values.Min() - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
+            return values.Any() ? values.Min() - DateTime.Now : TimeSpan.FromSeconds(-1);
         }
 
         public override long GetCounter(string key)
@@ -431,7 +431,7 @@ namespace Hangfire.LiteDB
                 .Select(_ => _.ExpireAt)
                 .FirstOrDefault();
 
-            return result.HasValue ? result.Value - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
+            return result.HasValue ? result.Value - DateTime.Now : TimeSpan.FromSeconds(-1);
         }
 
         public override string GetValueFromHash(string key, string name)
@@ -481,7 +481,7 @@ namespace Hangfire.LiteDB
                 .Select(_ => _.ExpireAt)
                 .FirstOrDefault();
 
-            return result.HasValue ? result.Value - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
+            return result.HasValue ? result.Value - DateTime.Now : TimeSpan.FromSeconds(-1);
         }
 
         public override List<string> GetRangeFromList(string key, int startingFrom, int endingAt)

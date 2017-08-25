@@ -106,7 +106,7 @@ namespace Hangfire.LiteDB.Test
                     () => connection.CreateExpiredJob(
                         null,
                         new Dictionary<string, string>(),
-                        DateTime.UtcNow,
+                        DateTime.Now,
                         TimeSpan.Zero));
 
                 Assert.Equal("job", exception.ParamName);
@@ -122,7 +122,7 @@ namespace Hangfire.LiteDB.Test
                     () => connection.CreateExpiredJob(
                         Job.FromExpression(() => SampleMethod("hello")),
                         null,
-                        DateTime.UtcNow,
+                        DateTime.Now,
                         TimeSpan.Zero));
 
                 Assert.Equal("parameters", exception.ParamName);
@@ -204,7 +204,7 @@ namespace Hangfire.LiteDB.Test
                     InvocationData = JobHelper.ToJson(InvocationData.Serialize(job)),
                     Arguments = "[\"\\\"Arguments\\\"\"]",
                     StateName = "Succeeded",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
 
@@ -215,8 +215,8 @@ namespace Hangfire.LiteDB.Test
                 Assert.Equal("Succeeded", result.State);
                 Assert.Equal("Arguments", result.Job.Args[0]);
                 Assert.Null(result.LoadException);
-                Assert.True(DateTime.UtcNow.AddMinutes(-1) < result.CreatedAt);
-                Assert.True(result.CreatedAt < DateTime.UtcNow.AddMinutes(1));
+                Assert.True(DateTime.Now.AddMinutes(-1) < result.CreatedAt);
+                Assert.True(result.CreatedAt < DateTime.Now.AddMinutes(1));
             });
         }
 
@@ -251,7 +251,7 @@ namespace Hangfire.LiteDB.Test
                 var state = new LiteState
                 {
                     Name = "old-state",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 var liteJob = new LiteJob
                 {
@@ -259,7 +259,7 @@ namespace Hangfire.LiteDB.Test
                     InvocationData = "",
                     Arguments = "",
                     StateName = "",
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.Now,
                     StateHistory = new[] { state }
                 };
 
@@ -272,7 +272,7 @@ namespace Hangfire.LiteDB.Test
                         Name = "Name",
                         Reason = "Reason",
                         Data = data,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.Now
                     });
 
                 database.Job.Update(job);
@@ -297,7 +297,7 @@ namespace Hangfire.LiteDB.Test
                     InvocationData = JobHelper.ToJson(new InvocationData(null, null, null, null)),
                     Arguments = "[\"\\\"Arguments\\\"\"]",
                     StateName = "Succeeded",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
                 var jobId = liteJob.IdString;
@@ -342,7 +342,7 @@ namespace Hangfire.LiteDB.Test
                      
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
                 string jobId = liteJob.IdString;
@@ -370,7 +370,7 @@ namespace Hangfire.LiteDB.Test
                      
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
                 string jobId = liteJob.IdString;
@@ -399,7 +399,7 @@ namespace Hangfire.LiteDB.Test
                      
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
                 string jobId = liteJob.IdString;
@@ -461,7 +461,7 @@ namespace Hangfire.LiteDB.Test
                      
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
 
@@ -615,13 +615,13 @@ namespace Hangfire.LiteDB.Test
                 {
                     Id = "Server1",
                     Data = "",
-                    LastHeartbeat = DateTime.UtcNow
+                    LastHeartbeat = DateTime.Now
                 });
                 database.Server.Insert(new Entities.Server
                 {
                     Id = "Server2",
                     Data = "",
-                    LastHeartbeat = DateTime.UtcNow
+                    LastHeartbeat = DateTime.Now
                 });
 
                 connection.RemoveServer("Server1");
@@ -682,13 +682,13 @@ namespace Hangfire.LiteDB.Test
                 {
                     Id = "server1",
                     Data = "",
-                    LastHeartbeat = DateTime.UtcNow.AddDays(-1)
+                    LastHeartbeat = DateTime.Now.AddDays(-1)
                 });
                 database.Server.Insert(new Entities.Server
                 {
                     Id = "server2",
                     Data = "",
-                    LastHeartbeat = DateTime.UtcNow.AddHours(-12)
+                    LastHeartbeat = DateTime.Now.AddHours(-12)
                 });
 
                 connection.RemoveTimedOutServers(TimeSpan.FromHours(15));
@@ -1024,7 +1024,7 @@ namespace Hangfire.LiteDB.Test
                     Key = "set-1",
                     Value = "1",
                     Score = 0.0,
-                    ExpireAt = DateTime.UtcNow.AddMinutes(60)
+                    ExpireAt = DateTime.Now.AddMinutes(60)
                 });
 
                 database.StateDataSet.Insert(new LiteSet
@@ -1207,7 +1207,7 @@ namespace Hangfire.LiteDB.Test
                     Id = ObjectId.NewObjectId(),
                     Key = "hash-1",
                     Field = "field",
-                    ExpireAt = DateTime.UtcNow.AddHours(1)
+                    ExpireAt = DateTime.Now.AddHours(1)
                 });
                 database.StateDataHash.Insert(new LiteHash
                 {
@@ -1376,7 +1376,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     Id = ObjectId.NewObjectId(),
                     Key = "list-1",
-                    ExpireAt = DateTime.UtcNow.AddHours(1)
+                    ExpireAt = DateTime.Now.AddHours(1)
                 });
                 database.StateDataList.Insert(new LiteList
                 {

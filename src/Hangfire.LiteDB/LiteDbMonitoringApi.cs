@@ -581,7 +581,7 @@ namespace Hangfire.LiteDB
 
         private Dictionary<DateTime, long> GetTimelineStats(HangfireDbContext connection, string type)
         {
-            var endDate = DateTime.UtcNow.Date;
+            var endDate = DateTime.Now.Date;
             var startDate = endDate.AddDays(-7);
             var dates = new List<DateTime>();
 
@@ -617,7 +617,7 @@ namespace Hangfire.LiteDB
 
         private Dictionary<DateTime, long> GetHourlyTimelineStats(HangfireDbContext connection, string type)
         {
-            var endDate = DateTime.UtcNow;
+            var endDate = DateTime.Now;
             var dates = new List<DateTime>();
             for (var i = 0; i < 24; i++)
             {

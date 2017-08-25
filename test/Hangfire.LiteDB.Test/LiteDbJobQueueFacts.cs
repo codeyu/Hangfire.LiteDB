@@ -124,7 +124,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 connection.Job.Insert(job);
 
@@ -146,7 +146,7 @@ namespace Hangfire.LiteDB.Test
                 var fetchedAt = connection.JobQueue.Find(_ => _.JobId== payloadJobId).FirstOrDefault().FetchedAt;
 
                 Assert.NotNull(fetchedAt);
-                Assert.True(fetchedAt > DateTime.UtcNow.AddMinutes(-1));
+                Assert.True(fetchedAt > DateTime.Now.AddMinutes(-1));
             });
         }
 
@@ -160,7 +160,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 connection.Job.Insert(job);
 
@@ -168,7 +168,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     JobId =  job.Id,
                     Queue = "default",
-                    FetchedAt = DateTime.UtcNow.AddDays(-1)
+                    FetchedAt = DateTime.Now.AddDays(-1)
                 };
                 connection.JobQueue.Insert(jobQueue);
 
@@ -192,7 +192,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 connection.Job.Insert(job1);
 
@@ -200,7 +200,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 connection.Job.Insert(job2);
 
@@ -238,7 +238,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 connection.Job.Insert(job1);
 
@@ -264,7 +264,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 connection.Job.Insert(criticalJob);
 
@@ -272,7 +272,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 connection.Job.Insert(defaultJob);
 

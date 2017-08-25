@@ -36,7 +36,7 @@ namespace Hangfire.LiteDB.Test
         public void Execute_RemovesOutdatedRecords()
         {
             var connection = ConnectionUtils.CreateConnection();
-            CreateExpirationEntries(connection, DateTime.UtcNow.AddMonths(-1));
+            CreateExpirationEntries(connection, DateTime.Now.AddMonths(-1));
             var manager = CreateManager();
             manager.Execute(_token);
             Assert.True(IsEntryExpired(connection));
@@ -71,7 +71,7 @@ namespace Hangfire.LiteDB.Test
                 Id = ObjectId.NewObjectId(),
                 Key = "key",
                 Value = 1L,
-                ExpireAt = DateTime.UtcNow.AddMonths(-1)
+                ExpireAt = DateTime.Now.AddMonths(-1)
             });
             var manager = CreateManager();
             manager.Execute(_token);
@@ -87,8 +87,8 @@ namespace Hangfire.LiteDB.Test
             {
                 InvocationData = "",
                 Arguments = "",
-                CreatedAt = DateTime.UtcNow,
-                ExpireAt = DateTime.UtcNow.AddMonths(-1),
+                CreatedAt = DateTime.Now,
+                ExpireAt = DateTime.Now.AddMonths(-1),
             });
             var manager = CreateManager();
             manager.Execute(_token);
@@ -104,7 +104,7 @@ namespace Hangfire.LiteDB.Test
             {
                 Id = ObjectId.NewObjectId(),
                 Key = "key",
-                ExpireAt = DateTime.UtcNow.AddMonths(-1)
+                ExpireAt = DateTime.Now.AddMonths(-1)
             });
             var manager = CreateManager();
             manager.Execute(_token);
@@ -124,7 +124,7 @@ namespace Hangfire.LiteDB.Test
                 Key = "key",
                 Score = 0,
                 Value = "",
-                ExpireAt = DateTime.UtcNow.AddMonths(-1)
+                ExpireAt = DateTime.Now.AddMonths(-1)
             });
             var manager = CreateManager();
             manager.Execute(_token);
@@ -144,7 +144,7 @@ namespace Hangfire.LiteDB.Test
                 Key = "key",
                 Field = "field",
                 Value = "",
-                ExpireAt = DateTime.UtcNow.AddMonths(-1)
+                ExpireAt = DateTime.Now.AddMonths(-1)
             });
             var manager = CreateManager();
             manager.Execute(_token);
@@ -163,7 +163,7 @@ namespace Hangfire.LiteDB.Test
             {
                 Key = "key",
                 Value = 1,
-                ExpireAt = DateTime.UtcNow.AddMonths(-1)
+                ExpireAt = DateTime.Now.AddMonths(-1)
             });
             var manager = CreateManager();
             manager.Execute(_token);

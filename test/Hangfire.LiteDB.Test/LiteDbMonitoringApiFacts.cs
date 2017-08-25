@@ -91,8 +91,8 @@ namespace Hangfire.LiteDB.Test
                 Assert.NotNull(result);
                 Assert.NotNull(result.Job);
                 Assert.Equal("Arguments", result.Job.Args[0]);
-                Assert.True(DateTime.UtcNow.AddMinutes(-1) < result.CreatedAt);
-                Assert.True(result.CreatedAt < DateTime.UtcNow.AddMinutes(1));
+                Assert.True(DateTime.Now.AddMinutes(-1) < result.CreatedAt);
+                Assert.True(result.CreatedAt < DateTime.Now.AddMinutes(1));
             });
         }
 
@@ -255,12 +255,12 @@ namespace Hangfire.LiteDB.Test
                     {
                         Name = ProcessingState.StateName,
                         Reason = null,
-                        CreatedAt = DateTime.UtcNow,
+                        CreatedAt = DateTime.Now,
                         Data = new Dictionary<string, string>
                         {
                             ["ServerId"] = Guid.NewGuid().ToString(),
                             ["StartedAt"] =
-                            JobHelper.SerializeDateTime(DateTime.UtcNow.Subtract(TimeSpan.FromMilliseconds(500)))
+                            JobHelper.SerializeDateTime(DateTime.Now.Subtract(TimeSpan.FromMilliseconds(500)))
                         }
                     };
                     var succeededState = liteJob.StateHistory[0];
@@ -300,14 +300,14 @@ namespace Hangfire.LiteDB.Test
             Dictionary<string, string> stateData;
             if (stateName == EnqueuedState.StateName)
             {
-                stateData = new Dictionary<string, string> {["EnqueuedAt"] = $"{DateTime.UtcNow:o}"};
+                stateData = new Dictionary<string, string> {["EnqueuedAt"] = $"{DateTime.Now:o}"};
             }
             else if (stateName == ProcessingState.StateName)
             {
                 stateData = new Dictionary<string, string>
                 {
                     ["ServerId"] = Guid.NewGuid().ToString(),
-                    ["StartedAt"] = JobHelper.SerializeDateTime(DateTime.UtcNow.Subtract(TimeSpan.FromMilliseconds(500)))
+                    ["StartedAt"] = JobHelper.SerializeDateTime(DateTime.Now.Subtract(TimeSpan.FromMilliseconds(500)))
                 };
             }
             else
@@ -320,7 +320,7 @@ namespace Hangfire.LiteDB.Test
                 JobId = jobId,
                 Name = stateName,
                 Reason = null,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 Data = stateData
             };
 
@@ -330,7 +330,7 @@ namespace Hangfire.LiteDB.Test
                 InvocationData = JobHelper.ToJson(InvocationData.Serialize(job)),
                 Arguments = "[\"\\\"Arguments\\\"\"]",
                 StateName = stateName,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 StateHistory = new []{jobState}
             };
             if (visitor != null)
@@ -348,7 +348,7 @@ namespace Hangfire.LiteDB.Test
 
             if (stateName == FetchedStateName)
             {
-                jobQueueDto.FetchedAt = DateTime.UtcNow;
+                jobQueueDto.FetchedAt = DateTime.Now;
             }
 
             database.JobQueue.Insert(jobQueueDto);

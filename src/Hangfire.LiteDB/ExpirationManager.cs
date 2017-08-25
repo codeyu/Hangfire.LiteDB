@@ -61,7 +61,7 @@ namespace Hangfire.LiteDB
         public void Execute(CancellationToken cancellationToken)
         {
             HangfireDbContext connection = _storage.CreateAndOpenConnection();
-            DateTime now = DateTime.UtcNow;
+            DateTime now = DateTime.Now;
             RemoveExpiredRecord(connection.Job, _ => _.ExpireAt < now && _.ExpireAt != null);
             RemoveExpiredRecord(connection.StateDataAggregatedCounter, _ => _.ExpireAt < now && _.ExpireAt != null);
             RemoveExpiredRecord(connection.StateDataCounter, _ => _.ExpireAt < now && _.ExpireAt != null);
