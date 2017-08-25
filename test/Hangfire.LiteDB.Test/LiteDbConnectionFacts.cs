@@ -146,7 +146,7 @@ namespace Hangfire.LiteDB.Test
 
                 var databaseJob = database.Job.FindAll().ToList().Single();
                 Assert.Equal(jobId, databaseJob.Id.ToString());
-                Assert.Equal(createdAt, databaseJob.CreatedAt);
+                Assert.Equal(createdAt, databaseJob.CreatedAt.ToUniversalTime()); //LiteDB always return local time.
                 Assert.Equal(null, databaseJob.StateName);
 
                 var invocationData = JobHelper.FromJson<InvocationData>(databaseJob.InvocationData);
@@ -255,7 +255,6 @@ namespace Hangfire.LiteDB.Test
                 };
                 var liteJob = new LiteJob
                 {
-                     
                     InvocationData = "",
                     Arguments = "",
                     StateName = "",
@@ -264,11 +263,11 @@ namespace Hangfire.LiteDB.Test
                 };
 
                 database.Job.Insert(liteJob);
-                var jobId = liteJob.Id;
                 var job = database.Job.FindById(liteJob.Id);
                 job.StateName = state.Name;
                 job.StateHistory.Append(new LiteState
                     {
+                        JobId = liteJob.Id,
                         Name = "Name",
                         Reason = "Reason",
                         Data = data,
@@ -277,7 +276,7 @@ namespace Hangfire.LiteDB.Test
 
                 database.Job.Update(job);
 
-                var result = connection.GetStateData(jobId.ToString());
+                var result = connection.GetStateData(liteJob.IdString);
                 Assert.NotNull(result);
 
                 Assert.Equal("Name", result.Name);
