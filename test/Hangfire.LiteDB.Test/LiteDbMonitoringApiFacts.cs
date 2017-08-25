@@ -264,7 +264,7 @@ namespace Hangfire.LiteDB.Test
                         }
                     };
                     var succeededState = liteJob.StateHistory[0];
-                    liteJob.StateHistory = new[] {processingState, succeededState};
+                    liteJob.StateHistory = new List<LiteState> {processingState, succeededState};
                     return liteJob;
                 });
 
@@ -331,7 +331,7 @@ namespace Hangfire.LiteDB.Test
                 Arguments = "[\"\\\"Arguments\\\"\"]",
                 StateName = stateName,
                 CreatedAt = DateTime.Now,
-                StateHistory = new []{jobState}
+                StateHistory = new List<LiteState>()
             };
             if (visitor != null)
             {

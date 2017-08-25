@@ -82,7 +82,7 @@ namespace Hangfire.LiteDB
                 var iJobId = int.Parse(jobId);
                 var job = x.Job.FindOne(_ => _.Id == iJobId);
                 job.StateName = state.Name;
-                job.StateHistory.Append(new LiteState
+                job.StateHistory.Add(new LiteState
                 {
                     JobId = iJobId,
                     Name = state.Name,
@@ -105,7 +105,7 @@ namespace Hangfire.LiteDB
             {
                 var iJobId = int.Parse(jobId);
                 var job = x.Job.FindOne(_ => _.Id == iJobId);
-                job.StateHistory.Append(new LiteState
+                job.StateHistory.Add(new LiteState
                 {
                     JobId = iJobId,
                     Name = state.Name,

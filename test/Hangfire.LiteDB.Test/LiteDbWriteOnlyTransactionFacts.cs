@@ -40,13 +40,13 @@ namespace Hangfire.LiteDB.Test
             Assert.Equal("queueProviders", exception.ParamName);
         }
 
-        [Fact, CleanDatabase]
-        public void Ctor_ThrowsAnException_IfLiteDBStorageOptionsIsNull()
-        {
-            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbWriteOnlyTransaction(ConnectionUtils.CreateConnection(), _queueProviders));
-
-            Assert.Equal("options", exception.ParamName);
-        }
+        //[Fact, CleanDatabase]
+        //public void Ctor_ThrowsAnException_IfLiteDBStorageOptionsIsNull()
+        //{
+        //    var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbWriteOnlyTransaction(ConnectionUtils.CreateConnection(), _queueProviders));
+        //
+        //    Assert.Equal("options", exception.ParamName);
+        //}
 
         [Fact, CleanDatabase]
         public void ExpireJob_SetsJobExpirationData()
@@ -143,7 +143,6 @@ namespace Hangfire.LiteDB.Test
                 };
                 database.Job.Insert(anotherJob);
 
-                var jobId = job.Id.ToString();
 	            var serializedData = new Dictionary<string, string> {{"Name", "Value"}};
 
 				var state = new Mock<IState>();
@@ -151,15 +150,15 @@ namespace Hangfire.LiteDB.Test
                 state.Setup(x => x.Reason).Returns("Reason");
                 state.Setup(x => x.SerializeData()).Returns(serializedData);
 
-                Commit(database, x => x.SetJobState(jobId, state.Object));
+                Commit(database, x => x.SetJobState(job.IdString, state.Object));
 
                 var testJob = GetTestJob(database, job.Id);
                 Assert.Equal("State", testJob.StateName);
-                Assert.Equal(1, testJob.StateHistory.Length);
+                Assert.Equal(1, testJob.StateHistory.Count);
 
                 var anotherTestJob = GetTestJob(database, anotherJob.Id);
                 Assert.Null(anotherTestJob.StateName);
-                Assert.Equal(0, anotherTestJob.StateHistory.Length);
+                Assert.Equal(0, anotherTestJob.StateHistory.Count);
 
                 var jobWithStates = database.Job.FindAll().ToList().FirstOrDefault();
                 

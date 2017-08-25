@@ -44,7 +44,7 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public LiteState[] StateHistory { get; set; } = new LiteState[0];
+        public List<LiteState> StateHistory { get; set; } = new List<LiteState>();
 
         /// <summary>
         /// 

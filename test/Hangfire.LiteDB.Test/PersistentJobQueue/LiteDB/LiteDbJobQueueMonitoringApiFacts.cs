@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
@@ -278,7 +279,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
             var job = new LiteJob
             {
                 CreatedAt = DateTime.Now,
-                StateHistory = new []{new LiteState()}
+                StateHistory = new List<LiteState>()
             };
 
             connection.Job.Insert(job);

@@ -50,7 +50,7 @@ namespace Hangfire.LiteDB
                 .ToList().Where(jobQueueJobId =>
                 {
                     var job = _connection.Job.Find(_ => _.Id==jobQueueJobId).FirstOrDefault();
-                    return job != null && job.StateHistory.Length > 0;
+                    return job != null && job.StateHistory.Count > 0;
                 }).ToArray();;
             
             

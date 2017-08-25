@@ -259,13 +259,13 @@ namespace Hangfire.LiteDB.Test
                     Arguments = "",
                     StateName = "",
                     CreatedAt = DateTime.Now,
-                    StateHistory = new[] { state }
+                    StateHistory = new List<LiteState>()
                 };
 
                 database.Job.Insert(liteJob);
                 var job = database.Job.FindById(liteJob.Id);
                 job.StateName = state.Name;
-                job.StateHistory.Append(new LiteState
+                job.StateHistory.Add(new LiteState
                     {
                         JobId = liteJob.Id,
                         Name = "Name",
