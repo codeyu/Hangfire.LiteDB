@@ -253,10 +253,11 @@ namespace Hangfire.LiteDB.Test
                 Assert.Equal(1L, record.Value);
                 Assert.NotNull(record.ExpireAt);
 
-                var expireAt = (DateTime)record.ExpireAt;
+                var expireAt = record.ExpireAt.Value.ToUniversalTime();//TODO
 
                 Assert.True(DateTime.UtcNow.AddHours(23) < expireAt);
-                Assert.True(expireAt < DateTime.UtcNow.AddHours(25));
+                var addTime = DateTime.UtcNow.AddHours(25);
+                Assert.True(expireAt < addTime);
             });
         }
 

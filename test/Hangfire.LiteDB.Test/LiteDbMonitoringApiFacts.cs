@@ -317,6 +317,7 @@ namespace Hangfire.LiteDB.Test
 
             var jobState = new LiteState()
             {
+                JobId = jobId,
                 Name = stateName,
                 Reason = null,
                 CreatedAt = DateTime.UtcNow,

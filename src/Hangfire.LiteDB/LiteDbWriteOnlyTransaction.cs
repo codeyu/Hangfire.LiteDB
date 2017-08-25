@@ -154,13 +154,14 @@ namespace Hangfire.LiteDB
         /// <param name="expireIn"></param>
         public override void IncrementCounter(string key, TimeSpan expireIn)
         {
-            QueueCommand(x => x.StateDataCounter.Insert(new Counter
+            var counter = new Counter
             {
                 Id = ObjectId.NewObjectId(),
                 Key = key,
                 Value = +1L,
                 ExpireAt = DateTime.UtcNow.Add(expireIn)
-            }));
+            };
+            QueueCommand(x => x.StateDataCounter.Insert(counter));
         }
 
         /// <summary>
@@ -279,11 +280,6 @@ namespace Hangfire.LiteDB
         /// <param name="keepEndingAt"></param>
         public override void TrimList(string key, int keepStartingFrom, int keepEndingAt)
         {
-            IEnumerable<BsonValue> Convert<T>(IEnumerable<T> items)
-            {
-                return items.Select(item => new BsonValue(item)).ToList();
-            }
-
             QueueCommand(x =>
             {
                 var start = keepStartingFrom + 1;
@@ -296,11 +292,11 @@ namespace Hangfire.LiteDB
                     .Where(_ => ((_.Index >= start) && (_.Index <= end)) == false)
                     .Select(_ => _.Data)
                     .ToList();
+                foreach(var id in items)
+                {
+                    x.StateDataList.Delete(_=>_.Id == id);
+                }
                 
-               
-                x.StateDataList
-                    .Delete(Query.And(Query.EQ("Key", key),
-                        Query.In("Id", Convert(items))));
             });
         }
 
