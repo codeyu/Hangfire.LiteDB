@@ -86,7 +86,7 @@ namespace Hangfire.LiteDB.Test
             {
                 var job1 = CreateJobInState(database, 1, EnqueuedState.StateName);
 
-                var result = monitoringApi.JobDetails(job1.Id.ToString());
+                var result = monitoringApi.JobDetails(job1.IdString);
 
                 Assert.NotNull(result);
                 Assert.NotNull(result.Job);
@@ -331,7 +331,7 @@ namespace Hangfire.LiteDB.Test
                 Arguments = "[\"\\\"Arguments\\\"\"]",
                 StateName = stateName,
                 CreatedAt = DateTime.Now,
-                StateHistory = new List<LiteState>()
+                StateHistory = new List<LiteState>{jobState}
             };
             if (visitor != null)
             {

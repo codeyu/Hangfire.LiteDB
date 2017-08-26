@@ -93,8 +93,8 @@ namespace Hangfire.LiteDB
         {
             return UseConnection(ctx =>
             {
-                var job = ctx.Job.Find(Query.EQ("Id", jobId))
-                    .FirstOrDefault();
+                var iJobId = int.Parse(jobId);
+                var job = ctx.Job.FindById(iJobId);
 
                 if (job == null)
                     return null;
@@ -127,7 +127,7 @@ namespace Hangfire.LiteDB
             {
                 var stats = new StatisticsDto();
 
-                var countByStates = ctx.Job.Find(_ => _.StateName== null)
+                var countByStates = ctx.Job.Find(_ => _.StateName != null)
                     .GroupBy(x=>x.StateName)
                     .Select(k => new { StateName = k.Key, Count = k.Count() })
                     .ToList().ToDictionary(kv => kv.StateName, kv => kv.Count);
@@ -418,7 +418,7 @@ namespace Hangfire.LiteDB
                 .ToList();
             var enqueuedJobs = connection.JobQueue
                 .FindAll()
-                .Where(x=>jobs.Select(_=>_.Id).Contains(x.JobId) && x.FetchedAt != null)
+                .Where(x=>jobs.Select(_=>_.Id).Contains(x.JobId) && x.FetchedAt == null)
                 .ToList();
 
             var jobsFiltered = enqueuedJobs
@@ -463,8 +463,7 @@ namespace Hangfire.LiteDB
             foreach (var job in jobs)
             {
                 var stateData = job.StateData;
-                var dto = selector(job, DeserializeJob(job.InvocationData, job.Arguments), stateData);
-                result.Add(new KeyValuePair<string, TDto>(job.Id.ToString(), dto));
+                result.Add(new KeyValuePair<string, TDto>(job.Id.ToString(), selector(job, DeserializeJob(job.InvocationData, job.Arguments), stateData)));
             }
 
             return new JobList<TDto>(result);
