@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
 namespace Hangfire.LiteDB
 {
     /// <summary>
@@ -40,18 +39,20 @@ namespace Hangfire.LiteDB
         /// <param name="from"></param>
         /// <param name="perPage"></param>
         /// <returns></returns>
-        public IEnumerable<string> GetEnqueuedJobIds(string queue, int from, int perPage)
+        public IEnumerable<int> GetEnqueuedJobIds(string queue, int from, int perPage)
         {
             return _connection.JobQueue
                 .Find(_ => _.Queue== queue && _.FetchedAt==null)
                 .Skip(from)
                 .Take(perPage)
                 .Select(_ => _.JobId)
-                .ToList()
-                .Where(jobQueueJobId =>
+                .ToList().Where(jobQueueJobId =>
                 {
-                    return _connection.Job.Find(j => j.Id == jobQueueJobId && j.StateHistory.Length > 0).Any();
+                    var job = _connection.Job.Find(_ => _.Id==jobQueueJobId).FirstOrDefault();
+                    return job?.StateHistory != null;
                 }).ToArray();
+            
+            
         }
 
         /// <summary>
@@ -61,7 +62,7 @@ namespace Hangfire.LiteDB
         /// <param name="from"></param>
         /// <param name="perPage"></param>
         /// <returns></returns>
-        public IEnumerable<string> GetFetchedJobIds(string queue, int from, int perPage)
+        public IEnumerable<int> GetFetchedJobIds(string queue, int from, int perPage)
         {
             return _connection.JobQueue
                 .Find(_ => _.Queue== queue && _.FetchedAt!=null)

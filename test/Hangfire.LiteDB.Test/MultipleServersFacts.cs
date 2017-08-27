@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Hangfire.Common;
 using Hangfire.LiteDB.Test.Utils;
 using Xunit;
-using Hangfire.LiteDB;
 namespace Hangfire.LiteDB.Test
 {
 #pragma warning disable 1591

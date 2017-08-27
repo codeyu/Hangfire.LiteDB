@@ -8,7 +8,7 @@ using Hangfire.Storage;
 namespace Hangfire.LiteDB
 {
     /// <summary>
-    /// Represents distibuted lock implementation for MongoDB
+    /// Represents distibuted lock implementation for LiteDB
     /// </summary>
     public sealed class LiteDbDistributedLock : IDisposable
     {
@@ -43,7 +43,7 @@ namespace Hangfire.LiteDB
         /// <param name="database">Lock database</param>
         /// <param name="storageOptions">Database options</param>
         /// <exception cref="DistributedLockTimeoutException">Thrown if lock is not acuired within the timeout</exception>
-        /// <exception cref="LiteDbDistributedLockException">Thrown if other mongo specific issue prevented the lock to be acquired</exception>
+        /// <exception cref="LiteDbDistributedLockException">Thrown if other LiteDB specific issue prevented the lock to be acquired</exception>
         public LiteDbDistributedLock(string resource, TimeSpan timeout, HangfireDbContext database, LiteDbStorageOptions storageOptions)
         {
             _resource = resource ?? throw new ArgumentNullException(nameof(resource));
@@ -130,7 +130,7 @@ namespace Hangfire.LiteDB
                     var result = _database.DistributedLock.FindOne(x => x.Resource == _resource);
                     var distributedLock = result??new DistributedLock();
                     distributedLock.Resource = _resource;
-                    distributedLock.ExpireAt = DateTime.UtcNow.Add(_storageOptions.DistributedLockLifetime);
+                    distributedLock.ExpireAt = DateTime.Now.Add(_storageOptions.DistributedLockLifetime);
 
                     _database.DistributedLock.Upsert(distributedLock);
                     // If result is null, then it means we acquired the lock
@@ -143,7 +143,7 @@ namespace Hangfire.LiteDB
                         try
                         {
                             // Wait on the event. This allows us to be "woken" up sooner rather than later.
-                            // We wait in chunks as we need to "wake-up" from time to time and poll mongo,
+                            // We wait in chunks as we need to "wake-up" from time to time and poll LiteDB,
                             // in case that the lock was acquired on another machine or instance.
                             var eventWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset, EventWaitHandleName);
                             eventWaitHandle.WaitOne((int)timeout.TotalMilliseconds / 10);
@@ -215,7 +215,7 @@ namespace Hangfire.LiteDB
             try
             {
                 // Delete expired locks
-                _database.DistributedLock.Delete(x => x.Resource == _resource && x.ExpireAt < DateTime.UtcNow);
+                _database.DistributedLock.Delete(x => x.Resource == _resource && x.ExpireAt < DateTime.Now);
             }
             catch (Exception ex)
             {
@@ -239,7 +239,7 @@ namespace Hangfire.LiteDB
                     try
                     {
                         var distributedLock = _database.DistributedLock.FindOne(x => x.Resource == _resource);
-                        distributedLock.ExpireAt = DateTime.UtcNow.Add(_storageOptions.DistributedLockLifetime);
+                        distributedLock.ExpireAt = DateTime.Now.Add(_storageOptions.DistributedLockLifetime);
 
                         _database.DistributedLock.Update(distributedLock);
                     }

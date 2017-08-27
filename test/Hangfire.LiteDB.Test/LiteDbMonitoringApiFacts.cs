@@ -6,6 +6,7 @@ using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
 using Hangfire.States;
 using Hangfire.Storage;
+using LiteDB;
 using Moq;
 using Xunit;
 
@@ -53,12 +54,12 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                CreateJobInState(database, 1.ToString(), EnqueuedState.StateName);
-                CreateJobInState(database, 2.ToString(), EnqueuedState.StateName);
-                CreateJobInState(database, 4.ToString(), FailedState.StateName);
-                CreateJobInState(database, 5.ToString(), ProcessingState.StateName);
-                CreateJobInState(database, 6.ToString(), ScheduledState.StateName);
-                CreateJobInState(database, 7.ToString(), ScheduledState.StateName);
+                CreateJobInState(database, 1, EnqueuedState.StateName);
+                CreateJobInState(database,2, EnqueuedState.StateName);
+                CreateJobInState(database, 4, FailedState.StateName);
+                CreateJobInState(database, 5, ProcessingState.StateName);
+                CreateJobInState(database, 6, ScheduledState.StateName);
+                CreateJobInState(database, 7, ScheduledState.StateName);
 
                 var result = monitoringApi.GetStatistics();
                 Assert.Equal(2, result.Enqueued);
@@ -83,15 +84,15 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                var job1 = CreateJobInState(database, 1.ToString(), EnqueuedState.StateName);
+                var job1 = CreateJobInState(database, 1, EnqueuedState.StateName);
 
-                var result = monitoringApi.JobDetails(job1.Id.ToString());
+                var result = monitoringApi.JobDetails(job1.IdString);
 
                 Assert.NotNull(result);
                 Assert.NotNull(result.Job);
                 Assert.Equal("Arguments", result.Job.Args[0]);
-                Assert.True(DateTime.UtcNow.AddMinutes(-1) < result.CreatedAt);
-                Assert.True(result.CreatedAt < DateTime.UtcNow.AddMinutes(1));
+                Assert.True(DateTime.Now.AddMinutes(-1) < result.CreatedAt);
+                Assert.True(result.CreatedAt < DateTime.Now.AddMinutes(1));
             });
         }
 
@@ -100,7 +101,7 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                var jobIds = new List<string>();
+                var jobIds = new List<int>();
 
                 _persistentJobQueueMonitoringApi.Setup(x => x
                     .GetEnqueuedJobIds(DefaultQueue, From, PerPage))
@@ -117,9 +118,9 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                var unfetchedJob = CreateJobInState(database, 1.ToString(), EnqueuedState.StateName);
+                var unfetchedJob = CreateJobInState(database, 1, EnqueuedState.StateName);
 
-                var jobIds = new List<string> { unfetchedJob.Id };
+                var jobIds = new List<int> { unfetchedJob.Id };
                 _persistentJobQueueMonitoringApi.Setup(x => x
                     .GetEnqueuedJobIds(DefaultQueue, From, PerPage))
                     .Returns(jobIds);
@@ -135,9 +136,9 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                var fetchedJob = CreateJobInState(database, 1.ToString(), FetchedStateName);
+                var fetchedJob = CreateJobInState(database, 1, FetchedStateName);
 
-                var jobIds = new List<string> { fetchedJob.Id };
+                var jobIds = new List<int> { fetchedJob.Id };
                 _persistentJobQueueMonitoringApi.Setup(x => x
                     .GetEnqueuedJobIds(DefaultQueue, From, PerPage))
                     .Returns(jobIds);
@@ -153,11 +154,11 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                var unfetchedJob = CreateJobInState(database, 1.ToString(), EnqueuedState.StateName);
-                var unfetchedJob2 = CreateJobInState(database, 2.ToString(), EnqueuedState.StateName);
-                var fetchedJob = CreateJobInState(database, 3.ToString(), FetchedStateName);
+                var unfetchedJob = CreateJobInState(database, 1, EnqueuedState.StateName);
+                var unfetchedJob2 = CreateJobInState(database,2, EnqueuedState.StateName);
+                var fetchedJob = CreateJobInState(database, 3, FetchedStateName);
 
-                var jobIds = new List<string> { unfetchedJob.Id, unfetchedJob2.Id, fetchedJob.Id };
+                var jobIds = new List<int> { unfetchedJob.Id, unfetchedJob2.Id, fetchedJob.Id };
                 _persistentJobQueueMonitoringApi.Setup(x => x
                     .GetEnqueuedJobIds(DefaultQueue, From, PerPage))
                     .Returns(jobIds);
@@ -173,7 +174,7 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                var jobIds = new List<string>();
+                var jobIds = new List<int>();
 
                 _persistentJobQueueMonitoringApi.Setup(x => x
                     .GetFetchedJobIds(DefaultQueue, From, PerPage))
@@ -190,9 +191,9 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                var fetchedJob = CreateJobInState(database, 1.ToString(), FetchedStateName);
+                var fetchedJob = CreateJobInState(database, 1, FetchedStateName);
 
-                var jobIds = new List<string> { fetchedJob.Id };
+                var jobIds = new List<int> { fetchedJob.Id };
                 _persistentJobQueueMonitoringApi.Setup(x => x
                     .GetFetchedJobIds(DefaultQueue, From, PerPage))
                     .Returns(jobIds);
@@ -208,9 +209,9 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                var unfetchedJob = CreateJobInState(database, 1.ToString(), EnqueuedState.StateName);
+                var unfetchedJob = CreateJobInState(database, 1, EnqueuedState.StateName);
 
-                var jobIds = new List<string> { unfetchedJob.Id };
+                var jobIds = new List<int> { unfetchedJob.Id };
                 _persistentJobQueueMonitoringApi.Setup(x => x
                     .GetFetchedJobIds(DefaultQueue, From, PerPage))
                     .Returns(jobIds);
@@ -226,11 +227,11 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                var fetchedJob = CreateJobInState(database, 1.ToString(), FetchedStateName);
-                var fetchedJob2 = CreateJobInState(database, 2.ToString(), FetchedStateName);
-                var unfetchedJob = CreateJobInState(database, 3.ToString(), EnqueuedState.StateName);
+                var fetchedJob = CreateJobInState(database, 1, FetchedStateName);
+                var fetchedJob2 = CreateJobInState(database,2, FetchedStateName);
+                var unfetchedJob = CreateJobInState(database, 3, EnqueuedState.StateName);
 
-                var jobIds = new List<string> { fetchedJob.Id, fetchedJob2.Id, unfetchedJob.Id };
+                var jobIds = new List<int> { fetchedJob.Id, fetchedJob2.Id, unfetchedJob.Id };
                 _persistentJobQueueMonitoringApi.Setup(x => x
                     .GetFetchedJobIds(DefaultQueue, From, PerPage))
                     .Returns(jobIds);
@@ -246,30 +247,30 @@ namespace Hangfire.LiteDB.Test
         {
             UseMonitoringApi((database, monitoringApi) =>
             {
-                var processingJob = CreateJobInState(database, 1.ToString(), ProcessingState.StateName);
+                var processingJob = CreateJobInState(database, 1, ProcessingState.StateName);
 
-                var succeededJob = CreateJobInState(database, 2.ToString(), SucceededState.StateName, liteJob =>
+                var succeededJob = CreateJobInState(database,2, SucceededState.StateName, liteJob =>
                 {
                     var processingState = new LiteState()
                     {
                         Name = ProcessingState.StateName,
                         Reason = null,
-                        CreatedAt = DateTime.UtcNow,
+                        CreatedAt = DateTime.Now,
                         Data = new Dictionary<string, string>
                         {
                             ["ServerId"] = Guid.NewGuid().ToString(),
                             ["StartedAt"] =
-                            JobHelper.SerializeDateTime(DateTime.UtcNow.Subtract(TimeSpan.FromMilliseconds(500)))
+                            JobHelper.SerializeDateTime(DateTime.Now.Subtract(TimeSpan.FromMilliseconds(500)))
                         }
                     };
                     var succeededState = liteJob.StateHistory[0];
-                    liteJob.StateHistory = new[] {processingState, succeededState};
+                    liteJob.StateHistory = new List<LiteState> {processingState, succeededState};
                     return liteJob;
                 });
 
-                var enqueuedJob = CreateJobInState(database, 3.ToString(), EnqueuedState.StateName);
+                var enqueuedJob = CreateJobInState(database, 3, EnqueuedState.StateName);
 
-                var jobIds = new List<string> { processingJob.Id, succeededJob.Id, enqueuedJob.Id };
+                var jobIds = new List<int> { processingJob.Id, succeededJob.Id, enqueuedJob.Id };
                 _persistentJobQueueMonitoringApi.Setup(x => x
                         .GetFetchedJobIds(DefaultQueue, From, PerPage))
                     .Returns(jobIds);
@@ -287,28 +288,26 @@ namespace Hangfire.LiteDB.Test
 
         private void UseMonitoringApi(Action<HangfireDbContext, LiteDbMonitoringApi> action)
         {
-            using (var database = ConnectionUtils.CreateConnection())
-            {
-                var connection = new LiteDbMonitoringApi(database, _providers);
-                action(database, connection);
-            }
+            var database = ConnectionUtils.CreateConnection();
+            var connection = new LiteDbMonitoringApi(database, _providers);
+            action(database, connection);
         }
 
-        private LiteJob CreateJobInState(HangfireDbContext database, string jobId, string stateName, Func<LiteJob, LiteJob> visitor = null)
+        private LiteJob CreateJobInState(HangfireDbContext database, int jobId, string stateName, Func<LiteJob, LiteJob> visitor = null)
         {
             var job = Job.FromExpression(() => SampleMethod("wrong"));
             
             Dictionary<string, string> stateData;
             if (stateName == EnqueuedState.StateName)
             {
-                stateData = new Dictionary<string, string> {["EnqueuedAt"] = $"{DateTime.UtcNow:o}"};
+                stateData = new Dictionary<string, string> {["EnqueuedAt"] = $"{DateTime.Now:o}"};
             }
             else if (stateName == ProcessingState.StateName)
             {
                 stateData = new Dictionary<string, string>
                 {
                     ["ServerId"] = Guid.NewGuid().ToString(),
-                    ["StartedAt"] = JobHelper.SerializeDateTime(DateTime.UtcNow.Subtract(TimeSpan.FromMilliseconds(500)))
+                    ["StartedAt"] = JobHelper.SerializeDateTime(DateTime.Now.Subtract(TimeSpan.FromMilliseconds(500)))
                 };
             }
             else
@@ -318,9 +317,10 @@ namespace Hangfire.LiteDB.Test
 
             var jobState = new LiteState()
             {
+                JobId = jobId,
                 Name = stateName,
                 Reason = null,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 Data = stateData
             };
 
@@ -330,8 +330,8 @@ namespace Hangfire.LiteDB.Test
                 InvocationData = JobHelper.ToJson(InvocationData.Serialize(job)),
                 Arguments = "[\"\\\"Arguments\\\"\"]",
                 StateName = stateName,
-                CreatedAt = DateTime.UtcNow,
-                StateHistory = new []{jobState}
+                CreatedAt = DateTime.Now,
+                StateHistory = new List<LiteState>{jobState}
             };
             if (visitor != null)
             {
@@ -348,7 +348,7 @@ namespace Hangfire.LiteDB.Test
 
             if (stateName == FetchedStateName)
             {
-                jobQueueDto.FetchedAt = DateTime.UtcNow;
+                jobQueueDto.FetchedAt = DateTime.Now;
             }
 
             database.JobQueue.Insert(jobQueueDto);

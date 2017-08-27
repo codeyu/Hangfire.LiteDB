@@ -49,7 +49,7 @@ namespace Hangfire.LiteDB
         /// <returns></returns>
         public static IEnumerable<BsonValue> ToBsonValueEnumerable<T>(this IEnumerable<T> items)
         {
-            return items.Select(item => new BsonValue(item)).ToList();
+            return items.Select(item => new BsonValue(item));
         }
     }
 }

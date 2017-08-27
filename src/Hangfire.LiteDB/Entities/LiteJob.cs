@@ -14,9 +14,13 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        [BsonId]
-        public string Id { get; set; }
+        public int Id { get; set; }
         
+        /// <summary>
+        /// 
+        /// </summary>
+        public string IdString => Id.ToString();
+
         /// <summary>
         /// 
         /// </summary>
@@ -40,7 +44,7 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public LiteState[] StateHistory { get; set; } = new LiteState[0];
+        public List<LiteState> StateHistory { get; set; } = new List<LiteState>();
 
         /// <summary>
         /// 

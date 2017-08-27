@@ -20,7 +20,7 @@ namespace Hangfire.LiteDB
         /// <param name="from"></param>
         /// <param name="perPage"></param>
         /// <returns></returns>
-        IEnumerable<string> GetEnqueuedJobIds(string queue, int from, int perPage);
+        IEnumerable<int> GetEnqueuedJobIds(string queue, int from, int perPage);
 
         /// <summary>
         /// 
@@ -29,7 +29,7 @@ namespace Hangfire.LiteDB
         /// <param name="from"></param>
         /// <param name="perPage"></param>
         /// <returns></returns>
-        IEnumerable<string> GetFetchedJobIds(string queue, int from, int perPage);
+        IEnumerable<int> GetFetchedJobIds(string queue, int from, int perPage);
 
         /// <summary>
         /// 

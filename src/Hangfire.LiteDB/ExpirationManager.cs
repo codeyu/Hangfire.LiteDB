@@ -16,7 +16,15 @@ namespace Hangfire.LiteDB
 
         private readonly LiteDbStorage _storage;
         private readonly TimeSpan _checkInterval;
-
+        private static readonly string[] ProcessedTables =
+        {
+            "Counter",
+            "AggregatedCounter",
+            "LiteJob",
+            "LiteList",
+            "LiteSet",
+            "LiteHash"
+        };
         /// <summary>
         /// Constructs expiration manager with one hour checking interval
         /// </summary>
@@ -52,14 +60,14 @@ namespace Hangfire.LiteDB
         /// <param name="cancellationToken">Cancellation token</param>
         public void Execute(CancellationToken cancellationToken)
         {
-            using (HangfireDbContext connection = _storage.CreateAndOpenConnection())
-            {
-                DateTime now = DateTime.UtcNow;
-
-                RemoveExpiredRecord(connection.Job, _ => _.ExpireAt < now);
-                RemoveExpiredRecord(connection.StateDataExpiringKeyValue, _ => _.ExpireAt==now);
-            }
-
+            HangfireDbContext connection = _storage.CreateAndOpenConnection();
+            DateTime now = DateTime.Now;
+            RemoveExpiredRecord(connection.Job, _ => _.ExpireAt < now && _.ExpireAt != null);
+            RemoveExpiredRecord(connection.StateDataAggregatedCounter, _ => _.ExpireAt < now && _.ExpireAt != null);
+            RemoveExpiredRecord(connection.StateDataCounter, _ => _.ExpireAt < now && _.ExpireAt != null);
+            RemoveExpiredRecord(connection.StateDataHash, _ => _.ExpireAt < now && _.ExpireAt != null);
+            RemoveExpiredRecord(connection.StateDataSet, _ => _.ExpireAt < now && _.ExpireAt != null);
+            RemoveExpiredRecord(connection.StateDataList, _ => _.ExpireAt < now && _.ExpireAt != null);
             cancellationToken.WaitHandle.WaitOne(_checkInterval);
         }
 
@@ -75,7 +83,10 @@ namespace Hangfire.LiteDB
         {
             Logger.DebugFormat("Removing outdated records from table '{0}'...", collection.Name);
 
-            collection.Delete(expression);
+            var result = collection.Delete(expression);
+#if DEBUG
+            Logger.DebugFormat(result.ToString());
+#endif
         }
     }
 }

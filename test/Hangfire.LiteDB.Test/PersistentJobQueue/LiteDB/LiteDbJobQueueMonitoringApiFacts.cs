@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Hangfire.LiteDB.Entities;
 using Hangfire.LiteDB.Test.Utils;
@@ -26,7 +27,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var queues = liteDbJobQueueMonitoringApi.GetQueues();
 
@@ -39,7 +40,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 CreateJobQueueDto(connection, QueueName1, false);
 
@@ -55,7 +56,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 CreateJobQueueDto(connection, QueueName1, false);
                 CreateJobQueueDto(connection, QueueName1, false);
@@ -74,7 +75,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10);
 
@@ -87,7 +88,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 CreateJobQueueDto(connection, QueueName1, true);
 
@@ -102,7 +103,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, false);
 
@@ -118,7 +119,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, false);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, false);
@@ -138,7 +139,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, false);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, false);
@@ -157,7 +158,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, false);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, false);
@@ -176,7 +177,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10);
 
@@ -189,7 +190,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 CreateJobQueueDto(connection, QueueName1, false);
 
@@ -204,7 +205,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, true);
 
@@ -220,7 +221,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, true);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, true);
@@ -240,7 +241,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, true);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, true);
@@ -259,7 +260,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             UseConnection(connection =>
             {
-                var liteDbJobQueueMonitoringApi = CreateMongoJobQueueMonitoringApi(connection);
+                var liteDbJobQueueMonitoringApi = CreateLiteDbJobQueueMonitoringApi(connection);
 
                 var jobQueueDto = CreateJobQueueDto(connection, QueueName1, true);
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, true);
@@ -277,8 +278,8 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             var job = new LiteJob
             {
-                CreatedAt = DateTime.UtcNow,
-                StateHistory = new []{new LiteState()}
+                CreatedAt = DateTime.Now,
+                StateHistory = new List<LiteState>()
             };
 
             connection.Job.Insert(job);
@@ -291,7 +292,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
 
             if (isFetched)
             {
-                jobQueue.FetchedAt = DateTime.UtcNow.AddDays(-1);
+                jobQueue.FetchedAt = DateTime.Now.AddDays(-1);
             }
 
             connection.JobQueue.Insert(jobQueue);
@@ -299,17 +300,15 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
             return jobQueue;
         }
 
-        private static LiteDbJobQueueMonitoringApi CreateMongoJobQueueMonitoringApi(HangfireDbContext connection)
+        private static LiteDbJobQueueMonitoringApi CreateLiteDbJobQueueMonitoringApi(HangfireDbContext connection)
         {
             return new LiteDbJobQueueMonitoringApi(connection);
         }
 
         private static void UseConnection(Action<HangfireDbContext> action)
         {
-            using (var connection = ConnectionUtils.CreateConnection())
-            {
-                action(connection);
-            }
+            var connection = ConnectionUtils.CreateConnection();
+            action(connection);
         }
     }
 #pragma warning restore 1591

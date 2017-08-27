@@ -18,13 +18,13 @@ namespace Hangfire.LiteDB.Test
             Assert.Equal("connectionString", exception.ParamName);
         }
 
-        [Fact]
-        public void Ctor_ThrowsAnException_WhenDatabaseNameIsNull()
-        {
-            var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage("lite.db", null));
-
-            Assert.Equal("databaseName", exception.ParamName);
-        }
+        //[Fact]
+        //public void Ctor_ThrowsAnException_WhenDatabaseNameIsNull()
+        //{
+        //    var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage("lite.db", null));
+        //
+        //    Assert.Equal("databaseName", exception.ParamName);
+        //}
 
         [Fact]
         public void Ctor_ThrowsAnException_WhenStorageOptionsValueIsNull()
@@ -52,16 +52,16 @@ namespace Hangfire.LiteDB.Test
             }
         }
 
-        [Fact]
-        public void GetComponents_ReturnsAllNeededComponents()
-        {
-            LiteDbStorage storage = ConnectionUtils.CreateStorage();
-
-            var components = storage.GetComponents();
-
-            Type[] componentTypes = components.Select(x => x.GetType()).ToArray();
-            Assert.Contains(typeof(ExpirationManager), componentTypes);
-        }
+        //[Fact]
+        //public void GetComponents_ReturnsAllNeededComponents()
+        //{
+        //    LiteDbStorage storage = ConnectionUtils.CreateStorage();
+        //
+        //   var components = storage.GetComponents();
+        //
+        //    Type[] componentTypes = components.Select(x => x.GetType()).ToArray();
+        //    Assert.Contains(typeof(ExpirationManager), componentTypes);
+        //}
 
     }
 #pragma warning restore 1591

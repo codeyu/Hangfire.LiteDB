@@ -150,7 +150,7 @@ namespace Hangfire.LiteDB.Test
             {
                 using (new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions() { DistributedLockLifetime = TimeSpan.FromSeconds(3) }))
                 {
-                    DateTime initialExpireAt = DateTime.UtcNow;
+                    DateTime initialExpireAt = DateTime.Now;
                     Thread.Sleep(TimeSpan.FromSeconds(5));
 
                     DistributedLock lockEntry = database.DistributedLock.Find(_ => _.Resource=="resource1").FirstOrDefault();
@@ -162,10 +162,8 @@ namespace Hangfire.LiteDB.Test
 
         private static void UseConnection(Action<HangfireDbContext> action)
         {
-            using (var connection = ConnectionUtils.CreateConnection())
-            {
-                action(connection);
-            }
+            var connection = ConnectionUtils.CreateConnection();
+            action(connection);
         }
     }
 #pragma warning restore 1591

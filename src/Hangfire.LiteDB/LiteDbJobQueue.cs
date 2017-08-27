@@ -49,7 +49,7 @@ namespace Hangfire.LiteDB
             var fetchConditions = new[]
             {
                 Query.EQ("FetchedAt", null),
-                Query.LT("FetchedAt", DateTime.UtcNow.AddSeconds(_storageOptions.InvisibilityTimeout.Negate().TotalSeconds))
+                Query.LT("FetchedAt", DateTime.Now.AddSeconds(_storageOptions.InvisibilityTimeout.Negate().TotalSeconds))
             };
             var fetchConditionsIndex = 0;
 
@@ -64,9 +64,13 @@ namespace Hangfire.LiteDB
                 {
                     fetchedJob = _connection.JobQueue.FindOne(Query.And(
                         fetchCondition, Query.EQ("Queue", queue)));
-                    fetchedJob.FetchedAt = DateTime.UtcNow;
-                    _connection.JobQueue.Update(fetchedJob);
-                    break;
+                    if (fetchedJob != null)
+                    {
+                        fetchedJob.FetchedAt = DateTime.Now;
+                        _connection.JobQueue.Update(fetchedJob);
+                        break;
+                    }
+                    
                 }
 
                 if (fetchedJob == null)
@@ -96,7 +100,7 @@ namespace Hangfire.LiteDB
         {
             _connection.JobQueue.Insert(new JobQueue
             {
-                JobId = jobId,
+                JobId = int.Parse(jobId),
                 Queue = queue
             });
         }

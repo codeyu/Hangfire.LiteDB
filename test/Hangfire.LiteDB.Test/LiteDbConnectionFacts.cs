@@ -106,7 +106,7 @@ namespace Hangfire.LiteDB.Test
                     () => connection.CreateExpiredJob(
                         null,
                         new Dictionary<string, string>(),
-                        DateTime.UtcNow,
+                        DateTime.Now,
                         TimeSpan.Zero));
 
                 Assert.Equal("job", exception.ParamName);
@@ -122,7 +122,7 @@ namespace Hangfire.LiteDB.Test
                     () => connection.CreateExpiredJob(
                         Job.FromExpression(() => SampleMethod("hello")),
                         null,
-                        DateTime.UtcNow,
+                        DateTime.Now,
                         TimeSpan.Zero));
 
                 Assert.Equal("parameters", exception.ParamName);
@@ -134,7 +134,8 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection((database, connection) =>
             {
-                var createdAt = new DateTime(2012, 12, 12, 0, 0, 0, 0, DateTimeKind.Utc);
+                //LiteDB always return local time.
+                var createdAt = new DateTime(2012, 12, 12, 0, 0, 0, 0, DateTimeKind.Local);
                 var jobId = connection.CreateExpiredJob(
                     Job.FromExpression(() => SampleMethod("Hello")),
                     new Dictionary<string, string> { { "Key1", "Value1" }, { "Key2", "Value2" } },
@@ -145,8 +146,8 @@ namespace Hangfire.LiteDB.Test
                 Assert.NotEmpty(jobId);
 
                 var databaseJob = database.Job.FindAll().ToList().Single();
-                Assert.Equal(jobId, databaseJob.Id.ToString());
-                Assert.Equal(createdAt, databaseJob.CreatedAt);
+                Assert.Equal(jobId, databaseJob.IdString);
+                Assert.Equal(createdAt, databaseJob.CreatedAt); 
                 Assert.Equal(null, databaseJob.StateName);
 
                 var invocationData = JobHelper.FromJson<InvocationData>(databaseJob.InvocationData);
@@ -162,7 +163,7 @@ namespace Hangfire.LiteDB.Test
 
                 var parameters = database
                     .Job
-                    .Find(_ => _.Id==jobId)
+                    .Find(_ => _.IdString==jobId)
                     .Select(j => j.Parameters)
                     .ToList()
                     .SelectMany(j => j)
@@ -200,23 +201,23 @@ namespace Hangfire.LiteDB.Test
 
                 var liteJob = new LiteJob
                 {
-                    Id = ObjectId.NewObjectId().ToString(),
+                    Id = 1,
                     InvocationData = JobHelper.ToJson(InvocationData.Serialize(job)),
                     Arguments = "[\"\\\"Arguments\\\"\"]",
                     StateName = "Succeeded",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
 
-                var result = connection.GetJobData(liteJob.Id);
+                var result = connection.GetJobData(liteJob.Id.ToString());
 
                 Assert.NotNull(result);
                 Assert.NotNull(result.Job);
                 Assert.Equal("Succeeded", result.State);
                 Assert.Equal("Arguments", result.Job.Args[0]);
                 Assert.Null(result.LoadException);
-                Assert.True(DateTime.UtcNow.AddMinutes(-1) < result.CreatedAt);
-                Assert.True(result.CreatedAt < DateTime.UtcNow.AddMinutes(1));
+                Assert.True(DateTime.Now.AddMinutes(-1) < result.CreatedAt);
+                Assert.True(result.CreatedAt < DateTime.Now.AddMinutes(1));
             });
         }
 
@@ -251,33 +252,32 @@ namespace Hangfire.LiteDB.Test
                 var state = new LiteState
                 {
                     Name = "old-state",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
                     InvocationData = "",
                     Arguments = "",
                     StateName = "",
-                    CreatedAt = DateTime.UtcNow,
-                    StateHistory = new[] { state }
+                    CreatedAt = DateTime.Now,
+                    StateHistory = new List<LiteState>()
                 };
 
                 database.Job.Insert(liteJob);
-                var jobId = liteJob.Id;
                 var job = database.Job.FindById(liteJob.Id);
                 job.StateName = state.Name;
-                job.StateHistory.Append(new LiteState
+                job.StateHistory.Add(new LiteState
                     {
+                        JobId = liteJob.Id,
                         Name = "Name",
                         Reason = "Reason",
                         Data = data,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.Now
                     });
 
                 database.Job.Update(job);
 
-                var result = connection.GetStateData(jobId.ToString());
+                var result = connection.GetStateData(liteJob.IdString);
                 Assert.NotNull(result);
 
                 Assert.Equal("Name", result.Name);
@@ -293,16 +293,16 @@ namespace Hangfire.LiteDB.Test
             {
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = JobHelper.ToJson(new InvocationData(null, null, null, null)),
                     Arguments = "[\"\\\"Arguments\\\"\"]",
                     StateName = "Succeeded",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
-                var jobId = liteJob.Id;
+                var jobId = liteJob.IdString;
 
-                var result = connection.GetJobData(jobId.ToString());
+                var result = connection.GetJobData(jobId);
 
                 Assert.NotNull(result.LoadException);
             });
@@ -339,19 +339,19 @@ namespace Hangfire.LiteDB.Test
             {
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
-                string jobId = liteJob.Id.ToString();
+                string jobId = liteJob.IdString;
 
                 connection.SetJobParameter(jobId, "Name", "Value");
 
                 var parameters = database
                     .Job
-                    .Find(j => j.Id == jobId)
+                    .Find(j =>  j.Id == liteJob.Id)
                     .Select(j => j.Parameters)
                     .FirstOrDefault();
 
@@ -367,20 +367,20 @@ namespace Hangfire.LiteDB.Test
             {
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
-                string jobId = liteJob.Id.ToString();
+                string jobId = liteJob.IdString;
 
                 connection.SetJobParameter(jobId, "Name", "Value");
                 connection.SetJobParameter(jobId, "Name", "AnotherValue");
 
                 var parameters = database
                     .Job
-                    .Find(j => j.Id == jobId)
+                    .Find(j =>  j.Id == liteJob.Id)
                     .Select(j => j.Parameters)
                     .FirstOrDefault();
 
@@ -396,19 +396,19 @@ namespace Hangfire.LiteDB.Test
             {
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
-                string jobId = liteJob.Id.ToString();
+                string jobId = liteJob.IdString;
 
                 connection.SetJobParameter(jobId, "Name", null);
 
                 var parameters = database
                     .Job
-                    .Find(j => j.Id == jobId)
+                    .Find(j =>  j.Id == liteJob.Id)
                     .Select(j => j.Parameters)
                     .FirstOrDefault();
 
@@ -458,17 +458,17 @@ namespace Hangfire.LiteDB.Test
             {
                 var liteJob = new LiteJob
                 {
-                    Id = 1.ToString(),
+                     
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
                 database.Job.Insert(liteJob);
 
 
-                connection.SetJobParameter(liteJob.Id, "name", "value");
+                connection.SetJobParameter(liteJob.IdString, "name", "value");
 
-                var value = connection.GetJobParameter(liteJob.Id, "name");
+                var value = connection.GetJobParameter(liteJob.IdString, "name");
 
                 Assert.Equal("value", value);
             });
@@ -615,13 +615,13 @@ namespace Hangfire.LiteDB.Test
                 {
                     Id = "Server1",
                     Data = "",
-                    LastHeartbeat = DateTime.UtcNow
+                    LastHeartbeat = DateTime.Now
                 });
                 database.Server.Insert(new Entities.Server
                 {
                     Id = "Server2",
                     Data = "",
-                    LastHeartbeat = DateTime.UtcNow
+                    LastHeartbeat = DateTime.Now
                 });
 
                 connection.RemoveServer("Server1");
@@ -682,13 +682,13 @@ namespace Hangfire.LiteDB.Test
                 {
                     Id = "server1",
                     Data = "",
-                    LastHeartbeat = DateTime.UtcNow.AddDays(-1)
+                    LastHeartbeat = DateTime.Now.AddDays(-1)
                 });
                 database.Server.Insert(new Entities.Server
                 {
                     Id = "server2",
                     Data = "",
-                    LastHeartbeat = DateTime.UtcNow.AddHours(-12)
+                    LastHeartbeat = DateTime.Now.AddHours(-12)
                 });
 
                 connection.RemoveTimedOutServers(TimeSpan.FromHours(15));
@@ -1024,7 +1024,7 @@ namespace Hangfire.LiteDB.Test
                     Key = "set-1",
                     Value = "1",
                     Score = 0.0,
-                    ExpireAt = DateTime.UtcNow.AddMinutes(60)
+                    ExpireAt = DateTime.Now.AddMinutes(60)
                 });
 
                 database.StateDataSet.Insert(new LiteSet
@@ -1207,7 +1207,7 @@ namespace Hangfire.LiteDB.Test
                     Id = ObjectId.NewObjectId(),
                     Key = "hash-1",
                     Field = "field",
-                    ExpireAt = DateTime.UtcNow.AddHours(1)
+                    ExpireAt = DateTime.Now.AddHours(1)
                 });
                 database.StateDataHash.Insert(new LiteHash
                 {
@@ -1376,7 +1376,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     Id = ObjectId.NewObjectId(),
                     Key = "list-1",
-                    ExpireAt = DateTime.UtcNow.AddHours(1)
+                    ExpireAt = DateTime.Now.AddHours(1)
                 });
                 database.StateDataList.Insert(new LiteList
                 {
@@ -1576,12 +1576,10 @@ namespace Hangfire.LiteDB.Test
         }
         private void UseConnection(Action<HangfireDbContext, LiteDbConnection> action)
         {
-            using (var database = ConnectionUtils.CreateConnection())
+            var database = ConnectionUtils.CreateConnection();
+            using (var connection = new LiteDbConnection(database, _providers))
             {
-                using (var connection = new LiteDbConnection(database, _providers))
-                {
-                    action(database, connection);
-                }
+                action(database, connection);
             }
         }
 

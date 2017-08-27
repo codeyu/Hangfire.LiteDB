@@ -17,7 +17,7 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public string JobId { get; set; }
+        public int JobId { get; set; }
 
         /// <summary>
         /// 

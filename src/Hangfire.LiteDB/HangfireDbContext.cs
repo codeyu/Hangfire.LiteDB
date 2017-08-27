@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using Hangfire.LiteDB.Entities;
 using LiteDB;
 namespace Hangfire.LiteDB
@@ -7,63 +6,64 @@ namespace Hangfire.LiteDB
     /// <summary>
     /// Represents LiteDB database context for Hangfire
     /// </summary>
-    public sealed class HangfireDbContext : IDisposable
+    public sealed class HangfireDbContext
     {
         private readonly string _prefix;
 
-        internal LiteDatabase Database { get; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public  LiteDatabase Database { get; }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        public LiteRepository Repository { get; }
 
+        private static readonly object Locker = new object();
+        private static volatile HangfireDbContext _instance;
         /// <summary>
         /// Starts LiteDB database using a connection string for file system database
         /// </summary>
         /// <param name="connectionString">Connection string for LiteDB database</param>
         /// <param name="prefix">Collections prefix</param>
-        /// <param name="mapper"></param>
-        public HangfireDbContext(string connectionString, BsonMapper mapper = null, string prefix = "hangfire")
+        private HangfireDbContext(string connectionString, string prefix = "hangfire")
         {
             _prefix = prefix;
 
-            var client = new LiteRepository(connectionString, mapper);
+            Repository = new LiteRepository(connectionString);
 
-            Database = client.Database;
+            Database = Repository.Database;
 
             ConnectionId = Guid.NewGuid().ToString();
         }
-
         /// <summary>
-        /// Starts LiteDB database using a connection string for file system database
+        /// 
         /// </summary>
-        /// <param name="mapper"></param>
-        /// <param name="prefix">Collections prefix</param>
         /// <param name="connectionString"></param>
-        public HangfireDbContext(ConnectionString connectionString, BsonMapper mapper = null, string prefix = "hangfire")
+        /// <param name="prefix"></param>
+        /// <returns></returns>
+        public static HangfireDbContext Instance(string connectionString, string prefix = "hangfire")
         {
-            _prefix = prefix;
+            if (_instance != null) return _instance;
+            lock (Locker)
+            {
+                if (_instance == null) 
+                {
+                    _instance = new HangfireDbContext(connectionString, prefix);
+                }
+            }
 
-            var client = new LiteRepository(connectionString, mapper);
-
-            Database = client.Database;
-
-            ConnectionId = Guid.NewGuid().ToString();
+            return _instance;
         }
+        
+
+        
 
         /// <summary>
-        /// Starts LiteDB database using a Stream disk
+        /// LiteDB database connection identifier
         /// </summary>
-        /// <param name="stream"></param>
-        /// <param name="mapper"></param>
-        /// <param name="password"></param>
-        public HangfireDbContext(Stream stream, BsonMapper mapper = null, string password = null)
-        {
-            var client = new LiteRepository(stream, mapper, password);
-            Database = client.Database;
-            ConnectionId = Guid.NewGuid().ToString();
-        }
-
-        /// <summary>
-        /// Mongo database connection identifier
-        /// </summary>
-        public string ConnectionId { get; private set; }
+        public string ConnectionId { get; }
 
         /// <summary>
         /// Reference to collection which contains various state information
@@ -136,45 +136,6 @@ namespace Hangfire.LiteDB
             //var migrationManager = new LiteDbStorageOptions(storageOptions);
             //migrationManager.Migrate(this);
         }
-
-
-
-        private bool _disposed;
-        /// <summary>
-        /// Disposes the object
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        ~HangfireDbContext()
-        {
-            Dispose(false);
-        }
         
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="disposing"></param>
-         void Dispose(bool disposing)
-        {
-            if (_disposed)
-                return;
-
-            if (disposing)
-            {
-                // free other managed objects that implement
-                // IDisposable only
-            }
-
-            Database.Dispose();
-
-            _disposed = true;
-        }
     }
 }

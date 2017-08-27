@@ -4,7 +4,7 @@ using LiteDB;
 namespace Hangfire.LiteDB.Entities
 {
     /// <summary>
-    /// Document used for holding a distributed lock in mongo.
+    /// Document used for holding a distributed lock in LiteDB.
     /// </summary>
     public class DistributedLock
     {
