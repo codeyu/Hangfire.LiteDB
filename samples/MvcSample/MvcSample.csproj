@@ -3,9 +3,15 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
-
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Hangfire.LiteDB\Hangfire.LiteDB.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
+    <PackageReference Include="HangFire.Core" Version="1.6.15" />
+    <PackageReference Include="HangFire" Version="1.6.15" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.1" />
+    <PackageReference Include="LiteDB" Version="3.1.4" />
   </ItemGroup>
 
   <ItemGroup>
