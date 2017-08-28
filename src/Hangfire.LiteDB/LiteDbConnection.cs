@@ -260,10 +260,17 @@ namespace Hangfire.LiteDB
             {
                 throw new ArgumentException("The `timeOut` value must be positive.", nameof(timeOut));
             }
-
-            return Database
-                .Server
-                .Delete(_ => _.LastHeartbeat < DateTime.Now.Add(timeOut.Negate()));
+            var delCount = 0;
+            var servers = Database.Server.FindAll();
+            foreach(var server in servers)
+            {
+                if(server.LastHeartbeat < DateTime.Now.Add(timeOut.Negate()))
+                {
+                    Database.Server.Delete(server.Id);
+                    delCount++;
+                }
+            }
+            return delCount;
         }
 
         public override HashSet<string> GetAllItemsFromSet(string key)
