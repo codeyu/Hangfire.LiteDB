@@ -39,7 +39,7 @@ Push-Location -Path .\test\Hangfire.LiteDB.Test
 exec { & dotnet test -c Release }
 
 Pop-Location
-
+<#
 $samples = Get-ChildItem .\samples\*
 
 foreach ($sample in $samples) {
@@ -49,5 +49,7 @@ foreach ($sample in $samples) {
 
     Pop-Location
 }
+#>
+
 
 exec { & dotnet pack .\src\Hangfire.LiteDB\Hangfire.LiteDB.csproj -c Release -o .\artifacts --include-symbols --no-build --version-suffix=$suffix }
