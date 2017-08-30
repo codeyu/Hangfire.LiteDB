@@ -6,6 +6,7 @@ nuget:
   disable_publish_on_pr: true
 build_script:
 - ps: .\Build.ps1
+test: off
 artifacts:
 - path: .\src\Hangfire.LiteDB\artifacts\**\*.nupkg
   name: NuGet
