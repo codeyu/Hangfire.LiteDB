@@ -6,8 +6,6 @@ nuget:
   disable_publish_on_pr: true
 build_script:
 - ps: .\Build.ps1
-test_script:
-- dotnet test test/Hangfire.LiteDB.Test/Hangfire.LiteDB.Test.csproj --configuration Release -f netcoreapp1.1 --no-build
 artifacts:
 - path: .\src\Hangfire.LiteDB\artifacts\**\*.nupkg
   name: NuGet
