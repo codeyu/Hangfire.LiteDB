@@ -7,6 +7,12 @@
     <ProjectReference Include="..\..\src\Hangfire.LiteDB\Hangfire.LiteDB.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.6.1" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.2.0" />
+    <PackageReference Include="HangFire.Autofac" Version="2.3.1" />
+    <PackageReference Include="Hangfire.Console" Version="1.3.4" />
+    <PackageReference Include="Hangfire.Core" Version="1.6.15" />
+    <PackageReference Include="Hangfire.RecurringJobExtensions" Version="1.1.6" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
     <PackageReference Include="HangFire" Version="1.6.15" />
   </ItemGroup>
