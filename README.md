@@ -1,5 +1,5 @@
 # Hangfire.LiteDB
-LiteDB storage for Hangfire. [![NuGet Badge](https://buildstats.info/nuget/Hangfire.LiteDB)](https://www.nuget.org/packages/Hangfire.LiteDB/)
+[![NuGet Badge](https://buildstats.info/nuget/Hangfire.LiteDB)](https://www.nuget.org/packages/Hangfire.LiteDB/)
 ## Build Status
 `Platform` | `Master`
 --- | ---
