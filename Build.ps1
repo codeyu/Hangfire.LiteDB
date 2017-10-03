@@ -26,13 +26,8 @@ if(Test-Path .\src\Hangfire.LiteDB\artifacts) { Remove-Item .\src\Hangfire.LiteD
 
 exec { & dotnet restore }
 
-$tag = $(git tag -l --points-at HEAD)
-$revision = @{ $true = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10); $false = "local" }[$env:APPVEYOR_BUILD_NUMBER -ne $NULL];
-$suffix = @{ $true = ""; $false = "ci-$revision"}[$tag -ne $NULL -and $revision -ne "local"]
-$commitHash = $(git rev-parse --short HEAD)
-$buildSuffix = @{ $true = "$($suffix)-$($commitHash)"; $false = "$($branch)-$($commitHash)" }[$suffix -ne ""]
 
-exec { & dotnet build Hangfire.LiteDB.sln -c Release --version-suffix=$buildSuffix -v q /nologo }
+exec { & dotnet build Hangfire.LiteDB.sln -c Release -v q /nologo }
 
 Push-Location -Path .\test\Hangfire.LiteDB.Test
 
@@ -51,4 +46,4 @@ foreach ($sample in $samples) {
 }
 #>
 
-exec { & dotnet pack .\src\Hangfire.LiteDB\Hangfire.LiteDB.csproj -c Release -o .\artifacts --include-symbols --no-build --version-suffix=$suffix }
+exec { & dotnet pack .\src\Hangfire.LiteDB\Hangfire.LiteDB.csproj -c Release -o .\artifacts --include-symbols --no-build }
