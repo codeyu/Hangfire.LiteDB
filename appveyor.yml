@@ -11,6 +11,14 @@ artifacts:
 - path: .\src\Hangfire.LiteDB\artifacts\**\*.nupkg
   name: NuGet
 deploy:
+deploy:  
+- provider: NuGet
+  server: https://www.myget.org/F/hangfire-litedb/api/v2/package
+  api_key:
+    secure: lIE6XJ45PjLqRwEf5cTv+VD5E5wK0KoEDgYXczeCMvc6e+p8f7bNh5CItTRsqJ8l
+  skip_symbols: true
+  on:
+    branch: master
 - provider: NuGet
   name: production
   api_key:

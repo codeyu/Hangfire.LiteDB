@@ -1,5 +1,5 @@
 # Hangfire.LiteDB
-[![NuGet Badge](https://buildstats.info/nuget/Hangfire.LiteDB)](https://www.nuget.org/packages/Hangfire.LiteDB/)
+[![NuGet Badge](https://buildstats.info/nuget/Hangfire.LiteDB)](https://www.nuget.org/packages/Hangfire.LiteDB/) [![MyGet Pre Release](https://img.shields.io/myget/hangfire-litedb/vpre/Hangfire.LiteDB.svg)](https://www.myget.org/feed/hangfire-litedb/package/nuget/Hangfire.LiteDB)
 ## Build Status
 `Platform` | `Master`
 --- | ---
