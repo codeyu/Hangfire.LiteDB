@@ -10,7 +10,6 @@ test: off
 artifacts:
 - path: .\src\Hangfire.LiteDB\artifacts\**\*.nupkg
   name: NuGet
-deploy:
 deploy:  
 - provider: NuGet
   server: https://www.myget.org/F/hangfire-litedb/api/v2/package
