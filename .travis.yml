@@ -18,7 +18,7 @@ branches:
 script:
   - ulimit -n 2048
   - dotnet restore "src\Hangfire.LiteDB" 
-  - dotnet build "src\Hangfire.LiteDB"
+  - dotnet build "src\Hangfire.LiteDB" -f netstandard2.0
   - dotnet restore "test\Hangfire.LiteDB.Test"
   - dotnet build "test\Hangfire.LiteDB.Test" -c Release
   - dotnet test "test\Hangfire.LiteDB.Test\Hangfire.LiteDB.Test.csproj" --configuration Release --no-build
