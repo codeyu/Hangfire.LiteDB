@@ -305,7 +305,7 @@ namespace Hangfire.LiteDB
             return Database
                 .StateDataSet
                 .Find(_ => _.Key == key &&
-                      _.Score == fromScore &&
+                      _.Score >= fromScore &&
                        _.Score <= toScore)
                 .OrderBy(_ => _.Score)
                 .Select(_ => _.Value)
