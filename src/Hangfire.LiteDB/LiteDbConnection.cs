@@ -250,6 +250,9 @@ namespace Hangfire.LiteDB
             }
 
             var server = Database.Server.FindById(serverId);
+             if (server == null)
+                    return;
+
             server.LastHeartbeat = DateTime.Now;
             Database.Server.Update(server);
         }
