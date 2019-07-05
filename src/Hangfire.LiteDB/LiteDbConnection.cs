@@ -108,7 +108,15 @@ namespace Hangfire.LiteDB
 
             var iJobId = int.Parse(id);
             var liteJob = Database.Job.FindById(iJobId);
-            liteJob.Parameters = new Dictionary<string, string> { { name, value } };
+            if (liteJob.Parameters == null)
+            {
+                liteJob.Parameters = new Dictionary<string, string>();
+            }
+            if (liteJob.Parameters.ContainsKey(name))
+            {
+                liteJob.Parameters.Remove(name);
+            }
+            liteJob.Parameters.Add(name, value);
 
             Database.Job.Update(liteJob);
         }
