@@ -28,6 +28,7 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
+        public DateTime CreatedAt { get { return _createdAt.ToUniversalTime(); } set { _createdAt = value; } }
         /// <summary>
         /// 
         /// </summary>
