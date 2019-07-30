@@ -8,6 +8,8 @@ namespace Hangfire.LiteDB.Entities
     /// </summary>
     public class JobQueue
     {
+        private DateTime? _fetchedAt;
+
         /// <summary>
         /// 
         /// </summary>
@@ -27,6 +29,6 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? FetchedAt { get; set; }
+        public DateTime? FetchedAt { get { return _fetchedAt.HasValue ? _fetchedAt.Value.ToUniversalTime() : default; } set { _fetchedAt = value; } }
     }
 }

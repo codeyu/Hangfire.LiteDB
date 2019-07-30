@@ -9,8 +9,9 @@ namespace Hangfire.LiteDB.Entities
     /// </summary>
     public class LiteJob
     {
-        
-       
+        private DateTime _createdAt;
+        private DateTime? _expireAt;
+
         /// <summary>
         /// 
         /// </summary>
@@ -49,12 +50,12 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get { return _createdAt.ToUniversalTime(); } set { _createdAt = value; } }
 
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? ExpireAt { get; set; }
+        public DateTime? ExpireAt { get { return _expireAt.HasValue ? _expireAt.Value.ToUniversalTime() : default; } set { _expireAt = value; } }
 
     }
 }

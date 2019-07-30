@@ -568,6 +568,7 @@ namespace Hangfire.LiteDB
                         StateData = state?.Data
                     };
                 })
+                .OrderByDescending(x => x.Id)
                 .ToList();
 
             return DeserializeJobs(joinedJobs, selector);
