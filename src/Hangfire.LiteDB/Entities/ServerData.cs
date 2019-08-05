@@ -21,6 +21,6 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? StartedAt { get { return _startedAt.HasValue ? _startedAt.Value.ToUniversalTime() : new DateTime().ToUniversalTime(); } set { _startedAt = value; } }
+        public DateTime? StartedAt { get { return _startedAt.HasValue ? _startedAt.Value.ToUniversalTime() : (DateTime?)null; } set { _startedAt = value; } }
     }
 }

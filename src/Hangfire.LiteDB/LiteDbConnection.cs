@@ -397,7 +397,7 @@ namespace Hangfire.LiteDB
                 .Select(dto => dto.ExpireAt.Value)
                 .ToList();
 
-            return values.Any() ? values.Min() - DateTime.Now : TimeSpan.FromSeconds(-1);
+            return values.Any() ? values.Min() - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
         }
 
         public override long GetCounter(string key)
@@ -454,7 +454,7 @@ namespace Hangfire.LiteDB
                 .Select(_ => _.ExpireAt)
                 .FirstOrDefault();
 
-            return result.HasValue ? result.Value - DateTime.Now : TimeSpan.FromSeconds(-1);
+            return result.HasValue ? result.Value - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
         }
 
         public override string GetValueFromHash(string key, string name)
@@ -504,7 +504,7 @@ namespace Hangfire.LiteDB
                 .Select(_ => _.ExpireAt)
                 .FirstOrDefault();
 
-            return result.HasValue ? result.Value - DateTime.Now : TimeSpan.FromSeconds(-1);
+            return result.HasValue ? result.Value - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
         }
 
         public override List<string> GetRangeFromList(string key, int startingFrom, int endingAt)

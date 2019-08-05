@@ -36,6 +36,6 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? ExpireAt { get { return _expireAt.HasValue ? _expireAt.Value.ToUniversalTime() : new DateTime().ToUniversalTime(); } set { _expireAt = value; } }
+        public DateTime? ExpireAt { get { return _expireAt.HasValue ? _expireAt.Value.ToUniversalTime() : (DateTime?)null; } set { _expireAt = value; } }
     }
 }
