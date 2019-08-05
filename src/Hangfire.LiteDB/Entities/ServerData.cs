@@ -8,6 +8,8 @@ namespace Hangfire.LiteDB.Entities
     /// </summary>
     public class ServerData
     {
+        private DateTime? _startedAt;
+
         /// <summary>
         /// 
         /// </summary>
@@ -19,6 +21,6 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? StartedAt { get; set; }
+        public DateTime? StartedAt { get { return _startedAt.HasValue ? _startedAt.Value.ToUniversalTime() : new DateTime().ToUniversalTime(); } set { _startedAt = value; } }
     }
 }

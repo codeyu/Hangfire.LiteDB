@@ -7,6 +7,8 @@ namespace Hangfire.LiteDB.Entities
     /// </summary>
     public class Server
     {
+        private DateTime _lastHeartbeat;
+
         /// <summary>
         /// 
         /// </summary>
@@ -14,7 +16,7 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public DateTime LastHeartbeat { get; set; }
+        public DateTime LastHeartbeat { get { return _lastHeartbeat.ToUniversalTime(); } set { _lastHeartbeat = value; } }
         /// <summary>
         /// 
         /// </summary>
