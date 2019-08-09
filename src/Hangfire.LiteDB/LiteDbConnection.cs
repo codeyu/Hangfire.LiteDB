@@ -280,7 +280,7 @@ namespace Hangfire.LiteDB
             var servers = Database.Server.FindAll();
             foreach (var server in servers)
             {
-                if (server.LastHeartbeat < DateTime.Now.Add(timeOut.Negate()))
+                if (server.LastHeartbeat < DateTime.UtcNow.Add(timeOut.Negate()))
                 {
                     Database.Server.Delete(server.Id);
                     delCount++;
