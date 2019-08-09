@@ -107,7 +107,7 @@ namespace Hangfire.LiteDB
                     CreatedAt = x.CreatedAt,
                     Reason = x.Reason,
                     Data = x.Data
-                }).OrderBy(x => x.CreatedAt).ToList();
+                }).OrderByDescending(x => x.CreatedAt).ToList();
 
                 return new JobDetailsDto
                 {
