@@ -183,7 +183,7 @@ namespace Hangfire.LiteDB.Test
 
             if (expireAt.HasValue)
             {
-                var expireIn = expireAt.Value - DateTime.Now;
+                var expireIn = expireAt.Value - DateTime.UtcNow;
                 Commit(connection, x => x.ExpireHash("my-hash-key", expireIn));
                 Commit(connection, x => x.ExpireSet("my-key", expireIn));
             }

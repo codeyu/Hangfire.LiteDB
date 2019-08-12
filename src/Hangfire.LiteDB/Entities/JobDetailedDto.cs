@@ -9,6 +9,10 @@ namespace Hangfire.LiteDB.Entities
     /// </summary>
     public class JobDetailedDto
     {
+        private DateTime _createdAt;
+        private DateTime? _expireAt;
+        private DateTime? _fetchedAt;
+
         /// <summary>
         /// 
         /// </summary>
@@ -24,15 +28,15 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get { return _createdAt.ToUniversalTime(); } set { _createdAt = value; } }
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? ExpireAt { get; set; }
+        public DateTime? ExpireAt { get { return _expireAt.HasValue ? _expireAt.Value.ToUniversalTime() : (DateTime?)null; } set { _expireAt = value; } }
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? FetchedAt { get; set; }
+        public DateTime? FetchedAt { get { return _fetchedAt.HasValue ? _fetchedAt.Value.ToUniversalTime() : new DateTime().ToUniversalTime(); } set { _fetchedAt = value; } }
         /// <summary>
         /// 
         /// </summary>

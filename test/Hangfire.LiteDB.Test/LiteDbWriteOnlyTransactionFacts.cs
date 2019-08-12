@@ -77,7 +77,7 @@ namespace Hangfire.LiteDB.Test
                 Commit(database, x => x.ExpireJob(jobId, TimeSpan.FromDays(1)));
 
                 var testJob = GetTestJob(database, job.Id);
-                Assert.True(DateTime.Now.AddMinutes(-1) < testJob.ExpireAt && testJob.ExpireAt <= DateTime.Now.AddDays(1));
+                Assert.True(DateTime.UtcNow.AddMinutes(-1) < testJob.ExpireAt && testJob.ExpireAt <= DateTime.UtcNow.AddDays(1));
 
                 var anotherTestJob = GetTestJob(database, anotherJobId);
                 Assert.Null(anotherTestJob.ExpireAt);
@@ -254,8 +254,8 @@ namespace Hangfire.LiteDB.Test
 
                 var expireAt = record.ExpireAt.Value;
 
-                Assert.True(DateTime.Now.AddHours(23) < expireAt);
-                Assert.True(expireAt < DateTime.Now.AddHours(25));
+                Assert.True(DateTime.UtcNow.AddHours(23) < expireAt);
+                Assert.True(expireAt < DateTime.UtcNow.AddHours(25));
             });
         }
 
@@ -306,8 +306,8 @@ namespace Hangfire.LiteDB.Test
 
                 var expireAt = (DateTime)record.ExpireAt;
 
-                Assert.True(DateTime.Now.AddHours(23) < expireAt);
-                Assert.True(expireAt < DateTime.Now.AddHours(25));
+                Assert.True(DateTime.UtcNow.AddHours(23) < expireAt);
+                Assert.True(expireAt < DateTime.UtcNow.AddHours(25));
             });
         }
 
@@ -723,7 +723,7 @@ namespace Hangfire.LiteDB.Test
                 Commit(database, x => x.ExpireSet(set1.Key, TimeSpan.FromDays(1)));
 
                 var testSet1 = GetTestSet(database, set1.Key).FirstOrDefault();
-                Assert.True(DateTime.Now.AddMinutes(-1) < testSet1.ExpireAt && testSet1.ExpireAt <= DateTime.Now.AddDays(1));
+                Assert.True(DateTime.UtcNow.AddMinutes(-1) < testSet1.ExpireAt && testSet1.ExpireAt <= DateTime.UtcNow.AddDays(1));
 
                 var testSet2 = GetTestSet(database, set2.Key).FirstOrDefault();
                 Assert.NotNull(testSet2);
@@ -745,7 +745,7 @@ namespace Hangfire.LiteDB.Test
                 Commit(database, x => x.ExpireList(list1.Key, TimeSpan.FromDays(1)));
 
                 var testList1 = GetTestList(database, list1.Key);
-                Assert.True(DateTime.Now.AddMinutes(-1) < testList1.ExpireAt && testList1.ExpireAt <= DateTime.Now.AddDays(1));
+                Assert.True(DateTime.Now.AddMinutes(-1) < testList1.ExpireAt && testList1.ExpireAt <= DateTime.UtcNow.AddDays(1));
 
                 var testList2 = GetTestList(database, list2.Key);
                 Assert.Null(testList2.ExpireAt);
@@ -766,7 +766,7 @@ namespace Hangfire.LiteDB.Test
                 Commit(database, x => x.ExpireHash(hash1.Key, TimeSpan.FromDays(1)));
 
                 var testHash1 = GetTestHash(database, hash1.Key);
-                Assert.True(DateTime.Now.AddMinutes(-1) < testHash1.ExpireAt && testHash1.ExpireAt <= DateTime.Now.AddDays(1));
+                Assert.True(DateTime.UtcNow.AddMinutes(-1) < testHash1.ExpireAt && testHash1.ExpireAt <= DateTime.UtcNow.AddDays(1));
 
                 var testHash2 = GetTestHash(database, hash2.Key);
                 Assert.Null(testHash2.ExpireAt);
