@@ -13,8 +13,8 @@ namespace Hangfire.LiteDB
         /// <summary>
         /// 
         /// </summary>
-        public  LiteDatabase Database { get; }
-        
+        public LiteDatabase Database { get; }
+
         /// <summary>
         /// 
         /// </summary>
@@ -36,6 +36,18 @@ namespace Hangfire.LiteDB
             Database = Repository.Database;
 
             ConnectionId = Guid.NewGuid().ToString();
+
+            //Create Indexes
+            StateDataKeyValue.EnsureIndex("Key");
+            StateDataExpiringKeyValue.EnsureIndex("Key");
+            StateDataHash.EnsureIndex("Key");
+            StateDataList.EnsureIndex("Key");
+            StateDataSet.EnsureIndex("Key");
+            StateDataCounter.EnsureIndex("Key");
+            StateDataAggregatedCounter.EnsureIndex("Key");
+            DistributedLock.EnsureIndex("Resource");
+            Job.EnsureIndex("Id");
+            JobQueue.EnsureIndex("Queue");
         }
         /// <summary>
         /// 
@@ -48,7 +60,7 @@ namespace Hangfire.LiteDB
             if (_instance != null) return _instance;
             lock (Locker)
             {
-                if (_instance == null) 
+                if (_instance == null)
                 {
                     _instance = new HangfireDbContext(connectionString, prefix);
                 }
@@ -56,9 +68,9 @@ namespace Hangfire.LiteDB
 
             return _instance;
         }
-        
 
-        
+
+
 
         /// <summary>
         /// LiteDB database connection identifier
@@ -136,6 +148,6 @@ namespace Hangfire.LiteDB
             //var migrationManager = new LiteDbStorageOptions(storageOptions);
             //migrationManager.Migrate(this);
         }
-        
+
     }
 }
