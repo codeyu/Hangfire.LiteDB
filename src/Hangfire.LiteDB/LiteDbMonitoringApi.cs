@@ -550,9 +550,9 @@ namespace Hangfire.LiteDB
         {
             var jobs = connection.Job
                 .Find(_ => _.StateName == stateName)
+                .OrderByDescending(x => x.Id)
                 .Skip(from)
                 .Take(count)
-                .OrderByDescending(x => x.Id)
                 .ToList();
 
             List<JobDetailedDto> joinedJobs = jobs
