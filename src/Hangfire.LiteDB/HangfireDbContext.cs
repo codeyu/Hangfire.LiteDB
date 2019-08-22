@@ -47,7 +47,13 @@ namespace Hangfire.LiteDB
             StateDataAggregatedCounter.EnsureIndex("Key");
             DistributedLock.EnsureIndex("Resource");
             Job.EnsureIndex("Id");
+            Job.EnsureIndex("StateName");
+            Job.EnsureIndex("CreatedAt");
+            Job.EnsureIndex("ExpireAt");
+            Job.EnsureIndex("FetchedAt");
+            JobQueue.EnsureIndex("JobId");
             JobQueue.EnsureIndex("Queue");
+            JobQueue.EnsureIndex("FetchedAt");
         }
         /// <summary>
         /// 

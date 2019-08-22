@@ -222,7 +222,8 @@ namespace Hangfire.LiteDB
                     Value = value,
                     ExpireAt = null
                 };
-                var oldSet = x.StateDataSet.Find(Query.And(Query.EQ("Key", key), Query.EQ("Value", value))).FirstOrDefault();
+                var oldSet = x.StateDataSet.Find(_ => _.Key == key && Convert.ToString(_.Value) == value).FirstOrDefault();
+
                 if (oldSet == null)
                 {
                     x.StateDataSet.Insert(liteSet);
@@ -232,7 +233,6 @@ namespace Hangfire.LiteDB
                     liteSet.Id = oldSet.Id;
                     x.StateDataSet.Update(liteSet);
                 }
-                
             });
             
         }
@@ -244,7 +244,7 @@ namespace Hangfire.LiteDB
         /// <param name="value"></param>
         public override void RemoveFromSet(string key, string value)
         {
-            QueueCommand(x => x.StateDataSet.Delete(Query.And(Query.EQ("Key", key), Query.EQ("Value", value))));
+            QueueCommand(x => x.StateDataSet.Delete(_ => _.Key == key && Convert.ToString(_.Value) == value));
         }
 
         /// <summary>
@@ -269,7 +269,7 @@ namespace Hangfire.LiteDB
         /// <param name="value"></param>
         public override void RemoveFromList(string key, string value)
         {
-            QueueCommand(x => x.StateDataList.Delete(Query.And(Query.EQ("Key", key), Query.EQ("Value", value))));
+            QueueCommand(x => x.StateDataList.Delete(_ => _.Key == key && Convert.ToString(_.Value) == value));
         }
 
         /// <summary>
@@ -296,7 +296,6 @@ namespace Hangfire.LiteDB
                 {
                     x.StateDataList.Delete(_=>_.Id == id);
                 }
-                
             });
         }
 
@@ -319,7 +318,6 @@ namespace Hangfire.LiteDB
                 var field = keyValuePair.Key;
                 var value = keyValuePair.Value;
 
-                
                 QueueCommand(x =>
                 {
                     var state = new LiteHash
@@ -329,7 +327,8 @@ namespace Hangfire.LiteDB
                         Value = value,
                         ExpireAt = null
                     };
-                    var oldHash = x.StateDataHash.Find(Query.And(Query.EQ("Key", key),Query.EQ("Field",field))).FirstOrDefault();
+
+                    var oldHash = x.StateDataHash.Find(_ => _.Key == key && Convert.ToString(_.Value) == value).FirstOrDefault();
                     if (oldHash == null)
                     {
                         x.StateDataHash.Insert(state);
@@ -338,8 +337,7 @@ namespace Hangfire.LiteDB
                     {
                         state.Id = oldHash.Id;
                         x.StateDataHash.Update(state);
-                    }
-                    
+                    }  
                 });
             }
         }
@@ -482,8 +480,7 @@ namespace Hangfire.LiteDB
                 {
                     state.ExpireAt = null;
                     x.StateDataList.Update(state);
-                }
-             
+                }       
             });
         }
 
@@ -502,8 +499,7 @@ namespace Hangfire.LiteDB
                 {
                     state.ExpireAt = null;
                     x.StateDataHash.Update(state);
-                }
-                
+                }    
             });
         }
 
@@ -529,7 +525,9 @@ namespace Hangfire.LiteDB
                         ExpireAt = null,
                         Score = 0.0
                     };
-                    var oldSet = x.StateDataSet.Find(Query.And(Query.EQ("Key", key), Query.EQ("Value", item))).FirstOrDefault();
+
+                    var oldSet = x.StateDataSet.Find(_ => _.Key == key && Convert.ToString(_.Value) == item).FirstOrDefault();
+
                     if (oldSet == null)
                     {
                         x.StateDataSet.Insert(state);
@@ -538,11 +536,9 @@ namespace Hangfire.LiteDB
                     {
                         state.Id = oldSet.Id;
                         x.StateDataSet.Update(state);
-                    }    
-                    
+                    } 
                 });
             }
-
         }
 
         /// <summary>

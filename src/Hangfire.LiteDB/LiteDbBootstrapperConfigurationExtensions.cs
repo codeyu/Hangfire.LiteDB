@@ -37,10 +37,6 @@ namespace Hangfire.LiteDB
             configuration.UseStorage(storage);
 
             return storage;
-        }
-
-        
-
-        
+        }    
     }
 }

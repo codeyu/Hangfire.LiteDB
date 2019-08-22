@@ -35,7 +35,6 @@ namespace Hangfire.LiteDB
             {
                 throw new ArgumentNullException(nameof(connectionString));
             }
-           
 
             _connectionString = connectionString;
             _storageOptions = storageOptions ?? throw new ArgumentNullException(nameof(storageOptions));
