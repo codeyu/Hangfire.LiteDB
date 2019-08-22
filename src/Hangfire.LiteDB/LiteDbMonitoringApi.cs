@@ -44,6 +44,7 @@ namespace Hangfire.LiteDB
                 var tuples = _queueProviders
                     .Select(x => x.GetJobQueueMonitoringApi(connection))
                     .SelectMany(x => x.GetQueues(), (monitoring, queue) => new { Monitoring = monitoring, Queue = queue })
+                    .ToArray()
                     .OrderBy(x => x.Queue)
                     .ToArray();
 
@@ -141,7 +142,7 @@ namespace Hangfire.LiteDB
                 stats.Processing = GetCountIfExists(ProcessingState.StateName);
                 stats.Scheduled = GetCountIfExists(ScheduledState.StateName);
 
-                stats.Servers = ctx.Server.Count(Query.All());
+                stats.Servers = ctx.Server.Count();
 
                 long[] succeededItems = ctx.StateDataCounter.Find(_ => _.Key == "stats:succeeded").ToList().Select(_ => (long)_.Value)
                     .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key == "stats:succeeded").ToList().Select(_ => (long)_.Value))
@@ -551,7 +552,6 @@ namespace Hangfire.LiteDB
                 .Find(_ => _.StateName == stateName)
                 .Skip(from)
                 .Take(count)
-                .ToList()
                 .OrderByDescending(x => x.Id)
                 .ToList();
 
