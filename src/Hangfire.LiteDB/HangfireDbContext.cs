@@ -20,8 +20,16 @@ namespace Hangfire.LiteDB
         /// </summary>
         public LiteRepository Repository { get; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public LiteDbStorageOptions StorageOptions { get { return _storageOptions; } }
+
         private static readonly object Locker = new object();
         private static volatile HangfireDbContext _instance;
+
+        private LiteDbStorageOptions _storageOptions;
+
         /// <summary>
         /// Starts LiteDB database using a connection string for file system database
         /// </summary>
@@ -74,9 +82,6 @@ namespace Hangfire.LiteDB
 
             return _instance;
         }
-
-
-
 
         /// <summary>
         /// LiteDB database connection identifier
@@ -151,9 +156,7 @@ namespace Hangfire.LiteDB
         /// </summary>
         public void Init(LiteDbStorageOptions storageOptions)
         {
-            //var migrationManager = new LiteDbStorageOptions(storageOptions);
-            //migrationManager.Migrate(this);
+            _storageOptions = storageOptions;
         }
-
     }
 }

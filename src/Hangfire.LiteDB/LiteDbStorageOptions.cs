@@ -22,6 +22,7 @@ namespace Hangfire.LiteDB
             DistributedLockLifetime = TimeSpan.FromSeconds(30);
             JobExpirationCheckInterval = TimeSpan.FromHours(1);
             CountersAggregateInterval = TimeSpan.FromMinutes(5);
+            ShrinkDb = true;
 
             ClientId = Guid.NewGuid().ToString().Replace("-", string.Empty);     
         }
@@ -96,5 +97,10 @@ namespace Hangfire.LiteDB
         /// Counters interval
         /// </summary>
         public TimeSpan CountersAggregateInterval { get; set; }
+
+        /// <summary>
+        /// Shrink Db when ExpirationManager is executed
+        /// </summary>
+        public bool ShrinkDb { get; set; }
     }
 }
