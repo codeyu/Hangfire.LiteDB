@@ -10,7 +10,7 @@ namespace Hangfire.LiteDB
     /// <summary>
     /// Represents Hangfire expiration manager for LiteDB database
     /// </summary>
-    public class ExpirationManager : IBackgroundProcess
+    public class ExpirationManager : IBackgroundProcess, IServerComponent
     {
         private static readonly ILog Logger = LogProvider.For<ExpirationManager>();
 
