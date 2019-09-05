@@ -19,6 +19,8 @@ namespace Hangfire.LiteDB
 
         private readonly PersistentJobQueueProviderCollection _queueProviders;
 
+        private static readonly object _lock = new object();
+
         /// <summary>
         /// Ctor using default storage options
         /// </summary>
@@ -60,22 +62,25 @@ namespace Hangfire.LiteDB
             if (parameters == null)
                 throw new ArgumentNullException(nameof(parameters));
 
-            var invocationData = InvocationData.Serialize(job);
-
-            var jobDto = new LiteJob
+            lock (_lock)
             {
-                InvocationData = JobHelper.ToJson(invocationData),
-                Arguments = invocationData.Arguments,
-                Parameters = parameters.ToDictionary(kv => kv.Key, kv => kv.Value),
-                CreatedAt = createdAt,
-                ExpireAt = createdAt.Add(expireIn)
-            };
+                var invocationData = InvocationData.Serialize(job);
 
-            Database.Job.Insert(jobDto);
+                var jobDto = new LiteJob
+                {
+                    InvocationData = JobHelper.ToJson(invocationData),
+                    Arguments = invocationData.Arguments,
+                    Parameters = parameters.ToDictionary(kv => kv.Key, kv => kv.Value),
+                    CreatedAt = createdAt,
+                    ExpireAt = createdAt.Add(expireIn)
+                };
 
-            var jobId = jobDto.Id;
+                Database.Job.Insert(jobDto);
 
-            return jobId.ToString();
+                var jobId = jobDto.Id;
+
+                return jobId.ToString();
+            }
         }
 
         public override IFetchedJob FetchNextJob(string[] queues, CancellationToken cancellationToken)
@@ -236,8 +241,8 @@ namespace Hangfire.LiteDB
                 server.Data = JobHelper.ToJson(data);
                 Database.Server.Update(server);
             }
-            
-            
+
+
         }
 
         public override void RemoveServer(string serverId)
@@ -258,8 +263,8 @@ namespace Hangfire.LiteDB
             }
 
             var server = Database.Server.FindById(serverId);
-             if (server == null)
-                    return;
+            if (server == null)
+                return;
 
             server.LastHeartbeat = DateTime.Now;
             Database.Server.Update(server);
@@ -273,9 +278,9 @@ namespace Hangfire.LiteDB
             }
             var delCount = 0;
             var servers = Database.Server.FindAll();
-            foreach(var server in servers)
+            foreach (var server in servers)
             {
-                if(server.LastHeartbeat < DateTime.Now.Add(timeOut.Negate()))
+                if (server.LastHeartbeat < DateTime.UtcNow.Add(timeOut.Negate()))
                 {
                     Database.Server.Delete(server.Id);
                     delCount++;
@@ -392,7 +397,7 @@ namespace Hangfire.LiteDB
                 .Select(dto => dto.ExpireAt.Value)
                 .ToList();
 
-            return values.Any() ? values.Min() - DateTime.Now : TimeSpan.FromSeconds(-1);
+            return values.Any() ? values.Min() - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
         }
 
         public override long GetCounter(string key)
@@ -449,7 +454,7 @@ namespace Hangfire.LiteDB
                 .Select(_ => _.ExpireAt)
                 .FirstOrDefault();
 
-            return result.HasValue ? result.Value - DateTime.Now : TimeSpan.FromSeconds(-1);
+            return result.HasValue ? result.Value - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
         }
 
         public override string GetValueFromHash(string key, string name)
@@ -499,7 +504,7 @@ namespace Hangfire.LiteDB
                 .Select(_ => _.ExpireAt)
                 .FirstOrDefault();
 
-            return result.HasValue ? result.Value - DateTime.Now : TimeSpan.FromSeconds(-1);
+            return result.HasValue ? result.Value - DateTime.UtcNow : TimeSpan.FromSeconds(-1);
         }
 
         public override List<string> GetRangeFromList(string key, int startingFrom, int endingAt)

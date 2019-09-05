@@ -62,15 +62,18 @@ namespace Hangfire.LiteDB
 
                 foreach (var queue in queues)
                 {
-                    fetchedJob = _connection.JobQueue.FindOne(Query.And(
-                        fetchCondition, Query.EQ("Queue", queue)));
-                    if (fetchedJob != null)
+                    var lockQueue = string.Intern($"f13333e1-a0c8-48c8-bf8c-788e89030329_{queue}");
+                    lock (lockQueue)
                     {
-                        fetchedJob.FetchedAt = DateTime.Now;
-                        _connection.JobQueue.Update(fetchedJob);
-                        break;
+                        fetchedJob = _connection.JobQueue.FindOne(Query.And(fetchCondition, Query.EQ("Queue", queue)));
+
+                        if (fetchedJob != null)
+                        {
+                            fetchedJob.FetchedAt = DateTime.Now;
+                            _connection.JobQueue.Update(fetchedJob);
+                            break;
+                        }
                     }
-                    
                 }
 
                 if (fetchedJob == null)
