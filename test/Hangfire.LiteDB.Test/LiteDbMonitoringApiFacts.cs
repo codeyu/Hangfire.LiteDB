@@ -91,8 +91,8 @@ namespace Hangfire.LiteDB.Test
                 Assert.NotNull(result);
                 Assert.NotNull(result.Job);
                 Assert.Equal("Arguments", result.Job.Args[0]);
-                Assert.True(DateTime.Now.AddMinutes(-1) < result.CreatedAt);
-                Assert.True(result.CreatedAt < DateTime.Now.AddMinutes(1));
+                Assert.True(DateTime.UtcNow.AddMinutes(-1) < result.CreatedAt);
+                Assert.True(result.CreatedAt < DateTime.UtcNow.AddMinutes(1));
             });
         }
 

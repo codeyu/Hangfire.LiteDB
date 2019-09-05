@@ -135,7 +135,7 @@ namespace Hangfire.LiteDB.Test
             UseConnection((database, connection) =>
             {
                 //LiteDB always return local time.
-                var createdAt = new DateTime(2012, 12, 12, 0, 0, 0, 0, DateTimeKind.Local);
+                var createdAt = new DateTime(2012, 12, 12, 0, 0, 0, 0, DateTimeKind.Utc);
                 var jobId = connection.CreateExpiredJob(
                     Job.FromExpression(() => SampleMethod("Hello")),
                     new Dictionary<string, string> { { "Key1", "Value1" }, { "Key2", "Value2" } },
@@ -216,8 +216,8 @@ namespace Hangfire.LiteDB.Test
                 Assert.Equal("Succeeded", result.State);
                 Assert.Equal("Arguments", result.Job.Args[0]);
                 Assert.Null(result.LoadException);
-                Assert.True(DateTime.Now.AddMinutes(-1) < result.CreatedAt);
-                Assert.True(result.CreatedAt < DateTime.Now.AddMinutes(1));
+                Assert.True(DateTime.UtcNow.AddMinutes(-1) < result.CreatedAt);
+                Assert.True(result.CreatedAt < DateTime.UtcNow.AddMinutes(1));
             });
         }
 

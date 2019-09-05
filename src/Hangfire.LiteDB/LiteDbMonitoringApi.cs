@@ -20,6 +20,8 @@ namespace Hangfire.LiteDB
 
         private readonly PersistentJobQueueProviderCollection _queueProviders;
 
+        private static readonly object _lock = new object();
+
         /// <summary>
         /// 
         /// </summary>
@@ -47,15 +49,15 @@ namespace Hangfire.LiteDB
 
                 var result = new List<QueueWithTopEnqueuedJobsDto>(tuples.Length);
                 result.AddRange(from tuple in tuples
-                    let enqueuedJobIds = tuple.Monitoring.GetEnqueuedJobIds(tuple.Queue, 0, 5)
-                    let counters = tuple.Monitoring.GetEnqueuedAndFetchedCount(tuple.Queue)
-                    select new QueueWithTopEnqueuedJobsDto
-                    {
-                        Name = tuple.Queue,
-                        Length = counters.EnqueuedCount ?? 0,
-                        Fetched = counters.FetchedCount,
-                        FirstJobs = EnqueuedJobs(connection, enqueuedJobIds)
-                    });
+                                let enqueuedJobIds = tuple.Monitoring.GetEnqueuedJobIds(tuple.Queue, 0, 5)
+                                let counters = tuple.Monitoring.GetEnqueuedAndFetchedCount(tuple.Queue)
+                                select new QueueWithTopEnqueuedJobsDto
+                                {
+                                    Name = tuple.Queue,
+                                    Length = counters.EnqueuedCount ?? 0,
+                                    Fetched = counters.FetchedCount,
+                                    FirstJobs = EnqueuedJobs(connection, enqueuedJobIds)
+                                });
 
                 return result;
             });
@@ -72,15 +74,15 @@ namespace Hangfire.LiteDB
                 var servers = ctx.Server.Find(Query.All()).ToList();
 
                 return (from server in servers
-                    let data = JobHelper.FromJson<ServerData>(server.Data)
-                    select new ServerDto
-                    {
-                        Name = server.Id.ToString(),
-                        Heartbeat = server.LastHeartbeat,
-                        Queues = data.Queues.ToList(),
-                        StartedAt = data.StartedAt ?? DateTime.MinValue,
-                        WorkersCount = data.WorkerCount
-                    }).ToList();
+                        let data = JobHelper.FromJson<ServerData>(server.Data)
+                        select new ServerDto
+                        {
+                            Name = server.Id.ToString(),
+                            Heartbeat = server.LastHeartbeat,
+                            Queues = data.Queues.ToList(),
+                            StartedAt = data.StartedAt ?? DateTime.MinValue,
+                            WorkersCount = data.WorkerCount
+                        }).ToList();
             });
         }
 
@@ -105,7 +107,7 @@ namespace Hangfire.LiteDB
                     CreatedAt = x.CreatedAt,
                     Reason = x.Reason,
                     Data = x.Data
-                }).ToList();
+                }).OrderByDescending(x => x.CreatedAt).ToList();
 
                 return new JobDetailsDto
                 {
@@ -128,7 +130,7 @@ namespace Hangfire.LiteDB
                 var stats = new StatisticsDto();
 
                 var countByStates = ctx.Job.Find(_ => _.StateName != null)
-                    .GroupBy(x=>x.StateName)
+                    .GroupBy(x => x.StateName)
                     .Select(k => new { StateName = k.Key, Count = k.Count() })
                     .ToList().ToDictionary(kv => kv.StateName, kv => kv.Count);
 
@@ -141,14 +143,14 @@ namespace Hangfire.LiteDB
 
                 stats.Servers = ctx.Server.Count(Query.All());
 
-                long[] succeededItems = ctx.StateDataCounter.Find(_ => _.Key== "stats:succeeded").ToList().Select(_ => (long)_.Value)
-                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key== "stats:succeeded").ToList().Select(_ => (long)_.Value))
+                long[] succeededItems = ctx.StateDataCounter.Find(_ => _.Key == "stats:succeeded").ToList().Select(_ => (long)_.Value)
+                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key == "stats:succeeded").ToList().Select(_ => (long)_.Value))
                     .ToArray();
 
                 stats.Succeeded = succeededItems.Any() ? succeededItems.Sum() : 0;
 
-                long[] deletedItems = ctx.StateDataCounter.Find(_ => _.Key== "stats:deleted").ToList().Select(_ => (long)_.Value)
-                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key== "stats:deleted").ToList().Select(_ => (long)_.Value))
+                long[] deletedItems = ctx.StateDataCounter.Find(_ => _.Key == "stats:deleted").ToList().Select(_ => (long)_.Value)
+                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key == "stats:deleted").ToList().Select(_ => (long)_.Value))
                     .ToArray();
                 stats.Deleted = deletedItems.Any() ? deletedItems.Sum() : 0;
 
@@ -406,19 +408,22 @@ namespace Hangfire.LiteDB
 
         private T UseConnection<T>(Func<HangfireDbContext, T> action)
         {
-            var result = action(_database);
-            return result;
+            lock (_lock)
+            {
+                var result = action(_database);
+                return result;
+            }
         }
 
         //TODO: need test Query.In method
         private JobList<EnqueuedJobDto> EnqueuedJobs(HangfireDbContext connection, IEnumerable<int> jobIds)
         {
             var jobs = connection.Job
-                .FindAll().Where(x=>jobIds.Contains(x.Id))
+                .FindAll().Where(x => jobIds.Contains(x.Id))
                 .ToList();
             var enqueuedJobs = connection.JobQueue
                 .FindAll()
-                .Where(x=>jobs.Select(_=>_.Id).Contains(x.JobId) && x.FetchedAt == null)
+                .Where(x => jobs.Select(_ => _.Id).Contains(x.JobId) && x.FetchedAt == null)
                 .ToList();
 
             var jobsFiltered = enqueuedJobs
@@ -495,12 +500,12 @@ namespace Hangfire.LiteDB
         private JobList<FetchedJobDto> FetchedJobs(HangfireDbContext connection, IEnumerable<int> jobIds)
         {
             var jobs = connection.Job
-                .FindAll().Where(x=>jobIds.Contains(x.Id))
+                .FindAll().Where(x => jobIds.Contains(x.Id))
                 .ToList();
 
             var jobIdToJobQueueMap = connection.JobQueue
                 .FindAll()
-                .Where(x=>jobs.Select(_=>_.Id).Contains(x.JobId) && x.FetchedAt != null)
+                .Where(x => jobs.Select(_ => _.Id).Contains(x.JobId) && x.FetchedAt != null)
                 .ToList().ToDictionary(kv => kv.JobId, kv => kv);
 
             IEnumerable<LiteJob> jobsFiltered = jobs.Where(job => jobIdToJobQueueMap.ContainsKey(job.Id));
@@ -543,9 +548,9 @@ namespace Hangfire.LiteDB
 
         private JobList<TDto> GetJobs<TDto>(HangfireDbContext connection, int from, int count, string stateName, Func<JobDetailedDto, Job, Dictionary<string, string>, TDto> selector)
         {
-            
             var jobs = connection.Job
                 .Find(Query.EQ("StateName", stateName))
+                .OrderByDescending(x => x.Id)
                 .Skip(from)
                 .Take(count)
                 .ToList();
@@ -596,7 +601,7 @@ namespace Hangfire.LiteDB
 
             var valuesMap = connection.StateDataAggregatedCounter
                 .FindAll()
-                .Where(x=>keys.Contains(x.Key))
+                .Where(x => keys.Contains(x.Key))
                 .ToList()
                 .GroupBy(x => x.Key)
                 .ToDictionary(x => x.Key, x => (long)x.Count());
@@ -629,7 +634,7 @@ namespace Hangfire.LiteDB
             var keys = dates.Select(x => $"stats:{type}:{x:yyyy-MM-dd-HH}").ToList();
 
             var valuesMap = connection.StateDataCounter.FindAll()
-                .Where(x=>keys.Contains(x.Key))
+                .Where(x => keys.Contains(x.Key))
                 .ToList()
                 .GroupBy(x => x.Key, x => x)
                 .ToDictionary(x => x.Key, x => (long)x.Count());
