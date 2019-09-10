@@ -69,11 +69,6 @@ namespace Hangfire.LiteDB
             RemoveExpiredRecord(connection.StateDataSet, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
             RemoveExpiredRecord(connection.StateDataList, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
 
-            if (connection.StorageOptions.ShrinkDb)
-            {
-                connection.Database.Shrink();
-            }
-
             cancellationToken.WaitHandle.WaitOne(_checkInterval);
         }
 
