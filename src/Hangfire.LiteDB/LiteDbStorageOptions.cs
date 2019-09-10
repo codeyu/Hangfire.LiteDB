@@ -22,7 +22,7 @@ namespace Hangfire.LiteDB
             DistributedLockLifetime = TimeSpan.FromSeconds(30);
             JobExpirationCheckInterval = TimeSpan.FromHours(1);
             CountersAggregateInterval = TimeSpan.FromMinutes(5);
-            ShrinkDb = true;
+            ShrinkDb = false;
 
             ClientId = Guid.NewGuid().ToString().Replace("-", string.Empty);     
         }
