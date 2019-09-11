@@ -11,7 +11,7 @@ namespace Hangfire.LiteDB
     /// <summary>
     /// Represents Counter collection aggregator for LiteDB database
     /// </summary>
-    public class CountersAggregator : IBackgroundProcess
+    public class CountersAggregator : IBackgroundProcess, IServerComponent
     {
         private static readonly ILog Logger = LogProvider.For<CountersAggregator>();
 
