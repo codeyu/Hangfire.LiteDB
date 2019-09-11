@@ -289,7 +289,7 @@ namespace Hangfire.LiteDB
                         .Find(_ => _.Key == key)
                     .Reverse()
                     .Select((data, i) => new {Index = i + 1, Data = data.Id})
-                    .Where(_ => ((_.Index >= start) && (_.Index <= end)) == false)
+                    .Where(_ => !((_.Index >= start) && (_.Index <= end)))
                     .Select(_ => _.Data)
                     .ToList();
                 foreach(var id in items)

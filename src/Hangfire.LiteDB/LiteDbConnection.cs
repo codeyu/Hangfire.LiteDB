@@ -347,7 +347,7 @@ namespace Hangfire.LiteDB
             var result = Database
                 .StateDataHash
                 .Find(_ => _.Key == key)
-                .ToList()
+                .AsEnumerable()
                 .ToDictionary(x => x.Field, x => (string)x.Value);
 
             return result.Count != 0 ? result : null;

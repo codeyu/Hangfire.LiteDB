@@ -76,16 +76,12 @@ namespace Hangfire.LiteDB
                     }
                 }
 
-                if (fetchedJob == null)
+                if (fetchedJob == null && fetchConditionsIndex == fetchConditions.Length - 1)
                 {
-                    // No more jobs found in any of the requested queues...
-                    if (fetchConditionsIndex == fetchConditions.Length - 1)
-                    {
-                        // ...and we are out of fetch conditions as well.
-                        // Wait for a while before polling again.
-                        cancellationToken.WaitHandle.WaitOne(_storageOptions.QueuePollInterval);
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
+                    // ...and we are out of fetch conditions as well.
+                    // Wait for a while before polling again.
+                    cancellationToken.WaitHandle.WaitOne(_storageOptions.QueuePollInterval);
+                    cancellationToken.ThrowIfCancellationRequested();   
                 }
 
                 // Move on to next fetch condition

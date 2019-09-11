@@ -29,7 +29,7 @@ namespace Hangfire.LiteDB
             return _connection.JobQueue
                 .FindAll()
                 .Select(_ => _.Queue)
-                .ToList().Distinct().ToList();
+                .AsEnumerable().Distinct().ToList();
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Hangfire.LiteDB
                 .Skip(from)
                 .Take(perPage)
                 .Select(_ => _.JobId)
-                .ToList().Where(jobQueueJobId =>
+                .AsEnumerable().Where(jobQueueJobId =>
                 {
                     var job = _connection.Job.Find(_ => _.Id == jobQueueJobId).FirstOrDefault();
                     return job?.StateHistory != null;
@@ -67,7 +67,7 @@ namespace Hangfire.LiteDB
                 .Skip(from)
                 .Take(perPage)
                 .Select(_ => _.JobId)
-                .ToList()
+                .AsEnumerable()
                 .Where(jobQueueJobId =>
                 {
                     var job = _connection.Job.Find(_ => _.Id==jobQueueJobId).FirstOrDefault();

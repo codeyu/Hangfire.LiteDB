@@ -634,7 +634,7 @@ namespace Hangfire.LiteDB
 
             var valuesMap = connection.StateDataCounter
                 .Find(x => keys.Contains(x.Key))
-                .ToList()
+                .AsEnumerable()
                 .GroupBy(x => x.Key, x => x)
                 .ToDictionary(x => x.Key, x => (long)x.Count());
 
