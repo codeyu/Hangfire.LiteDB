@@ -44,7 +44,7 @@ namespace Hangfire.LiteDB
                 var tuples = _queueProviders
                     .Select(x => x.GetJobQueueMonitoringApi(connection))
                     .SelectMany(x => x.GetQueues(), (monitoring, queue) => new { Monitoring = monitoring, Queue = queue })
-                    .ToArray()
+                    .AsEnumerable()
                     .OrderBy(x => x.Queue)
                     .ToArray();
 
@@ -108,7 +108,7 @@ namespace Hangfire.LiteDB
                     CreatedAt = x.CreatedAt,
                     Reason = x.Reason,
                     Data = x.Data
-                }).ToList().OrderByDescending(x => x.CreatedAt).ToList();
+                }).AsEnumerable().OrderByDescending(x => x.CreatedAt).ToList();
 
                 return new JobDetailsDto
                 {
@@ -133,7 +133,7 @@ namespace Hangfire.LiteDB
                 var countByStates = ctx.Job.Find(_ => _.StateName != null)
                     .GroupBy(x => x.StateName)
                     .Select(k => new { StateName = k.Key, Count = k.Count() })
-                    .ToList().ToDictionary(kv => kv.StateName, kv => kv.Count);
+                    .AsEnumerable().ToDictionary(kv => kv.StateName, kv => kv.Count);
 
                 int GetCountIfExists(string name) => countByStates.ContainsKey(name) ? countByStates[name] : 0;
 
@@ -144,14 +144,14 @@ namespace Hangfire.LiteDB
 
                 stats.Servers = ctx.Server.Count();
 
-                long[] succeededItems = ctx.StateDataCounter.Find(_ => _.Key == "stats:succeeded").ToList().Select(_ => (long)_.Value)
-                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key == "stats:succeeded").ToList().Select(_ => (long)_.Value))
+                long[] succeededItems = ctx.StateDataCounter.Find(_ => _.Key == "stats:succeeded").AsEnumerable().Select(_ => (long)_.Value)
+                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key == "stats:succeeded").AsEnumerable().Select(_ => (long)_.Value))
                     .ToArray();
 
                 stats.Succeeded = succeededItems.Any() ? succeededItems.Sum() : 0;
 
-                long[] deletedItems = ctx.StateDataCounter.Find(_ => _.Key == "stats:deleted").ToList().Select(_ => (long)_.Value)
-                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key == "stats:deleted").ToList().Select(_ => (long)_.Value))
+                long[] deletedItems = ctx.StateDataCounter.Find(_ => _.Key == "stats:deleted").AsEnumerable().Select(_ => (long)_.Value)
+                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key == "stats:deleted").AsEnumerable().Select(_ => (long)_.Value))
                     .ToArray();
                 stats.Deleted = deletedItems.Any() ? deletedItems.Sum() : 0;
 
@@ -506,7 +506,7 @@ namespace Hangfire.LiteDB
 
             var jobIdToJobQueueMap = connection.JobQueue
                 .Find(x => x.FetchedAt != null && jobs.Select(_ => _.Id).Contains(x.JobId))
-                .ToList().ToDictionary(kv => kv.JobId, kv => kv);
+                .AsEnumerable().ToDictionary(kv => kv.JobId, kv => kv);
 
             IEnumerable<LiteJob> jobsFiltered = jobs.Where(job => jobIdToJobQueueMap.ContainsKey(job.Id));
 
@@ -601,7 +601,7 @@ namespace Hangfire.LiteDB
 
             var valuesMap = connection.StateDataAggregatedCounter
                 .Find(x => keys.Contains(x.Key))
-                .ToList()
+                .AsEnumerable()
                 .GroupBy(x => x.Key)
                 .ToDictionary(x => x.Key, x => (long)x.Count());
 
