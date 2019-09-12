@@ -141,22 +141,10 @@ namespace Hangfire.LiteDB
                 stats.Failed = GetCountIfExists(FailedState.StateName);
                 stats.Processing = GetCountIfExists(ProcessingState.StateName);
                 stats.Scheduled = GetCountIfExists(ScheduledState.StateName);
-
                 stats.Servers = ctx.Server.Count();
-
-                long[] succeededItems = ctx.StateDataCounter.Find(_ => _.Key == "stats:succeeded").AsEnumerable().Select(_ => (long)_.Value)
-                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key == "stats:succeeded").AsEnumerable().Select(_ => (long)_.Value))
-                    .ToArray();
-
-                stats.Succeeded = succeededItems.Any() ? succeededItems.Sum() : 0;
-
-                long[] deletedItems = ctx.StateDataCounter.Find(_ => _.Key == "stats:deleted").AsEnumerable().Select(_ => (long)_.Value)
-                    .Concat(ctx.StateDataAggregatedCounter.Find(_ => _.Key == "stats:deleted").AsEnumerable().Select(_ => (long)_.Value))
-                    .ToArray();
-                stats.Deleted = deletedItems.Any() ? deletedItems.Sum() : 0;
-
+                stats.Succeeded = GetCountIfExists(SucceededState.StateName);
+                stats.Deleted = GetCountIfExists(DeletedState.StateName);
                 stats.Recurring = ctx.StateDataSet.Count(_ => _.Key == "recurring-jobs");
-
                 stats.Queues = _queueProviders
                     .SelectMany(x => x.GetJobQueueMonitoringApi(ctx).GetQueues())
                     .Count();
