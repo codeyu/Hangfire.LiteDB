@@ -13,14 +13,11 @@ namespace Hangfire.LiteDB
     /// <summary>
     /// 
     /// </summary>
-    public class LiteDbMonitoringApi
-     : IMonitoringApi
+    public class LiteDbMonitoringApi : IMonitoringApi
     {
         private readonly HangfireDbContext _database;
 
         private readonly PersistentJobQueueProviderCollection _queueProviders;
-
-        private static readonly object _lock = new object();
 
         /// <summary>
         /// 
@@ -397,11 +394,8 @@ namespace Hangfire.LiteDB
 
         private T UseConnection<T>(Func<HangfireDbContext, T> action)
         {
-            lock (_lock)
-            {
-                var result = action(_database);
-                return result;
-            }
+            var result = action(_database);
+            return result;
         }
 
         //TODO: need test Query.In method

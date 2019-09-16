@@ -37,8 +37,6 @@ namespace Hangfire.LiteDB
 
         private bool _completed;
 
-        private readonly object _lockObject = new object();
-
         private string EventWaitHandleName => $@"{GetType().FullName}.{_resource}";
 
 
@@ -106,20 +104,17 @@ namespace Hangfire.LiteDB
 
             // Timer callback may be invoked after the Dispose method call,
             // so we are using lock to avoid unsynchronized calls.
-            lock (_lockObject)
+            AcquiredLocks.Value.Remove(_resource);
+
+            if (_heartbeatTimer != null)
             {
-                AcquiredLocks.Value.Remove(_resource);
-
-                if (_heartbeatTimer != null)
-                {
-                    _heartbeatTimer.Dispose();
-                    _heartbeatTimer = null;
-                }
-
-                Release();
-
-                Cleanup();
+                _heartbeatTimer.Dispose();
+                _heartbeatTimer = null;
             }
+
+            Release();
+
+            Cleanup();
         }
 
 
@@ -248,19 +243,16 @@ namespace Hangfire.LiteDB
             {
                 // Timer callback may be invoked after the Dispose method call,
                 // so we are using lock to avoid unsynchronized calls.
-                lock (_lockObject)
+                try
                 {
-                    try
-                    {
-                        var distributedLock = _database.DistributedLock.FindOne(x => x.Resource == _resource);
-                        distributedLock.ExpireAt = DateTime.Now.Add(_storageOptions.DistributedLockLifetime);
+                    var distributedLock = _database.DistributedLock.FindOne(x => x.Resource == _resource);
+                    distributedLock.ExpireAt = DateTime.Now.Add(_storageOptions.DistributedLockLifetime);
 
-                        _database.DistributedLock.Update(distributedLock);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.ErrorFormat("Unable to update heartbeat on the resource '{0}'. {1}", _resource, ex);
-                    }
+                    _database.DistributedLock.Update(distributedLock);
+                }
+                catch (Exception ex)
+                {
+                    Logger.ErrorFormat("Unable to update heartbeat on the resource '{0}'. {1}", _resource, ex);
                 }
             }, null, timerInterval, timerInterval);
         }
