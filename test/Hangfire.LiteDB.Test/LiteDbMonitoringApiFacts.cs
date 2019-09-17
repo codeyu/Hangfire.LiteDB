@@ -327,7 +327,7 @@ namespace Hangfire.LiteDB.Test
             var liteJob = new LiteJob
             {
                 Id = jobId,
-                InvocationData = JobHelper.ToJson(InvocationData.Serialize(job)),
+                InvocationData = SerializationHelper.Serialize(InvocationData.SerializeJob(job)),
                 Arguments = "[\"\\\"Arguments\\\"\"]",
                 StateName = stateName,
                 CreatedAt = DateTime.Now,

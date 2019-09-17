@@ -150,10 +150,10 @@ namespace Hangfire.LiteDB.Test
                 Assert.Equal(createdAt, databaseJob.CreatedAt); 
                 Assert.Equal(null, databaseJob.StateName);
 
-                var invocationData = JobHelper.FromJson<InvocationData>(databaseJob.InvocationData);
+                var invocationData = SerializationHelper.Deserialize<InvocationData>(databaseJob.InvocationData);
                 invocationData.Arguments = databaseJob.Arguments;
 
-                var job = invocationData.Deserialize();
+                var job = invocationData.DeserializeJob();
                 Assert.Equal(typeof(LiteDbConnectionFacts), job.Type);
                 Assert.Equal("SampleMethod", job.Method.Name);
                 Assert.Equal("Hello", job.Args[0]);
@@ -202,7 +202,7 @@ namespace Hangfire.LiteDB.Test
                 var liteJob = new LiteJob
                 {
                     Id = 1,
-                    InvocationData = JobHelper.ToJson(InvocationData.Serialize(job)),
+                    InvocationData = SerializationHelper.Serialize(InvocationData.SerializeJob(job)),
                     Arguments = "[\"\\\"Arguments\\\"\"]",
                     StateName = "Succeeded",
                     CreatedAt = DateTime.Now
@@ -294,7 +294,7 @@ namespace Hangfire.LiteDB.Test
                 var liteJob = new LiteJob
                 {
                      
-                    InvocationData = JobHelper.ToJson(new InvocationData(null, null, null, null)),
+                    InvocationData = SerializationHelper.Serialize(new InvocationData(null, null, null, null)),
                     Arguments = "[\"\\\"Arguments\\\"\"]",
                     StateName = "Succeeded",
                     CreatedAt = DateTime.Now
