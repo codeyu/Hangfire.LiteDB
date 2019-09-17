@@ -23,9 +23,7 @@ namespace Hangfire.LiteDB
             JobExpirationCheckInterval = TimeSpan.FromHours(1);
             CountersAggregateInterval = TimeSpan.FromMinutes(5);
 
-            ClientId = Guid.NewGuid().ToString().Replace("-", string.Empty);
-
-            
+            ClientId = Guid.NewGuid().ToString().Replace("-", string.Empty);     
         }
 
         /// <summary>
@@ -98,7 +96,5 @@ namespace Hangfire.LiteDB
         /// Counters interval
         /// </summary>
         public TimeSpan CountersAggregateInterval { get; set; }
-
-
     }
 }

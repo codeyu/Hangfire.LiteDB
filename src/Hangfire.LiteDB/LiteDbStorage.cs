@@ -36,7 +36,6 @@ namespace Hangfire.LiteDB
             {
                 throw new ArgumentNullException(nameof(connectionString));
             }
-           
 
             _connectionString = connectionString;
             _storageOptions = storageOptions ?? throw new ArgumentNullException(nameof(storageOptions));
@@ -124,6 +123,16 @@ namespace Hangfire.LiteDB
             yield return new ProcessingStateHandler();
             yield return new SucceededStateHandler();
             yield return new DeletedStateHandler();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public override IEnumerable<IServerComponent> GetComponents()
+        {
+            yield return new ExpirationManager(this, _storageOptions.JobExpirationCheckInterval);
+            yield return new CountersAggregator(this, _storageOptions.CountersAggregateInterval);
         }
     }
 }
