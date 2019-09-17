@@ -148,7 +148,7 @@ namespace Hangfire.LiteDB.Test
                 var databaseJob = database.Job.FindAll().ToList().Single();
                 Assert.Equal(jobId, databaseJob.IdString);
                 Assert.Equal(createdAt, databaseJob.CreatedAt); 
-                Assert.Equal(null, databaseJob.StateName);
+                Assert.Null(databaseJob.StateName);
 
                 var invocationData = SerializationHelper.Deserialize<InvocationData>(databaseJob.InvocationData);
                 invocationData.Arguments = databaseJob.Arguments;
@@ -413,7 +413,7 @@ namespace Hangfire.LiteDB.Test
                     .FirstOrDefault();
 
                 Assert.NotNull(parameters);
-                Assert.Equal(null, parameters["Name"]);
+                Assert.Null(parameters["Name"]);
             });
         }
 
@@ -585,7 +585,7 @@ namespace Hangfire.LiteDB.Test
                 Assert.Equal("server", server.Id);
                 Assert.True(server.Data.StartsWith("{\"WorkerCount\":4,\"Queues\":[\"critical\",\"default\"],\"StartedAt\":", StringComparison.Ordinal),
                     server.Data);
-                Assert.NotNull(server.LastHeartbeat);
+                Assert.True(server.LastHeartbeat > DateTime.MinValue);
 
                 var context2 = new ServerContext
                 {
@@ -713,7 +713,7 @@ namespace Hangfire.LiteDB.Test
                 var result = connection.GetAllItemsFromSet("some-set");
 
                 Assert.NotNull(result);
-                Assert.Equal(0, result.Count);
+                Assert.Empty(result);
             });
         }
 

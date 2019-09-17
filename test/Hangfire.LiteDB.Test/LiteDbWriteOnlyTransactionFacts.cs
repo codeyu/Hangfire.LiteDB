@@ -154,18 +154,18 @@ namespace Hangfire.LiteDB.Test
 
                 var testJob = GetTestJob(database, job.Id);
                 Assert.Equal("State", testJob.StateName);
-                Assert.Equal(1, testJob.StateHistory.Count);
+                Assert.Single(testJob.StateHistory);
 
                 var anotherTestJob = GetTestJob(database, anotherJob.Id);
                 Assert.Null(anotherTestJob.StateName);
-                Assert.Equal(0, anotherTestJob.StateHistory.Count);
+                Assert.Empty(anotherTestJob.StateHistory);
 
                 var jobWithStates = database.Job.FindAll().ToList().FirstOrDefault();
                 
                 var jobState = jobWithStates.StateHistory.Single();
                 Assert.Equal("State", jobState.Name);
                 Assert.Equal("Reason", jobState.Reason);
-                Assert.NotNull(jobState.CreatedAt);
+                Assert.True(jobState.CreatedAt > DateTime.MinValue);
                 Assert.Equal(serializedData, jobState.Data);
             });
         }
@@ -201,7 +201,7 @@ namespace Hangfire.LiteDB.Test
                 var jobState = jobWithStates.StateHistory.Last();
                 Assert.Equal("State", jobState.Name);
                 Assert.Equal("Reason", jobState.Reason);
-                Assert.NotNull(jobState.CreatedAt);
+                Assert.True(jobState.CreatedAt > DateTime.MinValue);
                 Assert.Equal(serializedData, jobState.Data);
             });
         }
@@ -235,7 +235,7 @@ namespace Hangfire.LiteDB.Test
 
                 Assert.Equal("my-key", record.Key);
                 Assert.Equal(1L, record.Value);
-                Assert.Equal(null, record.ExpireAt);
+                Assert.Null(record.ExpireAt);
             });
         }
 
@@ -287,7 +287,7 @@ namespace Hangfire.LiteDB.Test
 
                 Assert.Equal("my-key", record.Key);
                 Assert.Equal(-1L, record.Value);
-                Assert.Equal(null, record.ExpireAt);
+                Assert.Null(record.ExpireAt);
             });
         }
 

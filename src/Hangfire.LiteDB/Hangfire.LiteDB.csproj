@@ -31,7 +31,8 @@
     <PackageReleaseNotes>
       0.2.0
       - Add Index to Collections for improve performance. by @felixclase, @bamotav and @BraulioAlvarez
-      - Fix removal of expired jobs by @luizgava
+      - Fix Utc Time Problems And Lock. by @luizgava
+      - Fix removal of expired jobs. by @luizgava
       - Upgrade LiteDb and other reference to last stable version. by @felixclase
     </PackageReleaseNotes>
     <License>https://github.com/codeyu/Hangfire.LiteDB/master/LICENSE</License>

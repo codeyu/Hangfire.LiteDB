@@ -127,7 +127,7 @@ namespace Hangfire.LiteDB.Test
 
                 var resultList = monitoringApi.EnqueuedJobs(DefaultQueue, From, PerPage);
 
-                Assert.Equal(1, resultList.Count);
+                Assert.Single(resultList);
             });
         }
 
@@ -200,7 +200,7 @@ namespace Hangfire.LiteDB.Test
 
                 var resultList = monitoringApi.FetchedJobs(DefaultQueue, From, PerPage);
 
-                Assert.Equal(1, resultList.Count);
+                Assert.Single(resultList);
             });
         }
 
@@ -277,7 +277,8 @@ namespace Hangfire.LiteDB.Test
 
                 var resultList = monitoringApi.ProcessingJobs(From, PerPage);
 
-                Assert.Equal(1, resultList.Count);
+                Assert.Single(resultList);
+                
             });
         }
 

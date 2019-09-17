@@ -46,7 +46,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
 
                 var queues = liteDbJobQueueMonitoringApi.GetQueues().ToList();
 
-                Assert.Equal(1, queues.Count);
+                Assert.Single(queues);
                 Assert.Equal(QueueName1, queues.First());
             });
         }
@@ -65,8 +65,8 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
                 var queues = liteDbJobQueueMonitoringApi.GetQueues().ToList();
 
                 Assert.Equal(2, queues.Count);
-                Assert.True(queues.Contains(QueueName1));
-                Assert.True(queues.Contains(QueueName2));
+                Assert.Contains(QueueName1, queues);
+                Assert.Contains(QueueName2, queues);
             });
         }
 
@@ -109,7 +109,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
 
                 var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
 
-                Assert.Equal(1, enqueuedJobIds.Count);
+                Assert.Single(enqueuedJobIds);
                 Assert.Equal(jobQueueDto.JobId, enqueuedJobIds.First());
             });
         }
@@ -128,9 +128,9 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
                 var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Equal(3, enqueuedJobIds.Count);
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto2.JobId));
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto3.JobId));
+                Assert.Contains(jobQueueDto.JobId, enqueuedJobIds);
+                Assert.Contains(jobQueueDto2.JobId, enqueuedJobIds);
+                Assert.Contains(jobQueueDto3.JobId, enqueuedJobIds);
             });
         }
 
@@ -148,8 +148,8 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
                 var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Equal(2, enqueuedJobIds.Count);
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto2.JobId));
+                Assert.Contains(jobQueueDto.JobId, enqueuedJobIds);
+                Assert.Contains(jobQueueDto2.JobId, enqueuedJobIds);
             });
         }
 
@@ -167,8 +167,8 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
                 var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 2).ToList();
 
                 Assert.Equal(2, enqueuedJobIds.Count);
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto2.JobId));
+                Assert.Contains(jobQueueDto.JobId, enqueuedJobIds);
+                Assert.Contains(jobQueueDto2.JobId, enqueuedJobIds);
             });
         }
 
@@ -211,7 +211,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
 
                 var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
 
-                Assert.Equal(1, enqueuedJobIds.Count);
+                Assert.Single(enqueuedJobIds);
                 Assert.Equal(jobQueueDto.JobId, enqueuedJobIds.First());
             });
         }
@@ -230,9 +230,9 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
                 var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Equal(3, enqueuedJobIds.Count);
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto2.JobId));
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto3.JobId));
+                Assert.Contains(jobQueueDto.JobId, enqueuedJobIds);
+                Assert.Contains(jobQueueDto2.JobId, enqueuedJobIds);
+                Assert.Contains(jobQueueDto3.JobId, enqueuedJobIds);
             });
         }
 
@@ -250,8 +250,8 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
                 var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 10).ToList();
 
                 Assert.Equal(2, enqueuedJobIds.Count);
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto2.JobId));
+                Assert.Contains(jobQueueDto.JobId, enqueuedJobIds);
+                Assert.Contains(jobQueueDto2.JobId, enqueuedJobIds);
             });
         }
 
@@ -269,8 +269,8 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
                 var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetFetchedJobIds(QueueName1, 0, 2).ToList();
 
                 Assert.Equal(2, enqueuedJobIds.Count);
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto.JobId));
-                Assert.True(enqueuedJobIds.Contains(jobQueueDto2.JobId));
+                Assert.Contains(jobQueueDto.JobId, enqueuedJobIds);
+                Assert.Contains(jobQueueDto2.JobId, enqueuedJobIds);             
             });
         }
 

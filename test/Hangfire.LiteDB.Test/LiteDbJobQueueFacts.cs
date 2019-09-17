@@ -146,7 +146,7 @@ namespace Hangfire.LiteDB.Test
                 var fetchedAt = connection.JobQueue.Find(_ => _.JobId== payloadJobId).FirstOrDefault().FetchedAt;
 
                 Assert.NotNull(fetchedAt);
-                Assert.True(fetchedAt > DateTime.Now.AddMinutes(-1));
+                Assert.True(fetchedAt > DateTime.UtcNow.AddMinutes(-1));
             });
         }
 

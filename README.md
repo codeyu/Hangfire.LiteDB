@@ -55,4 +55,4 @@ Hangfire.LiteDB is released under the MIT License.
 
 ## Known Bugs
 
-* UTC Time Zone and Local Time Zone is  confusing.
+* ~~UTC Time Zone and Local Time Zone is  confusing.~~
