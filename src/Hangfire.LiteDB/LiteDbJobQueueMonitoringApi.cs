@@ -29,7 +29,7 @@ namespace Hangfire.LiteDB
             return _connection.JobQueue
                 .FindAll()
                 .Select(_ => _.Queue)
-                .ToList().Distinct().ToList();
+                .AsEnumerable().Distinct().ToList();
         }
 
         /// <summary>
@@ -42,17 +42,15 @@ namespace Hangfire.LiteDB
         public IEnumerable<int> GetEnqueuedJobIds(string queue, int from, int perPage)
         {
             return _connection.JobQueue
-                .Find(_ => _.Queue== queue && _.FetchedAt==null)
+                .Find(_ => _.Queue == queue && _.FetchedAt == null)
                 .Skip(from)
                 .Take(perPage)
                 .Select(_ => _.JobId)
-                .ToList().Where(jobQueueJobId =>
+                .AsEnumerable().Where(jobQueueJobId =>
                 {
-                    var job = _connection.Job.Find(_ => _.Id==jobQueueJobId).FirstOrDefault();
+                    var job = _connection.Job.Find(_ => _.Id == jobQueueJobId).FirstOrDefault();
                     return job?.StateHistory != null;
-                }).ToArray();
-            
-            
+                }).ToArray();  
         }
 
         /// <summary>
@@ -65,11 +63,11 @@ namespace Hangfire.LiteDB
         public IEnumerable<int> GetFetchedJobIds(string queue, int from, int perPage)
         {
             return _connection.JobQueue
-                .Find(_ => _.Queue== queue && _.FetchedAt!=null)
+                .Find(_ => _.Queue == queue && _.FetchedAt != null)
                 .Skip(from)
                 .Take(perPage)
                 .Select(_ => _.JobId)
-                .ToList()
+                .AsEnumerable()
                 .Where(jobQueueJobId =>
                 {
                     var job = _connection.Job.Find(_ => _.Id==jobQueueJobId).FirstOrDefault();
@@ -84,9 +82,9 @@ namespace Hangfire.LiteDB
         /// <returns></returns>
         public EnqueuedAndFetchedCountDto GetEnqueuedAndFetchedCount(string queue)
         {
-            var enqueuedCount = _connection.JobQueue.Count(_ => _.Queue== queue && _.FetchedAt==null);
+            var enqueuedCount = _connection.JobQueue.Count(_ => _.Queue == queue && _.FetchedAt == null);
 
-            var fetchedCount = _connection.JobQueue.Count(_ => _.Queue== queue && _.FetchedAt!=null);
+            var fetchedCount = _connection.JobQueue.Count(_ => _.Queue == queue && _.FetchedAt != null);
 
             return new EnqueuedAndFetchedCountDto
             {

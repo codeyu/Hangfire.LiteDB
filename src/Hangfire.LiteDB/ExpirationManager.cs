@@ -10,7 +10,7 @@ namespace Hangfire.LiteDB
     /// <summary>
     /// Represents Hangfire expiration manager for LiteDB database
     /// </summary>
-    public class ExpirationManager : IBackgroundProcess
+    public class ExpirationManager : IBackgroundProcess, IServerComponent
     {
         private static readonly ILog Logger = LogProvider.For<ExpirationManager>();
 
@@ -61,13 +61,14 @@ namespace Hangfire.LiteDB
         public void Execute(CancellationToken cancellationToken)
         {
             HangfireDbContext connection = _storage.CreateAndOpenConnection();
-            DateTime now = DateTime.Now;
-            RemoveExpiredRecord(connection.Job, _ => _.ExpireAt < now && _.ExpireAt != null);
-            RemoveExpiredRecord(connection.StateDataAggregatedCounter, _ => _.ExpireAt < now && _.ExpireAt != null);
-            RemoveExpiredRecord(connection.StateDataCounter, _ => _.ExpireAt < now && _.ExpireAt != null);
-            RemoveExpiredRecord(connection.StateDataHash, _ => _.ExpireAt < now && _.ExpireAt != null);
-            RemoveExpiredRecord(connection.StateDataSet, _ => _.ExpireAt < now && _.ExpireAt != null);
-            RemoveExpiredRecord(connection.StateDataList, _ => _.ExpireAt < now && _.ExpireAt != null);
+            DateTime now = DateTime.UtcNow;
+            RemoveExpiredRecord(connection.Job, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            RemoveExpiredRecord(connection.StateDataAggregatedCounter, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            RemoveExpiredRecord(connection.StateDataCounter, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            RemoveExpiredRecord(connection.StateDataHash, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            RemoveExpiredRecord(connection.StateDataSet, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            RemoveExpiredRecord(connection.StateDataList, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+
             cancellationToken.WaitHandle.WaitOne(_checkInterval);
         }
 
@@ -79,7 +80,7 @@ namespace Hangfire.LiteDB
             return "LiteDB Expiration Manager";
         }
 
-        private static void RemoveExpiredRecord<TEntity>(LiteCollection<TEntity> collection, Expression<Func<TEntity, bool>> expression)
+        private void RemoveExpiredRecord<TEntity>(LiteCollection<TEntity> collection, Expression<Func<TEntity, bool>> expression)
         {
             Logger.DebugFormat("Removing outdated records from table '{0}'...", collection.Name);
 

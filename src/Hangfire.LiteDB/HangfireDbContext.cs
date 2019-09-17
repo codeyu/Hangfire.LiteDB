@@ -13,15 +13,23 @@ namespace Hangfire.LiteDB
         /// <summary>
         /// 
         /// </summary>
-        public  LiteDatabase Database { get; }
-        
+        public LiteDatabase Database { get; }
+
         /// <summary>
         /// 
         /// </summary>
         public LiteRepository Repository { get; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public LiteDbStorageOptions StorageOptions { get { return _storageOptions; } }
+
         private static readonly object Locker = new object();
         private static volatile HangfireDbContext _instance;
+
+        private LiteDbStorageOptions _storageOptions;
+
         /// <summary>
         /// Starts LiteDB database using a connection string for file system database
         /// </summary>
@@ -36,6 +44,24 @@ namespace Hangfire.LiteDB
             Database = Repository.Database;
 
             ConnectionId = Guid.NewGuid().ToString();
+
+            //Create Indexes
+            StateDataKeyValue.EnsureIndex("Key");
+            StateDataExpiringKeyValue.EnsureIndex("Key");
+            StateDataHash.EnsureIndex("Key");
+            StateDataList.EnsureIndex("Key");
+            StateDataSet.EnsureIndex("Key");
+            StateDataCounter.EnsureIndex("Key");
+            StateDataAggregatedCounter.EnsureIndex("Key");
+            DistributedLock.EnsureIndex("Resource");
+            Job.EnsureIndex("Id");
+            Job.EnsureIndex("StateName");
+            Job.EnsureIndex("CreatedAt");
+            Job.EnsureIndex("ExpireAt");
+            Job.EnsureIndex("FetchedAt");
+            JobQueue.EnsureIndex("JobId");
+            JobQueue.EnsureIndex("Queue");
+            JobQueue.EnsureIndex("FetchedAt");
         }
         /// <summary>
         /// 
@@ -48,7 +74,7 @@ namespace Hangfire.LiteDB
             if (_instance != null) return _instance;
             lock (Locker)
             {
-                if (_instance == null) 
+                if (_instance == null)
                 {
                     _instance = new HangfireDbContext(connectionString, prefix);
                 }
@@ -56,9 +82,6 @@ namespace Hangfire.LiteDB
 
             return _instance;
         }
-        
-
-        
 
         /// <summary>
         /// LiteDB database connection identifier
@@ -133,9 +156,7 @@ namespace Hangfire.LiteDB
         /// </summary>
         public void Init(LiteDbStorageOptions storageOptions)
         {
-            //var migrationManager = new LiteDbStorageOptions(storageOptions);
-            //migrationManager.Migrate(this);
+            _storageOptions = storageOptions;
         }
-        
     }
 }

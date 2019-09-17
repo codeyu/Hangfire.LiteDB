@@ -11,7 +11,7 @@ namespace Hangfire.LiteDB
     /// <summary>
     /// Represents Counter collection aggregator for LiteDB database
     /// </summary>
-    public class CountersAggregator : IBackgroundProcess
+    public class CountersAggregator : IBackgroundProcess, IServerComponent
     {
         private static readonly ILog Logger = LogProvider.For<CountersAggregator>();
 
@@ -75,7 +75,7 @@ namespace Hangfire.LiteDB
                     {
                         AggregatedCounter aggregatedItem = database
                             .StateDataAggregatedCounter
-                            .Find(Query.EQ("Key", item.Key))
+                            .Find(_ => _.Key == item.Key)
                             .FirstOrDefault();
 
                         if (aggregatedItem != null)
@@ -89,7 +89,6 @@ namespace Hangfire.LiteDB
                                     : aggregatedItem.ExpireAt;
                                 database.StateDataAggregatedCounter.Update(counter);
                             }
-                            
                         }
                         else
                         {
@@ -111,7 +110,6 @@ namespace Hangfire.LiteDB
                         .Delete(id);
                         removedCount++;
                     }
-                    
                 }
 
                 if (removedCount >= NumberOfRecordsInSinglePass)
@@ -129,7 +127,7 @@ namespace Hangfire.LiteDB
         /// </summary>
         public override string ToString()
         {
-            return "LiteDB Counter Colleciton Aggregator";
+            return "LiteDB Counter Collection Aggregator";
         }
     }
 }

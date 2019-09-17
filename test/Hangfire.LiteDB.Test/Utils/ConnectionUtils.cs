@@ -10,7 +10,8 @@ namespace Hangfire.LiteDB.Test.Utils
         
         private static string GetConnectionString()
         {
-            return Path.GetFullPath(string.Format("Hangfire-LiteDB-Tests.{0}", Ext));
+            var pathDb = Path.GetFullPath(string.Format("Hangfire-LiteDB-Tests.{0}", Ext));
+            return @"Filename=" + pathDb + "; mode=Exclusive";
         }
 
         public static LiteDbStorage CreateStorage()
@@ -22,7 +23,8 @@ namespace Hangfire.LiteDB.Test.Utils
 
         public static LiteDbStorage CreateStorage(LiteDbStorageOptions storageOptions)
         {
-            return new LiteDbStorage(GetConnectionString(), storageOptions);
+            var connectionString = GetConnectionString();
+            return new LiteDbStorage(connectionString, storageOptions);
         }
 
         public static HangfireDbContext CreateConnection()
