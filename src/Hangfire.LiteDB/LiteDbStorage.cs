@@ -74,16 +74,7 @@ namespace Hangfire.LiteDB
         {
             return new LiteDbConnection(Connection, _storageOptions, QueueProviders);
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public override IEnumerable<IServerComponent> GetComponents()
-        {
-            yield return new ExpirationManager(this);
-        }
-
+        
         /// <summary>
         /// 
         /// </summary>
