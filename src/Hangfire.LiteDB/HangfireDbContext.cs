@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Hangfire.LiteDB.Entities;
 using LiteDB;
 namespace Hangfire.LiteDB
@@ -38,6 +39,15 @@ namespace Hangfire.LiteDB
         private HangfireDbContext(string connectionString, string prefix = "hangfire")
         {
             _prefix = prefix;
+
+            BsonMapper.Global.ResolveMember += (type, memberInfo, member) =>
+            {
+                if (member.DataType == typeof(DateTime?) || member.DataType == typeof(DateTime))
+                {
+                    member.Deserialize = (v, m) => v != null ? v.AsDateTime.ToUniversalTime() : (DateTime?)null;
+                    member.Serialize = (o, m) => new BsonValue(((DateTime?)o).HasValue ? ((DateTime?)o).Value.ToUniversalTime() : (DateTime?)null);
+                }
+            };
 
             Repository = new LiteRepository(connectionString);
 
