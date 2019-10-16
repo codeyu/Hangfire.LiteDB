@@ -72,7 +72,7 @@ namespace Hangfire.LiteDB
                 var servers = ctx.Server.FindAll().ToList();
 
                 return (from server in servers
-                        let data = JobHelper.FromJson<ServerData>(server.Data)
+                        let data = SerializationHelper.Deserialize<ServerData>(server.Data, SerializationOption.User)
                         select new ServerDto
                         {
                             Name = server.Id.ToString(),
@@ -459,7 +459,7 @@ namespace Hangfire.LiteDB
 
         private static Job DeserializeJob(string invocationData, string arguments)
         {
-            var data = JobHelper.FromJson<InvocationData>(invocationData);
+            var data = SerializationHelper.Deserialize<InvocationData>(invocationData, SerializationOption.User);
             data.Arguments = arguments;
 
             try

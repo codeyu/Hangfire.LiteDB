@@ -68,7 +68,7 @@ namespace Hangfire.LiteDB
 
                 var jobDto = new LiteJob
                 {
-                    InvocationData = JobHelper.ToJson(invocationData),
+                    InvocationData = SerializationHelper.Serialize(invocationData, SerializationOption.User),
                     Arguments = invocationData.Arguments,
                     Parameters = parameters.ToDictionary(kv => kv.Key, kv => kv.Value),
                     CreatedAt = createdAt,
@@ -160,7 +160,8 @@ namespace Hangfire.LiteDB
                 return null;
 
             // TODO: conversion exception could be thrown.
-            var invocationData = JobHelper.FromJson<InvocationData>(jobData.InvocationData);
+            var invocationData = SerializationHelper.Deserialize<InvocationData>(jobData.InvocationData,
+                SerializationOption.User);
             invocationData.Arguments = jobData.Arguments;
 
             Job job = null;
@@ -230,7 +231,7 @@ namespace Hangfire.LiteDB
                 server = new Entities.Server
                 {
                     Id = serverId,
-                    Data = JobHelper.ToJson(data),
+                    Data = SerializationHelper.Serialize(data, SerializationOption.User),
                     LastHeartbeat = DateTime.Now
                 };
                 Database.Server.Insert(server);
@@ -238,7 +239,7 @@ namespace Hangfire.LiteDB
             else
             {
                 server.LastHeartbeat = DateTime.Now;
-                server.Data = JobHelper.ToJson(data);
+                server.Data = SerializationHelper.Serialize(data, SerializationOption.User);
                 Database.Server.Update(server);
             }
 
