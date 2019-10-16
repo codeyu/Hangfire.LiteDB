@@ -55,7 +55,9 @@ namespace Hangfire.LiteDB
             //UTC - Internal JSON
             GlobalConfiguration.Configuration
                 .UseSerializerSettings(new JsonSerializerSettings() {
-                    DateTimeZoneHandling = DateTimeZoneHandling.Utc
+                    DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+                    DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                    DateFormatString = "yyyy-MM-dd HH:mm:ss.fff"
                 });
 
             Repository = new LiteRepository(connectionString);
