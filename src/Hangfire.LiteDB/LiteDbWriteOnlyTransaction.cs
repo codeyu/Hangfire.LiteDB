@@ -328,7 +328,7 @@ namespace Hangfire.LiteDB
                         ExpireAt = null
                     };
 
-                    var oldHash = x.StateDataHash.Find(_ => _.Key == key && Convert.ToString(_.Value) == value).FirstOrDefault();
+                    var oldHash = x.StateDataHash.Find(_ => _.Key == key && _.Field == field).FirstOrDefault();
                     if (oldHash == null)
                     {
                         x.StateDataHash.Insert(state);
