@@ -568,7 +568,7 @@ namespace Hangfire.LiteDB
 
         private Dictionary<DateTime, long> GetTimelineStats(HangfireDbContext connection, string type)
         {
-            var endDate = DateTime.Now.Date;
+            var endDate = DateTime.UtcNow.Date;
             var startDate = endDate.AddDays(-7);
             var dates = new List<DateTime>();
 
@@ -585,7 +585,7 @@ namespace Hangfire.LiteDB
                 .Find(x => keys.Contains(x.Key))
                 .AsEnumerable()
                 .GroupBy(x => x.Key)
-                .ToDictionary(x => x.Key, x => (long)x.Count());
+                .ToDictionary(x => x.Key, x => Convert.ToInt64(x.Count()));
 
             foreach (var key in keys)
             {
@@ -604,7 +604,7 @@ namespace Hangfire.LiteDB
 
         private Dictionary<DateTime, long> GetHourlyTimelineStats(HangfireDbContext connection, string type)
         {
-            var endDate = DateTime.Now;
+            var endDate = DateTime.UtcNow;
             var dates = new List<DateTime>();
             for (var i = 0; i < 24; i++)
             {
@@ -618,7 +618,7 @@ namespace Hangfire.LiteDB
                 .Find(x => keys.Contains(x.Key))
                 .AsEnumerable()
                 .GroupBy(x => x.Key, x => x)
-                .ToDictionary(x => x.Key, x => (long)x.Count());
+                .ToDictionary(x => x.Key, x => Convert.ToInt64(x.Count()));
 
             foreach (var key in keys.Where(key => !valuesMap.ContainsKey(key)))
             {

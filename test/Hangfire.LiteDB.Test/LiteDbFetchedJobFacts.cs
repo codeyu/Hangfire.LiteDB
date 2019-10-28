@@ -150,7 +150,7 @@ namespace Hangfire.LiteDB.Test
                 Id = ObjectId.NewObjectId(),
                 JobId = jobId,
                 Queue = queue,
-                FetchedAt = DateTime.Now
+                FetchedAt = DateTime.UtcNow
             };
 
             connection.JobQueue.Insert(jobQueue);

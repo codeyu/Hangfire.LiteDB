@@ -58,7 +58,7 @@ namespace Hangfire.LiteDB.Test
                     
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
                 database.Job.Insert(job);
 
@@ -67,7 +67,7 @@ namespace Hangfire.LiteDB.Test
                     
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
                 database.Job.Insert(anotherJob);
 
@@ -93,8 +93,8 @@ namespace Hangfire.LiteDB.Test
                 {
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.Now,
-                    ExpireAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow,
+                    ExpireAt = DateTime.UtcNow
                 };
                 database.Job.Insert(job);
 
@@ -102,8 +102,8 @@ namespace Hangfire.LiteDB.Test
                 {
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.Now,
-                    ExpireAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow,
+                    ExpireAt = DateTime.UtcNow
                 };
                 database.Job.Insert(anotherJob);
 
@@ -130,7 +130,7 @@ namespace Hangfire.LiteDB.Test
                    
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
                 database.Job.Insert(job);
 
@@ -139,7 +139,7 @@ namespace Hangfire.LiteDB.Test
                     
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
                 database.Job.Insert(anotherJob);
 
@@ -180,7 +180,7 @@ namespace Hangfire.LiteDB.Test
                    
                     InvocationData = "",
                     Arguments = "",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
                 database.Job.Insert(job);
 
@@ -745,7 +745,7 @@ namespace Hangfire.LiteDB.Test
                 Commit(database, x => x.ExpireList(list1.Key, TimeSpan.FromDays(1)));
 
                 var testList1 = GetTestList(database, list1.Key);
-                Assert.True(DateTime.Now.AddMinutes(-1) < testList1.ExpireAt && testList1.ExpireAt <= DateTime.UtcNow.AddDays(1));
+                Assert.True(DateTime.UtcNow.AddMinutes(-1) < testList1.ExpireAt && testList1.ExpireAt <= DateTime.UtcNow.AddDays(1));
 
                 var testList2 = GetTestList(database, list2.Key);
                 Assert.Null(testList2.ExpireAt);
@@ -779,10 +779,10 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var set1 = new LiteSet { Key = "Set1", Value = "value1", ExpireAt = DateTime.Now };
+                var set1 = new LiteSet { Key = "Set1", Value = "value1", ExpireAt = DateTime.UtcNow };
                 database.StateDataSet.Insert(set1);
 
-                var set2 = new LiteSet { Key = "Set2", Value = "value2", ExpireAt = DateTime.Now };
+                var set2 = new LiteSet { Key = "Set2", Value = "value2", ExpireAt = DateTime.UtcNow };
                 database.StateDataSet.Insert(set2);
 
                 Commit(database, x => x.PersistSet(set1.Key));
@@ -800,10 +800,10 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var list1 = new LiteList { Key = "List1", Value = "value1", ExpireAt = DateTime.Now };
+                var list1 = new LiteList { Key = "List1", Value = "value1", ExpireAt = DateTime.UtcNow };
                 database.StateDataList.Insert(list1);
 
-                var list2 = new LiteList { Key = "List2", Value = "value2", ExpireAt = DateTime.Now };
+                var list2 = new LiteList { Key = "List2", Value = "value2", ExpireAt = DateTime.UtcNow };
                 database.StateDataList.Insert(list2);
 
                 Commit(database, x => x.PersistList(list1.Key));
@@ -821,10 +821,10 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var hash1 = new LiteHash { Key = "Hash1", Value = "value1", ExpireAt = DateTime.Now };
+                var hash1 = new LiteHash { Key = "Hash1", Value = "value1", ExpireAt = DateTime.UtcNow };
                 database.StateDataHash.Insert(hash1);
 
-                var hash2 = new LiteHash { Key = "Hash2", Value = "value2", ExpireAt = DateTime.Now };
+                var hash2 = new LiteHash { Key = "Hash2", Value = "value2", ExpireAt = DateTime.UtcNow };
                 database.StateDataHash.Insert(hash2);
 
                 Commit(database, x => x.PersistHash(hash1.Key));
@@ -842,13 +842,13 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var set1Val1 = new LiteSet { Key = "Set1", Value = "value1", ExpireAt = DateTime.Now };
+                var set1Val1 = new LiteSet { Key = "Set1", Value = "value1", ExpireAt = DateTime.UtcNow };
                 database.StateDataSet.Insert(set1Val1);
 
-                var set1Val2 = new LiteSet { Key = "Set1", Value = "value2", ExpireAt = DateTime.Now };
+                var set1Val2 = new LiteSet { Key = "Set1", Value = "value2", ExpireAt = DateTime.UtcNow };
                 database.StateDataSet.Insert(set1Val2);
 
-                var set2 = new LiteSet { Key = "Set2", Value = "value2", ExpireAt = DateTime.Now };
+                var set2 = new LiteSet { Key = "Set2", Value = "value2", ExpireAt = DateTime.UtcNow };
                 database.StateDataSet.Insert(set2);
 
                 var values = new[] { "test1", "test2", "test3" };
@@ -874,13 +874,13 @@ namespace Hangfire.LiteDB.Test
         {
             UseConnection(database =>
             {
-                var set1Val1 = new LiteSet { Key = "Set1", Value = "value1", ExpireAt = DateTime.Now };
+                var set1Val1 = new LiteSet { Key = "Set1", Value = "value1", ExpireAt = DateTime.UtcNow };
                 database.StateDataSet.Insert(set1Val1);
 
-                var set1Val2 = new LiteSet { Key = "Set1", Value = "value2", ExpireAt = DateTime.Now };
+                var set1Val2 = new LiteSet { Key = "Set1", Value = "value2", ExpireAt = DateTime.UtcNow };
                 database.StateDataSet.Insert(set1Val2);
 
-                var set2 = new LiteSet { Key = "Set2", Value = "value2", ExpireAt = DateTime.Now };
+                var set2 = new LiteSet { Key = "Set2", Value = "value2", ExpireAt = DateTime.UtcNow };
                 database.StateDataSet.Insert(set2);
 
                 Commit(database, x => x.RemoveSet(set1Val1.Key));

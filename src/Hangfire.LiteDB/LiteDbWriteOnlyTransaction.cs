@@ -50,7 +50,7 @@ namespace Hangfire.LiteDB
             {
                 var iJobId = int.Parse(jobId);
                 var job = x.Job.FindOne(_ => _.Id == iJobId);
-                job.ExpireAt = DateTime.Now.Add(expireIn);
+                job.ExpireAt = DateTime.UtcNow.Add(expireIn);
                 x.Job.Update(job);
             });
         }
@@ -87,7 +87,7 @@ namespace Hangfire.LiteDB
                     JobId = iJobId,
                     Name = state.Name,
                     Reason = state.Reason,
-                    CreatedAt = DateTime.Now,
+                    CreatedAt = DateTime.UtcNow,
                     Data = state.SerializeData()
                 });
                 x.Job.Update(job);
@@ -110,7 +110,7 @@ namespace Hangfire.LiteDB
                     JobId = iJobId,
                     Name = state.Name,
                     Reason = state.Reason,
-                    CreatedAt = DateTime.Now,
+                    CreatedAt = DateTime.UtcNow,
                     Data = state.SerializeData()
                 });
                 x.Job.Update(job);
@@ -159,7 +159,7 @@ namespace Hangfire.LiteDB
                 Id = ObjectId.NewObjectId(),
                 Key = key,
                 Value = +1L,
-                ExpireAt = DateTime.Now.Add(expireIn)
+                ExpireAt = DateTime.UtcNow.Add(expireIn)
             };
             QueueCommand(x => x.StateDataCounter.Insert(counter));
         }
@@ -190,7 +190,7 @@ namespace Hangfire.LiteDB
                 Id = ObjectId.NewObjectId(),
                 Key = key,
                 Value = -1L,
-                ExpireAt = DateTime.Now.Add(expireIn)
+                ExpireAt = DateTime.UtcNow.Add(expireIn)
             }));
         }
 
@@ -393,7 +393,7 @@ namespace Hangfire.LiteDB
                 var states = x.StateDataSet.Find(_ => _.Key == key);
                 foreach(var state in states)
                 {
-                    state.ExpireAt = DateTime.Now.Add(expireIn);
+                    state.ExpireAt = DateTime.UtcNow.Add(expireIn);
                     x.StateDataSet.Update(state);
                 }
                 
@@ -416,7 +416,7 @@ namespace Hangfire.LiteDB
                 var states = x.StateDataList.Find(_ => _.Key == key);
                 foreach(var state in states)
                 {
-                    state.ExpireAt = DateTime.Now.Add(expireIn);
+                    state.ExpireAt = DateTime.UtcNow.Add(expireIn);
                     x.StateDataList.Update(state);
                 }
                 
@@ -438,7 +438,7 @@ namespace Hangfire.LiteDB
                 var states = x.StateDataHash.Find(_ => _.Key == key);
                 foreach(var state in states)
                 {
-                    state.ExpireAt = DateTime.Now.Add(expireIn);
+                    state.ExpireAt = DateTime.UtcNow.Add(expireIn);
                     x.StateDataHash.Update(state);
                 }
                 

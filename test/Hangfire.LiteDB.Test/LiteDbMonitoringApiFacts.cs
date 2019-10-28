@@ -255,12 +255,12 @@ namespace Hangfire.LiteDB.Test
                     {
                         Name = ProcessingState.StateName,
                         Reason = null,
-                        CreatedAt = DateTime.Now,
+                        CreatedAt = DateTime.UtcNow,
                         Data = new Dictionary<string, string>
                         {
                             ["ServerId"] = Guid.NewGuid().ToString(),
                             ["StartedAt"] =
-                            JobHelper.SerializeDateTime(DateTime.Now.Subtract(TimeSpan.FromMilliseconds(500)))
+                            JobHelper.SerializeDateTime(DateTime.UtcNow.Subtract(TimeSpan.FromMilliseconds(500)))
                         }
                     };
                     var succeededState = liteJob.StateHistory[0];
@@ -301,14 +301,14 @@ namespace Hangfire.LiteDB.Test
             Dictionary<string, string> stateData;
             if (stateName == EnqueuedState.StateName)
             {
-                stateData = new Dictionary<string, string> {["EnqueuedAt"] = $"{DateTime.Now:o}"};
+                stateData = new Dictionary<string, string> {["EnqueuedAt"] = $"{DateTime.UtcNow:o}"};
             }
             else if (stateName == ProcessingState.StateName)
             {
                 stateData = new Dictionary<string, string>
                 {
                     ["ServerId"] = Guid.NewGuid().ToString(),
-                    ["StartedAt"] = JobHelper.SerializeDateTime(DateTime.Now.Subtract(TimeSpan.FromMilliseconds(500)))
+                    ["StartedAt"] = JobHelper.SerializeDateTime(DateTime.UtcNow.Subtract(TimeSpan.FromMilliseconds(500)))
                 };
             }
             else
@@ -321,7 +321,7 @@ namespace Hangfire.LiteDB.Test
                 JobId = jobId,
                 Name = stateName,
                 Reason = null,
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 Data = stateData
             };
 
@@ -331,7 +331,7 @@ namespace Hangfire.LiteDB.Test
                 InvocationData = SerializationHelper.Serialize(InvocationData.SerializeJob(job)),
                 Arguments = "[\"\\\"Arguments\\\"\"]",
                 StateName = stateName,
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 StateHistory = new List<LiteState>{jobState}
             };
             if (visitor != null)
@@ -349,7 +349,7 @@ namespace Hangfire.LiteDB.Test
 
             if (stateName == FetchedStateName)
             {
-                jobQueueDto.FetchedAt = DateTime.Now;
+                jobQueueDto.FetchedAt = DateTime.UtcNow;
             }
 
             database.JobQueue.Insert(jobQueueDto);

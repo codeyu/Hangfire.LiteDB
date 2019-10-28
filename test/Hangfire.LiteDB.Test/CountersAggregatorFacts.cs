@@ -21,7 +21,7 @@ namespace Hangfire.LiteDB.Test
                 {
                     Key = "key",
                     Value = 1L,
-                    ExpireAt = DateTime.Now.AddHours(1)
+                    ExpireAt = DateTime.UtcNow.AddHours(1)
                 });
 
                 var aggregator = new CountersAggregator(storage, TimeSpan.Zero);

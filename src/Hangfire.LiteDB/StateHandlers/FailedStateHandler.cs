@@ -10,7 +10,7 @@ namespace Hangfire.LiteDB.StateHandlers
     {
         public void Apply(ApplyStateContext context, IWriteOnlyTransaction transaction)
         {
-            transaction.AddToSet("failed", context.BackgroundJob.Id, JobHelper.ToTimestamp(DateTime.Now));
+            transaction.AddToSet("failed", context.BackgroundJob.Id, JobHelper.ToTimestamp(DateTime.UtcNow));
         }
 
         public void Unapply(ApplyStateContext context, IWriteOnlyTransaction transaction)
