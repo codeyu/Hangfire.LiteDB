@@ -124,15 +124,15 @@ namespace Hangfire.LiteDB
             {
                 // If result is null, then it means we acquired the lock
                 var isLockAcquired = false;
-                var now = DateTime.Now;
+                var now = DateTime.UtcNow;
                 var lockTimeoutTime = now.Add(timeout);
 
                 while (!isLockAcquired && (lockTimeoutTime >= now))
                 {
                     var result = _database.DistributedLock.FindOne(x => x.Resource == _resource);
-                    var distributedLock = result??new DistributedLock();
+                    var distributedLock = result ?? new DistributedLock();
                     distributedLock.Resource = _resource;
-                    distributedLock.ExpireAt = DateTime.Now.Add(_storageOptions.DistributedLockLifetime);
+                    distributedLock.ExpireAt = DateTime.UtcNow.Add(_storageOptions.DistributedLockLifetime);
 
                     _database.DistributedLock.Upsert(distributedLock);
                     // If result is null, then it means we acquired the lock
@@ -166,7 +166,7 @@ namespace Hangfire.LiteDB
                             // Sleep for a while and then check if the lock has been released.
                             Thread.Sleep(waitTime);
                         }
-                        now = DateTime.Now;
+                        now = DateTime.UtcNow;
                     }
                 }
 
@@ -224,7 +224,7 @@ namespace Hangfire.LiteDB
             try
             {
                 // Delete expired locks
-                _database.DistributedLock.Delete(x => x.Resource == _resource && x.ExpireAt < DateTime.Now);
+                _database.DistributedLock.Delete(x => x.Resource == _resource && x.ExpireAt.ToUniversalTime() < DateTime.UtcNow);
             }
             catch (Exception ex)
             {
@@ -246,7 +246,7 @@ namespace Hangfire.LiteDB
                 try
                 {
                     var distributedLock = _database.DistributedLock.FindOne(x => x.Resource == _resource);
-                    distributedLock.ExpireAt = DateTime.Now.Add(_storageOptions.DistributedLockLifetime);
+                    distributedLock.ExpireAt = DateTime.UtcNow.Add(_storageOptions.DistributedLockLifetime);
 
                     _database.DistributedLock.Update(distributedLock);
                 }
