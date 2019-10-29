@@ -222,7 +222,7 @@ namespace Hangfire.LiteDB
             {
                 WorkerCount = context.WorkerCount,
                 Queues = context.Queues,
-                StartedAt = DateTime.Now
+                StartedAt = DateTime.UtcNow
             };
 
             var server = Database.Server.FindById(serverId);
@@ -232,18 +232,16 @@ namespace Hangfire.LiteDB
                 {
                     Id = serverId,
                     Data = SerializationHelper.Serialize(data, SerializationOption.User),
-                    LastHeartbeat = DateTime.Now
+                    LastHeartbeat = DateTime.UtcNow
                 };
                 Database.Server.Insert(server);
             }
             else
             {
-                server.LastHeartbeat = DateTime.Now;
+                server.LastHeartbeat = DateTime.UtcNow;
                 server.Data = SerializationHelper.Serialize(data, SerializationOption.User);
                 Database.Server.Update(server);
             }
-
-
         }
 
         public override void RemoveServer(string serverId)
@@ -412,18 +410,17 @@ namespace Hangfire.LiteDB
             var counterQuery = Database
                 .StateDataCounter
                 .Find(_ => _.Key == key)
-                .Select(_ => _.Value)
+                .Select(_ => _.Value.ToInt64())
                 .ToList();
 
             var aggregatedCounterQuery = Database
                 .StateDataAggregatedCounter
                 .Find(_ => _.Key == key)
-                .Select(_ => _.Value)
+                .Select(_ => _.Value.ToInt64())
                 .ToList();
 
             var values = counterQuery
                 .Concat(aggregatedCounterQuery)
-                .Select(c => (long)c)
                 .ToArray();
 
             return values.Any() ? values.Sum() : 0;
