@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Hangfire.LiteDB.StateHandlers;
 using Hangfire.Logging;
 using Hangfire.Server;
 using Hangfire.States;
@@ -100,20 +99,7 @@ namespace Hangfire.LiteDB
         /// </summary>
         public override string ToString()
         {
-            
             return $"Connection string: {_connectionString},  prefix: {_storageOptions.Prefix}";
-        }
-
-        /// <summary>
-        /// Returns collection of state handers
-        /// </summary>
-        /// <returns>Collection of state handers</returns>
-        public override IEnumerable<IStateHandler> GetStateHandlers()
-        {
-            yield return new FailedStateHandler();
-            yield return new ProcessingStateHandler();
-            yield return new SucceededStateHandler();
-            yield return new DeletedStateHandler();
         }
 
         /// <summary>
