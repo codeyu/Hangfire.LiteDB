@@ -123,7 +123,7 @@ namespace Hangfire.LiteDB
         public override IEnumerable<IServerComponent> GetComponents()
         {
             yield return new ExpirationManager(this, _storageOptions.JobExpirationCheckInterval);
-            //yield return new CountersAggregator(this, _storageOptions.CountersAggregateInterval);
+            yield return new CountersAggregator(this, _storageOptions.CountersAggregateInterval);
         }
     }
 }

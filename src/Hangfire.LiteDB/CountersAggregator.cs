@@ -67,9 +67,17 @@ namespace Hangfire.LiteDB
                         .GroupBy(_ => _.Key).Select(_ => new
                         {
                             _.Key,
-                            Value = _.Sum(x => (long)x.Value),
+                            Value = _.Sum(x => x.Value.ToInt64()),
                             ExpireAt = _.Max(x => x.ExpireAt)
                         });
+
+                    foreach (var id in recordsToAggregate.Select(_ => _.Id))
+                    {
+                        database
+                            .StateDataCounter
+                            .Delete(id);
+                        removedCount++;
+                    }
 
                     foreach (var item in recordsToMerge)
                     {
@@ -81,12 +89,13 @@ namespace Hangfire.LiteDB
                         if (aggregatedItem != null)
                         {
                             var aggregatedCounters = database.StateDataAggregatedCounter.Find(_ => _.Key == item.Key);
+
                             foreach (var counter in aggregatedCounters)
                             {
-                                counter.Value = (long) counter.Value + item.Value;
+                                counter.Value = counter.Value.ToInt64() + item.Value;
                                 counter.ExpireAt = item.ExpireAt > aggregatedItem.ExpireAt
-                                    ? item.ExpireAt
-                                    : aggregatedItem.ExpireAt;
+                                    ?  (item.ExpireAt.HasValue ? (DateTime?)item.ExpireAt.Value : null)
+                                    :  (aggregatedItem.ExpireAt.HasValue ? (DateTime?)aggregatedItem.ExpireAt.Value : null);
                                 database.StateDataAggregatedCounter.Update(counter);
                             }
                         }
@@ -94,21 +103,14 @@ namespace Hangfire.LiteDB
                         {
                             database
                                 .StateDataAggregatedCounter
-                                .Insert(new AggregatedCounter
-                            {
-                                Id = ObjectId.NewObjectId(),
-                                Key = item.Key,
-                                Value = item.Value,
-                                ExpireAt = item.ExpireAt
-                            });
+                                .Insert(new AggregatedCounter 
+                                {
+                                    Id = ObjectId.NewObjectId(),
+                                    Key = item.Key,
+                                    Value = item.Value,
+                                    ExpireAt = item.ExpireAt
+                                });
                         }
-                    }
-                    foreach(var id in recordsToAggregate.Select(_ => _.Id))
-                    {
-                        database
-                        .StateDataCounter
-                        .Delete(id);
-                        removedCount++;
                     }
                 }
 
