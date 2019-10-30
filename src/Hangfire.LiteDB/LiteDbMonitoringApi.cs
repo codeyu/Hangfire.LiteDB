@@ -581,31 +581,21 @@ namespace Hangfire.LiteDB
             var stringDates = dates.Select(x => x.ToString("yyyy-MM-dd")).ToList();
             var keys = stringDates.Select(x => $"stats:{type}:{x}").ToList();
 
-            var valuesCounterMap = connection.StateDataCounter
-                .Find(x => keys.Contains(x.Key))
-                .AsEnumerable()
-                .GroupBy(x => x.Key, x => x)
-                .ToDictionary(x => x.Key, x => Convert.ToInt64(x.Count()));
-
             var valuesAggregatorMap = connection.StateDataAggregatedCounter
                 .Find(x => keys.Contains(x.Key))
                 .AsEnumerable()
                 .GroupBy(x => x.Key)
                 .ToDictionary(x => x.Key, x => Convert.ToInt64(x.Sum(y => y.Value.ToInt64())));
 
-            var valuesUnion = valuesCounterMap
-                .Union(valuesAggregatorMap).GroupBy(x => x.Key, x => x)
-                .ToDictionary(x => x.Key, x => x.Sum(y => y.Value.ToInt64()));
-
             foreach (var key in keys)
             {
-                if (!valuesUnion.ContainsKey(key)) valuesUnion.Add(key, 0);
+                if (!valuesAggregatorMap.ContainsKey(key)) valuesAggregatorMap.Add(key, 0);
             }
 
             var result = new Dictionary<DateTime, long>();
             for (var i = 0; i < stringDates.Count; i++)
             {
-                var value = valuesUnion[valuesUnion.Keys.ElementAt(i)];
+                var value = valuesAggregatorMap[valuesAggregatorMap.Keys.ElementAt(i)];
                 result.Add(dates[i], value);
             }
 
@@ -624,31 +614,21 @@ namespace Hangfire.LiteDB
 
             var keys = dates.Select(x => $"stats:{type}:{x:yyyy-MM-dd-HH}").ToList();
 
-            var valuesCounterMap = connection.StateDataCounter
-                .Find(x => keys.Contains(x.Key))
-                .AsEnumerable()
-                .GroupBy(x => x.Key, x => x)
-                .ToDictionary(x => x.Key, x => Convert.ToInt64(x.Count()));
-
             var valuesAggregatorMap = connection.StateDataAggregatedCounter
                 .Find(x => keys.Contains(x.Key))
                 .AsEnumerable()
                 .GroupBy(x => x.Key, x => x)
                 .ToDictionary(x => x.Key, x => x.Sum(y => y.Value.ToInt64()));
 
-            var valuesUnion = valuesCounterMap
-                .Union(valuesAggregatorMap).GroupBy(x => x.Key, x => x)
-                .ToDictionary(x => x.Key, x => x.Sum(y => y.Value.ToInt64()));
-
-            foreach (var key in keys.Where(key => !valuesUnion.ContainsKey(key)))
+            foreach (var key in keys.Where(key => !valuesAggregatorMap.ContainsKey(key)))
             {
-                valuesUnion.Add(key, 0);
+                valuesAggregatorMap.Add(key, 0);
             }
 
             var result = new Dictionary<DateTime, long>();
             for (var i = 0; i < dates.Count; i++)
             {
-                var value = valuesUnion[valuesUnion.Keys.ElementAt(i)];
+                var value = valuesAggregatorMap[valuesAggregatorMap.Keys.ElementAt(i)];
                 result.Add(dates[i], value);
             }
 
