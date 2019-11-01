@@ -278,7 +278,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
         {
             var job = new LiteJob
             {
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 StateHistory = new List<LiteState>()
             };
 
@@ -292,7 +292,7 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
 
             if (isFetched)
             {
-                jobQueue.FetchedAt = DateTime.Now.AddDays(-1);
+                jobQueue.FetchedAt = DateTime.UtcNow.AddDays(-1);
             }
 
             connection.JobQueue.Insert(jobQueue);

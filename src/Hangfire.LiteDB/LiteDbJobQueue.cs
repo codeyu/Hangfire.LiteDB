@@ -49,7 +49,7 @@ namespace Hangfire.LiteDB
             var fetchConditions = new[]
             {
                 Query.EQ("FetchedAt", null),
-                Query.LT("FetchedAt", DateTime.Now.AddSeconds(_storageOptions.InvisibilityTimeout.Negate().TotalSeconds))
+                Query.LT("FetchedAt", DateTime.UtcNow.AddSeconds(_storageOptions.InvisibilityTimeout.Negate().TotalSeconds))
             };
             var fetchConditionsIndex = 0;
 
@@ -69,7 +69,7 @@ namespace Hangfire.LiteDB
 
                         if (fetchedJob != null)
                         {
-                            fetchedJob.FetchedAt = DateTime.Now;
+                            fetchedJob.FetchedAt = DateTime.UtcNow;
                             _connection.JobQueue.Update(fetchedJob);
                             break;
                         }
@@ -81,7 +81,7 @@ namespace Hangfire.LiteDB
                     // ...and we are out of fetch conditions as well.
                     // Wait for a while before polling again.
                     cancellationToken.WaitHandle.WaitOne(_storageOptions.QueuePollInterval);
-                    cancellationToken.ThrowIfCancellationRequested();   
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
 
                 // Move on to next fetch condition

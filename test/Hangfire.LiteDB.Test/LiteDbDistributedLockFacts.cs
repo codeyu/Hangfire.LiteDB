@@ -123,10 +123,10 @@ namespace Hangfire.LiteDB.Test
                 Thread.Sleep(TimeSpan.FromSeconds(1));
 
                 // Record when we try to aquire the lock
-                var startTime = DateTime.Now;
+                var startTime = DateTime.UtcNow;
                 using (new LiteDbDistributedLock("resource1", TimeSpan.FromSeconds(10), database, new LiteDbStorageOptions()))
                 {
-                    Assert.InRange(DateTime.Now - startTime, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+                    Assert.InRange(DateTime.UtcNow - startTime, TimeSpan.Zero, TimeSpan.FromSeconds(5));
                 }
             });
         }
@@ -150,7 +150,7 @@ namespace Hangfire.LiteDB.Test
             {
                 using (new LiteDbDistributedLock("resource1", TimeSpan.Zero, database, new LiteDbStorageOptions() { DistributedLockLifetime = TimeSpan.FromSeconds(3) }))
                 {
-                    DateTime initialExpireAt = DateTime.Now;
+                    DateTime initialExpireAt = DateTime.UtcNow;
                     Thread.Sleep(TimeSpan.FromSeconds(5));
 
                     DistributedLock lockEntry = database.DistributedLock.Find(_ => _.Resource=="resource1").FirstOrDefault();

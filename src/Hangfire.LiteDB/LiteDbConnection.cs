@@ -68,7 +68,7 @@ namespace Hangfire.LiteDB
 
                 var jobDto = new LiteJob
                 {
-                    InvocationData = JobHelper.ToJson(invocationData),
+                    InvocationData = SerializationHelper.Serialize(invocationData, SerializationOption.User),
                     Arguments = invocationData.Arguments,
                     Parameters = parameters.ToDictionary(kv => kv.Key, kv => kv.Value),
                     CreatedAt = createdAt,
@@ -160,7 +160,8 @@ namespace Hangfire.LiteDB
                 return null;
 
             // TODO: conversion exception could be thrown.
-            var invocationData = JobHelper.FromJson<InvocationData>(jobData.InvocationData);
+            var invocationData = SerializationHelper.Deserialize<InvocationData>(jobData.InvocationData,
+                SerializationOption.User);
             invocationData.Arguments = jobData.Arguments;
 
             Job job = null;
@@ -221,7 +222,7 @@ namespace Hangfire.LiteDB
             {
                 WorkerCount = context.WorkerCount,
                 Queues = context.Queues,
-                StartedAt = DateTime.Now
+                StartedAt = DateTime.UtcNow
             };
 
             var server = Database.Server.FindById(serverId);
@@ -230,19 +231,17 @@ namespace Hangfire.LiteDB
                 server = new Entities.Server
                 {
                     Id = serverId,
-                    Data = JobHelper.ToJson(data),
-                    LastHeartbeat = DateTime.Now
+                    Data = SerializationHelper.Serialize(data, SerializationOption.User),
+                    LastHeartbeat = DateTime.UtcNow
                 };
                 Database.Server.Insert(server);
             }
             else
             {
-                server.LastHeartbeat = DateTime.Now;
-                server.Data = JobHelper.ToJson(data);
+                server.LastHeartbeat = DateTime.UtcNow;
+                server.Data = SerializationHelper.Serialize(data, SerializationOption.User);
                 Database.Server.Update(server);
             }
-
-
         }
 
         public override void RemoveServer(string serverId)
@@ -266,7 +265,7 @@ namespace Hangfire.LiteDB
             if (server == null)
                 return;
 
-            server.LastHeartbeat = DateTime.Now;
+            server.LastHeartbeat = DateTime.UtcNow;
             Database.Server.Update(server);
         }
 
@@ -348,9 +347,8 @@ namespace Hangfire.LiteDB
                 .StateDataHash
                 .Find(_ => _.Key == key)
                 .AsEnumerable()
-                .GroupBy(_ => _.Field)
-                .Select(_ => new { _.Key, Value = _.Max(x => x.Value)})
-                .ToDictionary(x => x.Key, x => (string)x.Value);
+                .Select(_ => new { _.Field, _.Value})
+                .ToDictionary(x => x.Field, x => Convert.ToString(x.Value));
 
             return result.Count != 0 ? result : null;
         }
@@ -412,18 +410,17 @@ namespace Hangfire.LiteDB
             var counterQuery = Database
                 .StateDataCounter
                 .Find(_ => _.Key == key)
-                .Select(_ => _.Value)
+                .Select(_ => _.Value.ToInt64())
                 .ToList();
 
             var aggregatedCounterQuery = Database
                 .StateDataAggregatedCounter
                 .Find(_ => _.Key == key)
-                .Select(_ => _.Value)
+                .Select(_ => _.Value.ToInt64())
                 .ToList();
 
             var values = counterQuery
                 .Concat(aggregatedCounterQuery)
-                .Select(c => (long)c)
                 .ToArray();
 
             return values.Any() ? values.Sum() : 0;

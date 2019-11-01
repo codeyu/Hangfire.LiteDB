@@ -31,11 +31,9 @@ namespace Hangfire.LiteDB.Entities
     /// </summary>
     public class LiteExpiringKeyValue : LiteKeyValue
     {
-        private DateTime? _expireAt;
-
         /// <summary>
         /// 
         /// </summary>
-        public DateTime? ExpireAt { get { return _expireAt.HasValue ? _expireAt.Value.ToUniversalTime() : (DateTime?)null; } set { _expireAt = value; } }
+        public DateTime? ExpireAt { get; set; }
     }
 }

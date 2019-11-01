@@ -72,7 +72,7 @@ namespace Hangfire.LiteDB
                 var servers = ctx.Server.FindAll().ToList();
 
                 return (from server in servers
-                        let data = JobHelper.FromJson<ServerData>(server.Data)
+                        let data = SerializationHelper.Deserialize<ServerData>(server.Data, SerializationOption.User)
                         select new ServerDto
                         {
                             Name = server.Id.ToString(),
@@ -459,7 +459,7 @@ namespace Hangfire.LiteDB
 
         private static Job DeserializeJob(string invocationData, string arguments)
         {
-            var data = JobHelper.FromJson<InvocationData>(invocationData);
+            var data = SerializationHelper.Deserialize<InvocationData>(invocationData, SerializationOption.User);
             data.Arguments = arguments;
 
             try
@@ -568,7 +568,7 @@ namespace Hangfire.LiteDB
 
         private Dictionary<DateTime, long> GetTimelineStats(HangfireDbContext connection, string type)
         {
-            var endDate = DateTime.Now.Date;
+            var endDate = DateTime.UtcNow.Date;
             var startDate = endDate.AddDays(-7);
             var dates = new List<DateTime>();
 
@@ -581,21 +581,21 @@ namespace Hangfire.LiteDB
             var stringDates = dates.Select(x => x.ToString("yyyy-MM-dd")).ToList();
             var keys = stringDates.Select(x => $"stats:{type}:{x}").ToList();
 
-            var valuesMap = connection.StateDataAggregatedCounter
+            var valuesAggregatorMap = connection.StateDataAggregatedCounter
                 .Find(x => keys.Contains(x.Key))
                 .AsEnumerable()
                 .GroupBy(x => x.Key)
-                .ToDictionary(x => x.Key, x => (long)x.Count());
+                .ToDictionary(x => x.Key, x => Convert.ToInt64(x.Sum(y => y.Value.ToInt64())));
 
             foreach (var key in keys)
             {
-                if (!valuesMap.ContainsKey(key)) valuesMap.Add(key, 0);
+                if (!valuesAggregatorMap.ContainsKey(key)) valuesAggregatorMap.Add(key, 0);
             }
 
             var result = new Dictionary<DateTime, long>();
             for (var i = 0; i < stringDates.Count; i++)
             {
-                var value = valuesMap[valuesMap.Keys.ElementAt(i)];
+                var value = valuesAggregatorMap[valuesAggregatorMap.Keys.ElementAt(i)];
                 result.Add(dates[i], value);
             }
 
@@ -604,7 +604,7 @@ namespace Hangfire.LiteDB
 
         private Dictionary<DateTime, long> GetHourlyTimelineStats(HangfireDbContext connection, string type)
         {
-            var endDate = DateTime.Now;
+            var endDate = DateTime.UtcNow;
             var dates = new List<DateTime>();
             for (var i = 0; i < 24; i++)
             {
@@ -614,21 +614,21 @@ namespace Hangfire.LiteDB
 
             var keys = dates.Select(x => $"stats:{type}:{x:yyyy-MM-dd-HH}").ToList();
 
-            var valuesMap = connection.StateDataCounter
+            var valuesAggregatorMap = connection.StateDataAggregatedCounter
                 .Find(x => keys.Contains(x.Key))
                 .AsEnumerable()
                 .GroupBy(x => x.Key, x => x)
-                .ToDictionary(x => x.Key, x => (long)x.Count());
+                .ToDictionary(x => x.Key, x => x.Sum(y => y.Value.ToInt64()));
 
-            foreach (var key in keys.Where(key => !valuesMap.ContainsKey(key)))
+            foreach (var key in keys.Where(key => !valuesAggregatorMap.ContainsKey(key)))
             {
-                valuesMap.Add(key, 0);
+                valuesAggregatorMap.Add(key, 0);
             }
 
             var result = new Dictionary<DateTime, long>();
             for (var i = 0; i < dates.Count; i++)
             {
-                var value = valuesMap[valuesMap.Keys.ElementAt(i)];
+                var value = valuesAggregatorMap[valuesAggregatorMap.Keys.ElementAt(i)];
                 result.Add(dates[i], value);
             }
 

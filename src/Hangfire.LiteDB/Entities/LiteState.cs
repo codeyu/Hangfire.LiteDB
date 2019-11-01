@@ -8,8 +8,6 @@ namespace Hangfire.LiteDB.Entities
     /// </summary>
     public class LiteState
     {
-        private DateTime _createdAt;
-
         /// <summary>
         /// 
         /// </summary>
@@ -25,7 +23,7 @@ namespace Hangfire.LiteDB.Entities
         /// <summary>
         /// 
         /// </summary>
-        public DateTime CreatedAt { get { return _createdAt.ToUniversalTime(); } set { _createdAt = value; } }
+        public DateTime CreatedAt { get; set; }
         /// <summary>
         /// 
         /// </summary>

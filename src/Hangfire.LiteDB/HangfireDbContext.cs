@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using Hangfire.LiteDB.Entities;
 using LiteDB;
+using Newtonsoft.Json;
+
 namespace Hangfire.LiteDB
 {
     /// <summary>
@@ -38,6 +41,24 @@ namespace Hangfire.LiteDB
         private HangfireDbContext(string connectionString, string prefix = "hangfire")
         {
             _prefix = prefix;
+
+            //UTC - LiteDB
+            BsonMapper.Global.ResolveMember += (type, memberInfo, member) =>
+            {
+                if (member.DataType == typeof(DateTime?) || member.DataType == typeof(DateTime))
+                {
+                    member.Deserialize = (v, m) => v != null ? v.AsDateTime.ToUniversalTime() : (DateTime?)null;
+                    member.Serialize = (o, m) => new BsonValue(((DateTime?)o).HasValue ? ((DateTime?)o).Value.ToUniversalTime() : (DateTime?)null);
+                }
+            };
+
+            //UTC - Internal JSON
+            GlobalConfiguration.Configuration
+                .UseSerializerSettings(new JsonSerializerSettings() {
+                    DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+                    DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                    DateFormatString = "yyyy-MM-dd HH:mm:ss.fff"
+                });
 
             Repository = new LiteRepository(connectionString);
 
