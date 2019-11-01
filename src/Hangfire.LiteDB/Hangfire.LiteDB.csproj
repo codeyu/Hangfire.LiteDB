@@ -6,7 +6,7 @@
     <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup>
-    <Version>0.2.1</Version>
+    <Version>0.3.0</Version>
     <authors>codeyu</authors>
     <AssemblyName>Hangfire.LiteDB</AssemblyName>
     <PackageId>Hangfire.LiteDB</PackageId>
@@ -29,11 +29,9 @@
     <Description>LiteDB storage implementation for Hangfire (background job system for ASP.NET applications).</Description>
     <PackageTags>Hangfire AspNet OWIN LiteDB Long-Running Background Fire-And-Forget Delayed Recurring Tasks Jobs Scheduler Threading Queues</PackageTags>
     <PackageReleaseNotes>
-      0.2.1
-      - Add Index to Collections for improve performance. by @felixclase, @bamotav and @BraulioAlvarez
-      - Fix Utc Time Problems And Lock. by @felixclase
-      - Fix removal of expired jobs. by @luizgava
-      - Upgrade LiteDb and other reference to last stable version. by @felixclase
+      0.3.0
+      - improve：UTC handling simplification & Reduced ram usage @felixclase
+      - fix wrong chart by recurring jobs @felixclase, @BraulioAlvarez and @bamotav
     </PackageReleaseNotes>
     <License>https://github.com/codeyu/Hangfire.LiteDB/master/LICENSE</License>
     <PackageProjectUrl>https://github.com/codeyu/Hangfire.LiteDB</PackageProjectUrl>
