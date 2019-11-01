@@ -197,7 +197,7 @@ namespace Hangfire.LiteDB
                 .Select(x => x.StateHistory)
                 .FirstOrDefault();
 
-            var state = latest?[0];
+            var state = latest?.Last();
 
             if (state == null)
                 return null;
