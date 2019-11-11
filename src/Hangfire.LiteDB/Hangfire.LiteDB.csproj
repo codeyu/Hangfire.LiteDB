@@ -33,6 +33,7 @@
       - improve：UTC handling simplification @felixclase
       - improve：Reduced ram usage @felixclase
       - fix wrong chart by recurring jobs @felixclase, @BraulioAlvarez and @bamotav
+      - fix JobCancellationToken throws immediately after calling method @felixclase
     </PackageReleaseNotes>
     <License>https://github.com/codeyu/Hangfire.LiteDB/master/LICENSE</License>
     <PackageProjectUrl>https://github.com/codeyu/Hangfire.LiteDB</PackageProjectUrl>
