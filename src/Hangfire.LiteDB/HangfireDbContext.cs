@@ -74,7 +74,7 @@ namespace Hangfire.LiteDB
             StateDataSet.EnsureIndex("Key");
             StateDataCounter.EnsureIndex("Key");
             StateDataAggregatedCounter.EnsureIndex("Key");
-            DistributedLock.EnsureIndex("Resource");
+            DistributedLock.EnsureIndex("Resource", true);
             Job.EnsureIndex("Id");
             Job.EnsureIndex("StateName");
             Job.EnsureIndex("CreatedAt");
