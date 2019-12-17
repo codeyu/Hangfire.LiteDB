@@ -112,7 +112,8 @@ namespace Hangfire.LiteDB
                     CreatedAt = job.CreatedAt,
                     Job = DeserializeJob(job.InvocationData, job.Arguments),
                     History = history,
-                    Properties = job.Parameters
+                    Properties = job.Parameters,
+                    ExpireAt = job.ExpireAt
                 };
             });
         }
