@@ -26,12 +26,10 @@ namespace Hangfire.LiteDB
         /// <summary>
         /// 
         /// </summary>
-        public LiteDbStorageOptions StorageOptions { get { return _storageOptions; } }
+        public LiteDbStorageOptions StorageOptions { get; private set; }
 
         private static readonly object Locker = new object();
         private static volatile HangfireDbContext _instance;
-
-        private LiteDbStorageOptions _storageOptions;
 
         /// <summary>
         /// Starts LiteDB database using a connection string for file system database
@@ -177,7 +175,7 @@ namespace Hangfire.LiteDB
         /// </summary>
         public void Init(LiteDbStorageOptions storageOptions)
         {
-            _storageOptions = storageOptions;
+            StorageOptions = storageOptions;
         }
     }
 }

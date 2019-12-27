@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using Hangfire.Logging;
 using Hangfire.Server;
+using Hangfire.Storage;
 using LiteDB;
 
 namespace Hangfire.LiteDB
@@ -12,6 +13,16 @@ namespace Hangfire.LiteDB
     /// </summary>
     public class ExpirationManager : IBackgroundProcess, IServerComponent
     {
+        private const string DistributedLockKey = "locks:expirationmanager";
+        private static readonly TimeSpan DefaultLockTimeout = TimeSpan.FromMinutes(5);
+
+        // This value should be high enough to optimize the deletion as much, as possible,
+        // reducing the number of queries. But low enough to cause lock escalations (it
+        // appears, when ~5000 locks were taken, but this number is a subject of version).
+        // Note, that lock escalation may also happen during the cascade deletions for
+        // State (3-5 rows/job usually) and JobParameters (2-3 rows/job usually) tables.
+        private const int NumberOfRecordsInSinglePass = 1000;
+
         private static readonly ILog Logger = LogProvider.For<ExpirationManager>();
 
         private readonly LiteDbStorage _storage;
@@ -62,12 +73,13 @@ namespace Hangfire.LiteDB
         {
             HangfireDbContext connection = _storage.CreateAndOpenConnection();
             DateTime now = DateTime.UtcNow;
-            RemoveExpiredRecord(connection.Job, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
-            RemoveExpiredRecord(connection.StateDataAggregatedCounter, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
-            RemoveExpiredRecord(connection.StateDataCounter, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
-            RemoveExpiredRecord(connection.StateDataHash, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
-            RemoveExpiredRecord(connection.StateDataSet, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
-            RemoveExpiredRecord(connection.StateDataList, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+
+            RemoveExpiredRecord(connection, connection.Job, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            RemoveExpiredRecord(connection, connection.StateDataAggregatedCounter, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            RemoveExpiredRecord(connection, connection.StateDataCounter, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            RemoveExpiredRecord(connection, connection.StateDataHash, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            RemoveExpiredRecord(connection, connection.StateDataSet, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            RemoveExpiredRecord(connection, connection.StateDataList, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
 
             cancellationToken.WaitHandle.WaitOne(_checkInterval);
         }
@@ -80,11 +92,34 @@ namespace Hangfire.LiteDB
             return "LiteDB Expiration Manager";
         }
 
-        private void RemoveExpiredRecord<TEntity>(LiteCollection<TEntity> collection, Expression<Func<TEntity, bool>> expression)
+        private void RemoveExpiredRecord<TEntity>(HangfireDbContext db, LiteCollection<TEntity> collection, Expression<Func<TEntity, bool>> expression)
         {
             Logger.DebugFormat("Removing outdated records from table '{0}'...", collection.Name);
 
-            var result = collection.Delete(expression);
+            try
+            {
+                var _lock = new LiteDbDistributedLock(DistributedLockKey, DefaultLockTimeout,
+                    db, db.StorageOptions);
+
+                using (_lock)
+                {
+                    var result = collection.Delete(expression);
+                }
+            }
+            catch (DistributedLockTimeoutException e) when (e.Resource == DistributedLockKey)
+            {
+                // DistributedLockTimeoutException here doesn't mean that outdated records weren't removed.
+                // It just means another Hangfire server did this work.
+                Logger.Log(
+                    LogLevel.Debug,
+                    () => $@"An exception was thrown during acquiring distributed lock on the {DistributedLockKey} resource within {DefaultLockTimeout.TotalSeconds} seconds. Outdated records were not removed. It will be retried in {_checkInterval.TotalSeconds} seconds.",
+                    e);
+            }
+            catch (Exception e)
+            {
+                Logger.Log(LogLevel.Error, () => $"Error in RemoveExpireRows Method. Details: {e.ToString()}", e);
+            }
+
 #if DEBUG
             Logger.DebugFormat(result.ToString());
 #endif
