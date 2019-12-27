@@ -95,12 +95,12 @@ namespace Hangfire.LiteDB
         private void RemoveExpiredRecord<TEntity>(HangfireDbContext db, LiteCollection<TEntity> collection, Expression<Func<TEntity, bool>> expression)
         {
             Logger.DebugFormat("Removing outdated records from table '{0}'...", collection.Name);
+            int result = 0;
 
             try
             {
                 var _lock = new LiteDbDistributedLock(DistributedLockKey, DefaultLockTimeout,
                     db, db.StorageOptions);
-                int result = 0;
 
                 using (_lock)
                 {
