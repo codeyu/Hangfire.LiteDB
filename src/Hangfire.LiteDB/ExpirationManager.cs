@@ -100,10 +100,11 @@ namespace Hangfire.LiteDB
             {
                 var _lock = new LiteDbDistributedLock(DistributedLockKey, DefaultLockTimeout,
                     db, db.StorageOptions);
+                int result = 0;
 
                 using (_lock)
                 {
-                    var result = collection.Delete(expression);
+                    result = collection.Delete(expression);
                 }
             }
             catch (DistributedLockTimeoutException e) when (e.Resource == DistributedLockKey)
