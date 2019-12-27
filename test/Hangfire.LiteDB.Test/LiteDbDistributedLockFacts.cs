@@ -147,7 +147,7 @@ namespace Hangfire.LiteDB.Test
                 manualResetEvent.Wait();
 
                 // Attempt to acquire the distributed lock.
-                using (new LiteDbDistributedLock("resource1", TimeSpan.FromSeconds(5), connection, new LiteDbStorageOptions()))
+                using (new LiteDbDistributedLock("resource1", TimeSpan.FromSeconds(20), connection, new LiteDbStorageOptions()))
                 {
                     // Find out if any other threads managed to acquire the lock.
                     var oldConcurrencyCounter = Interlocked.CompareExchange(ref concurrencyCounter, 1, 0);
