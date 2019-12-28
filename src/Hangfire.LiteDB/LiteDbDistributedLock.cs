@@ -4,6 +4,7 @@ using System.Threading;
 using Hangfire.LiteDB.Entities;
 using Hangfire.Logging;
 using Hangfire.Storage;
+using LiteDB;
 
 namespace Hangfire.LiteDB
 {
@@ -134,7 +135,16 @@ namespace Hangfire.LiteDB
                     distributedLock.Resource = _resource;
                     distributedLock.ExpireAt = DateTime.UtcNow.Add(_storageOptions.DistributedLockLifetime);
 
-                    _database.DistributedLock.Upsert(distributedLock);
+                    try
+                    {
+                      _database.DistributedLock.Upsert(distributedLock);
+                    }
+                    catch (LiteException ex) when (ex.ErrorCode == LiteException.INDEX_DUPLICATE_KEY)
+                    {
+                        // The lock already exists preventing us from inserting.
+                        continue;
+                    }
+                    
                     // If result is null, then it means we acquired the lock
                     if (result == null)
                     {

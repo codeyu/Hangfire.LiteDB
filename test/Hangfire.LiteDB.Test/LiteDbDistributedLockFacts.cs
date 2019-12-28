@@ -131,6 +131,50 @@ namespace Hangfire.LiteDB.Test
             });
         }
 
+        [Fact, CleanDatabase]
+        public void Ctor_WaitForLock_OnlySingleLockCanBeAcquired()
+        {
+            var connection = ConnectionUtils.CreateConnection();
+            var numThreads = 10;
+            long concurrencyCounter = 0;
+            var manualResetEvent = new ManualResetEventSlim();
+            var success = new bool[numThreads];
+
+            // Spawn multiple threads to race each other.
+            var threads = Enumerable.Range(0, numThreads).Select(i => new Thread(() =>
+            {
+                // Wait for the start signal.
+                manualResetEvent.Wait();
+
+                // Attempt to acquire the distributed lock.
+                using (new LiteDbDistributedLock("resource1", TimeSpan.FromSeconds(20), connection, new LiteDbStorageOptions()))
+                {
+                    // Find out if any other threads managed to acquire the lock.
+                    var oldConcurrencyCounter = Interlocked.CompareExchange(ref concurrencyCounter, 1, 0);
+
+                    // The old concurrency counter should be 0 as only one thread should be allowed to acquire the lock.
+                    success[i] = oldConcurrencyCounter == 0;
+
+                    Interlocked.MemoryBarrier();
+
+                    // Hold the lock for some time.
+                    Thread.Sleep(100);
+
+                    Interlocked.Decrement(ref concurrencyCounter);
+                }
+            })).ToList();
+
+            threads.ForEach(t => t.Start());
+
+            manualResetEvent.Set();
+
+            threads.ForEach(t => Assert.True(t.Join(TimeSpan.FromMinutes(1)), "Thread is hanging unexpected"));
+
+            // All the threads should report success.
+            Interlocked.MemoryBarrier();
+            Assert.DoesNotContain(false, success);
+        }
+
         [Fact]
         public void Ctor_ThrowsAnException_WhenOptionsIsNull()
         {
