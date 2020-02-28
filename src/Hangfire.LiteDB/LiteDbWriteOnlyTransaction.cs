@@ -244,7 +244,7 @@ namespace Hangfire.LiteDB
         /// <param name="value"></param>
         public override void RemoveFromSet(string key, string value)
         {
-            QueueCommand(x => x.StateDataSet.Delete(_ => _.Key == key && Convert.ToString(_.Value) == value));
+            QueueCommand(x => x.StateDataSet.DeleteMany(_ => _.Key == key && Convert.ToString(_.Value) == value));
         }
 
         /// <summary>
@@ -269,7 +269,7 @@ namespace Hangfire.LiteDB
         /// <param name="value"></param>
         public override void RemoveFromList(string key, string value)
         {
-            QueueCommand(x => x.StateDataList.Delete(_ => _.Key == key && Convert.ToString(_.Value) == value));
+            QueueCommand(x => x.StateDataList.DeleteMany(_ => _.Key == key && Convert.ToString(_.Value) == value));
         }
 
         /// <summary>
@@ -294,7 +294,7 @@ namespace Hangfire.LiteDB
                     .ToList();
                 foreach(var id in items)
                 {
-                    x.StateDataList.Delete(_=>_.Id == id);
+                    x.StateDataList.DeleteMany(_=>_.Id == id);
                 }
             });
         }
@@ -352,7 +352,7 @@ namespace Hangfire.LiteDB
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
 
-            QueueCommand(x => x.StateDataHash.Delete(_ => _.Key == key));
+            QueueCommand(x => x.StateDataHash.DeleteMany(_ => _.Key == key));
         }
 
         /// <summary>
@@ -549,7 +549,7 @@ namespace Hangfire.LiteDB
         public override void RemoveSet(string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            QueueCommand(x => x.StateDataSet.Delete(_ => _.Key == key));
+            QueueCommand(x => x.StateDataSet.DeleteMany(_ => _.Key == key));
         }
     }
 }

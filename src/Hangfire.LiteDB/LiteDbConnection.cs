@@ -251,7 +251,7 @@ namespace Hangfire.LiteDB
                 throw new ArgumentNullException(nameof(serverId));
             }
 
-            Database.Server.Delete(_ => _.Id == serverId);
+            Database.Server.DeleteMany(_ => _.Id == serverId);
         }
 
         public override void Heartbeat(string serverId)

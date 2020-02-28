@@ -16,12 +16,12 @@ namespace Hangfire.LiteDB
         /// <summary>
         /// 
         /// </summary>
-        public LiteDatabase Database { get; }
+        public ILiteDatabase Database { get; }
 
         /// <summary>
         /// 
         /// </summary>
-        public LiteRepository Repository { get; }
+        public ILiteRepository Repository { get; }
 
         /// <summary>
         /// 
@@ -46,7 +46,7 @@ namespace Hangfire.LiteDB
                 if (member.DataType == typeof(DateTime?) || member.DataType == typeof(DateTime))
                 {
                     member.Deserialize = (v, m) => v != null ? v.AsDateTime.ToUniversalTime() : (DateTime?)null;
-                    member.Serialize = (o, m) => new BsonValue(((DateTime?)o).HasValue ? ((DateTime?)o).Value.ToUniversalTime() : (DateTime?)null);
+                    member.Serialize = (o, m) => ((DateTime?)o).HasValue ? new BsonValue(((DateTime)o).ToUniversalTime()) : new BsonValue();
                 }
             };
 
@@ -110,65 +110,65 @@ namespace Hangfire.LiteDB
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
-        public LiteCollection<LiteKeyValue> StateDataKeyValue =>
+        public ILiteCollection<LiteKeyValue> StateDataKeyValue =>
             Database.GetCollection<LiteKeyValue>(_prefix + $"_{nameof(LiteKeyValue)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
-        public LiteCollection<LiteExpiringKeyValue> StateDataExpiringKeyValue =>
+        public ILiteCollection<LiteExpiringKeyValue> StateDataExpiringKeyValue =>
             Database.GetCollection<LiteExpiringKeyValue>(_prefix + $"_{nameof(StateDataExpiringKeyValue)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
-        public LiteCollection<LiteHash> StateDataHash =>
+        public ILiteCollection<LiteHash> StateDataHash =>
             Database.GetCollection<LiteHash>(_prefix + $"_{nameof(LiteHash)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
-        public LiteCollection<LiteList> StateDataList =>
+        public ILiteCollection<LiteList> StateDataList =>
             Database.GetCollection<LiteList>(_prefix + $"_{nameof(LiteList)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
-        public LiteCollection<LiteSet> StateDataSet =>
+        public ILiteCollection<LiteSet> StateDataSet =>
             Database.GetCollection<LiteSet>(_prefix + $"_{nameof(LiteSet)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
-        public LiteCollection<Counter> StateDataCounter =>
+        public ILiteCollection<Counter> StateDataCounter =>
             Database.GetCollection<Counter>(_prefix + $"_{nameof(Counter)}");
         /// <summary>
         /// Reference to collection which contains various state information
         /// </summary>
-        public LiteCollection<AggregatedCounter> StateDataAggregatedCounter =>
+        public ILiteCollection<AggregatedCounter> StateDataAggregatedCounter =>
             Database.GetCollection<AggregatedCounter>(_prefix + $"_{nameof(AggregatedCounter)}");
 
         /// <summary>
         /// Reference to collection which contains distributed locks
         /// </summary>
-        public LiteCollection<DistributedLock> DistributedLock => Database
+        public ILiteCollection<DistributedLock> DistributedLock => Database
             .GetCollection<DistributedLock>(_prefix + "_locks");
 
         /// <summary>
         /// Reference to collection which contains jobs
         /// </summary>
-        public LiteCollection<LiteJob> Job => Database.GetCollection<LiteJob>(_prefix + "_job");
+        public ILiteCollection<LiteJob> Job => Database.GetCollection<LiteJob>(_prefix + "_job");
 
         /// <summary>
         /// Reference to collection which contains jobs queues
         /// </summary>
-        public LiteCollection<JobQueue> JobQueue =>
+        public ILiteCollection<JobQueue> JobQueue =>
             Database.GetCollection<JobQueue>(_prefix + "_jobQueue");
 
         /// <summary>
         /// Reference to collection which contains schemas
         /// </summary>
-        public LiteCollection<LiteSchema> Schema => Database.GetCollection<LiteSchema>(_prefix + "_schema");
+        public ILiteCollection<LiteSchema> Schema => Database.GetCollection<LiteSchema>(_prefix + "_schema");
 
         /// <summary>
         /// Reference to collection which contains servers information
         /// </summary>
-        public LiteCollection<Entities.Server> Server => Database.GetCollection<Entities.Server>(_prefix + "_server");
+        public ILiteCollection<Entities.Server> Server => Database.GetCollection<Entities.Server>(_prefix + "_server");
 
         /// <summary>
         /// Initializes intial collections schema for Hangfire

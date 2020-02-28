@@ -41,15 +41,17 @@ namespace Hangfire.LiteDB
             throw  new NotImplementedException();
         }
         
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="items"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static IEnumerable<BsonValue> ToBsonValueEnumerable<T>(this IEnumerable<T> items)
-        {
-            return items.Select(item => new BsonValue(item));
-        }
+        // BsonValue(object) is no longer supported 
+        // Could use BsonValue(BsonType.Document, item) but I don't think that's the intent
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <param name="items"></param>
+        ///// <typeparam name="T"></typeparam>
+        ///// <returns></returns>
+        //public static IEnumerable<BsonValue> ToBsonValueEnumerable<T>(this IEnumerable<T> items)
+        //{
+        //    return items.Select(item => new BsonValue(item));
+        //}
     }
 }
