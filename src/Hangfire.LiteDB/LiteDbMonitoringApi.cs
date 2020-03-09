@@ -406,8 +406,14 @@ namespace Hangfire.LiteDB
                 .Find(x => jobIds.Contains(x.Id))
                 .ToList();
 
+
+
             var enqueuedJobs = connection.JobQueue
-                .Find(x => x.FetchedAt == null && jobs.Select(_ => _.Id).Contains(x.JobId))
+                .Query()
+                //.Where(x=>x.FetchedAt == null && jobs.Select(c=>c.Id).ToArray().Contains(x.JobId))
+                // V5 Weirdness: Splitting this to two separate statements worked, but keeping it as one fails!
+                .Where(x => x.FetchedAt == null)
+                .Where(x => jobs.Select(c => c.Id).ToArray().Contains(x.JobId))
                 .ToList();
 
             var jobsFiltered = enqueuedJobs
@@ -488,8 +494,11 @@ namespace Hangfire.LiteDB
                 .ToList();
 
             var jobIdToJobQueueMap = connection.JobQueue
-                .Find(x => x.FetchedAt != null && jobs.Select(_ => _.Id).Contains(x.JobId))
-                .AsEnumerable().ToDictionary(kv => kv.JobId, kv => kv);
+                //.Find(x => x.FetchedAt != null && jobs.Select(_ => _.Id).Contains(x.JobId))
+                .Query()
+                .Where(x=>x.FetchedAt != null)
+                .Where(x=>jobs.Select(_=>_.Id).ToArray().Contains(x.JobId))
+                .ToEnumerable().ToDictionary(kv => kv.JobId, kv => kv);
 
             IEnumerable<LiteJob> jobsFiltered = jobs.Where(job => jobIdToJobQueueMap.ContainsKey(job.Id));
 

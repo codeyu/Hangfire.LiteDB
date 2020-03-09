@@ -63,11 +63,12 @@ namespace Hangfire.LiteDB
         public IEnumerable<int> GetFetchedJobIds(string queue, int from, int perPage)
         {
             return _connection.JobQueue
-                .Find(_ => _.Queue == queue && _.FetchedAt != null)
+                .Query()
+                .Where(_ => _.Queue == queue && _.FetchedAt != null)
                 .Skip(from)
-                .Take(perPage)
+                .Limit(perPage)
+                .ToEnumerable()
                 .Select(_ => _.JobId)
-                .AsEnumerable()
                 .Where(jobQueueJobId =>
                 {
                     var job = _connection.Job.Find(_ => _.Id==jobQueueJobId).FirstOrDefault();

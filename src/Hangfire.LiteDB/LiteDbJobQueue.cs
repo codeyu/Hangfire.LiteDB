@@ -48,7 +48,7 @@ namespace Hangfire.LiteDB
 
             var fetchConditions = new[]
             {
-                Query.EQ("FetchedAt", null),
+                Query.EQ("FetchedAt", BsonValue.Null),
                 Query.LT("FetchedAt", DateTime.UtcNow.AddSeconds(_storageOptions.InvisibilityTimeout.Negate().TotalSeconds))
             };
             var fetchConditionsIndex = 0;

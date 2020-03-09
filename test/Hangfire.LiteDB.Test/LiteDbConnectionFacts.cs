@@ -161,9 +161,12 @@ namespace Hangfire.LiteDB.Test
                 Assert.True(createdAt.AddDays(1).AddMinutes(-1) < databaseJob.ExpireAt);
                 Assert.True(databaseJob.ExpireAt < createdAt.AddDays(1).AddMinutes(1));
 
+               
+
                 var parameters = database
                     .Job
-                    .Find(_ => _.IdString.Trim() == jobId)
+                    //.Find(_ => _.IdString.Trim() == jobId)
+                    .Find(_=>_.Id.ToString() == jobId)
                     .Select(j => j.Parameters)
                     .ToList()
                     .SelectMany(j => j)

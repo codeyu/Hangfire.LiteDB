@@ -74,12 +74,16 @@ namespace Hangfire.LiteDB
             HangfireDbContext connection = _storage.CreateAndOpenConnection();
             DateTime now = DateTime.UtcNow;
 
-            RemoveExpiredRecord(connection, connection.Job, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
-            RemoveExpiredRecord(connection, connection.StateDataAggregatedCounter, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
-            RemoveExpiredRecord(connection, connection.StateDataCounter, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
-            RemoveExpiredRecord(connection, connection.StateDataHash, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
-            RemoveExpiredRecord(connection, connection.StateDataSet, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
-            RemoveExpiredRecord(connection, connection.StateDataList, _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now);
+            // TounviersalTime() is not supported in BsonExpression
+            // _ => _.ExpireAt != null && _.ExpireAt.Value.ToUniversalTime() < now 
+            // Assume the values being pushed are always universal time instead
+
+            RemoveExpiredRecord(connection, connection.Job, _ => _.ExpireAt != null && _.ExpireAt.Value < now);
+            RemoveExpiredRecord(connection, connection.StateDataAggregatedCounter, _ => _.ExpireAt != null && _.ExpireAt.Value < now);
+            RemoveExpiredRecord(connection, connection.StateDataCounter, _ => _.ExpireAt != null && _.ExpireAt.Value < now);
+            RemoveExpiredRecord(connection, connection.StateDataHash, _ => _.ExpireAt != null && _.ExpireAt.Value  < now);
+            RemoveExpiredRecord(connection, connection.StateDataSet, _ => _.ExpireAt != null && _.ExpireAt.Value < now);
+            RemoveExpiredRecord(connection, connection.StateDataList, _ => _.ExpireAt != null && _.ExpireAt.Value  < now);
 
             cancellationToken.WaitHandle.WaitOne(_checkInterval);
         }
@@ -104,7 +108,9 @@ namespace Hangfire.LiteDB
 
                 using (_lock)
                 {
+                    
                     result = collection.DeleteMany(expression);
+                    
                 }
             }
             catch (DistributedLockTimeoutException e) when (e.Resource == DistributedLockKey)
