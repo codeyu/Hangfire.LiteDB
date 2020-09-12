@@ -11,6 +11,7 @@ using Hangfire.Storage;
 using LiteDB;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Hangfire.LiteDB.Test
 {
@@ -18,11 +19,13 @@ namespace Hangfire.LiteDB.Test
     [Collection("Database")]
     public class LiteDbConnectionFacts
     {
+        private readonly ITestOutputHelper _testOutputHelper;
         private readonly Mock<IPersistentJobQueue> _queue;
         private readonly PersistentJobQueueProviderCollection _providers;
 
-        public LiteDbConnectionFacts()
+        public LiteDbConnectionFacts(ITestOutputHelper testOutputHelper)
         {
+            _testOutputHelper = testOutputHelper;
             _queue = new Mock<IPersistentJobQueue>();
 
             var provider = new Mock<IPersistentJobQueueProvider>();
@@ -163,7 +166,7 @@ namespace Hangfire.LiteDB.Test
 
                 var parameters = database
                     .Job
-                    .Find(_ => _.IdString.Trim() == jobId)
+                    .Find(_ => _.Id.ToString().Trim() == jobId)
                     .Select(j => j.Parameters)
                     .ToList()
                     .SelectMany(j => j)
