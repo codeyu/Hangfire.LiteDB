@@ -92,7 +92,7 @@ namespace Hangfire.LiteDB
             return "LiteDB Expiration Manager";
         }
 
-        private void RemoveExpiredRecord<TEntity>(HangfireDbContext db, LiteCollection<TEntity> collection, Expression<Func<TEntity, bool>> expression)
+        private void RemoveExpiredRecord<TEntity>(HangfireDbContext db, ILiteCollection<TEntity> collection, Expression<Func<TEntity, bool>> expression)
         {
             Logger.DebugFormat("Removing outdated records from table '{0}'...", collection.Name);
             int result = 0;
@@ -104,7 +104,7 @@ namespace Hangfire.LiteDB
 
                 using (_lock)
                 {
-                    result = collection.Delete(expression);
+                    result = collection.DeleteMany(expression);
                 }
             }
             catch (DistributedLockTimeoutException e) when (e.Resource == DistributedLockKey)

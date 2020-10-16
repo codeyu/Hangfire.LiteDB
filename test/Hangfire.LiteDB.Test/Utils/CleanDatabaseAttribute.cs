@@ -30,16 +30,16 @@ namespace Hangfire.LiteDB.Test.Utils
             {
                 context.Init(new LiteDbStorageOptions());
 
-                context.DistributedLock.Delete(Query.All());
-                context.StateDataExpiringKeyValue.Delete(Query.All());
-                context.StateDataHash.Delete(Query.All());
-                context.StateDataSet.Delete(Query.All());
-                context.StateDataList.Delete(Query.All());
-                context.StateDataCounter.Delete(Query.All());
-                context.StateDataAggregatedCounter.Delete(Query.All());
-                context.Job.Delete(Query.All());
-                context.JobQueue.Delete(Query.All());
-                context.Server.Delete(Query.All());
+                context.DistributedLock.DeleteAll();
+                context.StateDataExpiringKeyValue.DeleteAll();
+                context.StateDataHash.DeleteAll();
+                context.StateDataSet.DeleteAll();
+                context.StateDataList.DeleteAll();
+                context.StateDataCounter.DeleteAll();
+                context.StateDataAggregatedCounter.DeleteAll();
+                context.Job.DeleteAll();
+                context.JobQueue.DeleteAll();
+                context.Server.DeleteAll();
 
             }
             catch (Exception ex)

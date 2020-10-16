@@ -205,7 +205,7 @@ namespace Hangfire.LiteDB
             try
             {
                 // Remove resource lock
-                _database.DistributedLock.Delete(_ => _.Resource== _resource);
+                _database.DistributedLock.DeleteMany(_ => _.Resource== _resource);
                 if (_isEventWaitHandleSupported)
                 {
                     try
@@ -234,7 +234,7 @@ namespace Hangfire.LiteDB
             try
             {
                 // Delete expired locks
-                _database.DistributedLock.Delete(x => x.Resource == _resource && x.ExpireAt.ToUniversalTime() < DateTime.UtcNow);
+                _database.DistributedLock.DeleteMany(x => x.Resource == _resource && x.ExpireAt.ToUniversalTime() < DateTime.UtcNow);
             }
             catch (Exception ex)
             {

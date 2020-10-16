@@ -557,7 +557,7 @@ namespace Hangfire.LiteDB.Test
                     x.TrimList("my-key", 1, 2);
                 });
 
-                LiteList[] records = database.StateDataList.FindAll().ToArray();
+                var records = database.StateDataList.FindAll().ToArray();
 
                 Assert.Equal(2, records.Length);
                 Assert.Equal("1", records[0].Value);

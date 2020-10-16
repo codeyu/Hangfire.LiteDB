@@ -64,6 +64,7 @@ namespace Hangfire.LiteDB
         {
             return _connection.JobQueue
                 .Find(_ => _.Queue == queue && _.FetchedAt != null)
+                .OrderBy(_ => _.Id)
                 .Skip(from)
                 .Take(perPage)
                 .Select(_ => _.JobId)

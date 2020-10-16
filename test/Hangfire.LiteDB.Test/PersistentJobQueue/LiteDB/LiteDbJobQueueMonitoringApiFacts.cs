@@ -164,9 +164,9 @@ namespace Hangfire.LiteDB.Test.PersistentJobQueue.LiteDB
                 var jobQueueDto2 = CreateJobQueueDto(connection, QueueName1, false);
                 CreateJobQueueDto(connection, QueueName1, false);
 
-                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 2).ToList();
+                var enqueuedJobIds = liteDbJobQueueMonitoringApi.GetEnqueuedJobIds(QueueName1, 0, 3).ToList();
 
-                Assert.Equal(2, enqueuedJobIds.Count);
+                Assert.Equal(3, enqueuedJobIds.Count);
                 Assert.Contains(jobQueueDto.JobId, enqueuedJobIds);
                 Assert.Contains(jobQueueDto2.JobId, enqueuedJobIds);
             });
