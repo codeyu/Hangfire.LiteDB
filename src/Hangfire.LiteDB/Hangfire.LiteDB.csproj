@@ -6,7 +6,7 @@
     <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup>
-    <Version>0.3.1</Version>
+    <Version>0.4.0</Version>
     <authors>codeyu</authors>
     <AssemblyName>Hangfire.LiteDB</AssemblyName>
     <PackageId>Hangfire.LiteDB</PackageId>
@@ -23,14 +23,14 @@
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Copyright>Copyright 2019 © codeyu</Copyright>
+    <Copyright>Copyright 2020 © codeyu</Copyright>
     <title>Hangfire LiteDB Storage</title>
     <owners>codeyu</owners>
     <Description>LiteDB storage implementation for Hangfire (background job system for ASP.NET applications).</Description>
     <PackageTags>Hangfire AspNet OWIN LiteDB Long-Running Background Fire-And-Forget Delayed Recurring Tasks Jobs Scheduler Threading Queues</PackageTags>
     <PackageReleaseNotes>
-      0.3.1
-      - fix lock never released. @felixclase and @Sumo-MBryant
+      0.4.0
+      - Upgrade to LiteDB V5 @CocaColaBear
     </PackageReleaseNotes>
     <License>https://github.com/codeyu/Hangfire.LiteDB/master/LICENSE</License>
     <PackageProjectUrl>https://github.com/codeyu/Hangfire.LiteDB</PackageProjectUrl>
@@ -61,8 +61,8 @@
   </ItemGroup>
     
   <ItemGroup>
-    <PackageReference Include="HangFire.Core" Version="1.7.6" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="HangFire.Core" Version="1.7.16" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="LiteDB" Version="5.0.9" />
   </ItemGroup>
 </Project>
