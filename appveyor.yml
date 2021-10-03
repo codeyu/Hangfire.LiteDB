@@ -22,5 +22,6 @@ deploy:
   name: production
   api_key:
     secure: WHDLnYf52eLupU6TjbBTcXXhs8kyjIYJOC/oIa4ZC/6+j0KRNuKNMfZKmssyMqV0
+  skip_symbols: true
   on:
     appveyor_repo_tag: true
