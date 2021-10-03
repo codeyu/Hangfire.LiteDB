@@ -3,13 +3,13 @@ language: csharp
 matrix:
   include:
     - os: osx
-      osx_image: xcode8.3
-      dotnet: 2.0.0
+      osx_image: xcode9.4
+      dotnet: 2.1.502
       mono: none
     - os: linux
       dist: trusty
       sudo: required
-      dotnet: 2.0.0
+      dotnet: 2.1.502
       mono: none
 
 branches:
