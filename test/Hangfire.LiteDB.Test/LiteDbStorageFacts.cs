@@ -25,14 +25,14 @@ namespace Hangfire.LiteDB.Test
         //
         //    Assert.Equal("databaseName", exception.ParamName);
         //}
-
+        /*
         [Fact]
         public void Ctor_ThrowsAnException_WhenStorageOptionsValueIsNull()
         {
             var exception = Assert.Throws<ArgumentNullException>(() => new LiteDbStorage("lite.db",  null));
 
             Assert.Equal("storageOptions", exception.ParamName);
-        }
+        }*/
 
         [Fact, CleanDatabase]
         public void GetMonitoringApi_ReturnsNonNullInstance()

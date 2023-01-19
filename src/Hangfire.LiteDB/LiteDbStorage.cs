@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using Hangfire.Annotations;
 using Hangfire.Logging;
 using Hangfire.Server;
 using Hangfire.States;
@@ -36,11 +38,24 @@ namespace Hangfire.LiteDB
         }
 
         /// <summary>
+        /// Constructs Job Storage by database connection string
+        /// </summary>
+        /// <param name="liteDatabase">LiteDB connection string</param>
+        /// /// <param name="options">LiteDB connection string</param>
+        public LiteDbStorage(LiteRepository liteDatabase, LiteDbStorageOptions options) : this(HangfireDbContext.Instance(liteDatabase), options)
+        {
+            if (liteDatabase == null)
+            {
+                throw new ArgumentNullException(nameof(liteDatabase));
+            }
+        }
+
+        /// <summary>
         /// Constructs Job Storage by database connection string and options
         /// </summary>
         /// <param name="connectionString">LiteDB connection string</param>
         /// <param name="storageOptions">Storage options</param>
-        public LiteDbStorage(string connectionString, LiteDbStorageOptions storageOptions) : this(HangfireDbContext.Instance(connectionString, storageOptions.Prefix),storageOptions)
+        public LiteDbStorage(string connectionString, [AllowNull] LiteDbStorageOptions storageOptions) : this(HangfireDbContext.Instance(connectionString, storageOptions?.Prefix ?? new LiteDbStorageOptions().Prefix),storageOptions)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
             {
@@ -56,8 +71,10 @@ namespace Hangfire.LiteDB
         /// <param name="storageOptions">Storage options</param>
         private LiteDbStorage(HangfireDbContext connection, LiteDbStorageOptions storageOptions)
         {
-            //_connectionString = connectionString;
-            _storageOptions = storageOptions ?? throw new ArgumentNullException(nameof(storageOptions));
+            if (storageOptions == null)
+                storageOptions = new LiteDbStorageOptions();
+
+            _storageOptions = storageOptions;
 
             Connection = connection;
             Connection.Init(_storageOptions);
