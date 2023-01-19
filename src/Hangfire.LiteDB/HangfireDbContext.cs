@@ -36,7 +36,16 @@ namespace Hangfire.LiteDB
         /// </summary>
         /// <param name="connectionString">Connection string for LiteDB database</param>
         /// <param name="prefix">Collections prefix</param>
-        private HangfireDbContext(string connectionString, string prefix = "hangfire")
+        private HangfireDbContext(string connectionString, string prefix = "hangfire") : this(new LiteRepository(connectionString),prefix)
+        {
+        }
+
+        /// <summary>
+        /// Starts LiteDB database using a connection string for file system database
+        /// </summary>
+        /// <param name="repository">Connection string for LiteDB database</param>
+        /// <param name="prefix">Collections prefix</param>
+        private HangfireDbContext(LiteRepository repository, string prefix = "hangfire")
         {
             _prefix = prefix;
 
@@ -58,8 +67,7 @@ namespace Hangfire.LiteDB
                     DateFormatString = "yyyy-MM-dd HH:mm:ss.fff"
                 });
 
-            Repository = new LiteRepository(connectionString);
-            
+            Repository = repository;            
             Database = Repository.Database;
 
             ConnectionId = Guid.NewGuid().ToString();
@@ -82,6 +90,7 @@ namespace Hangfire.LiteDB
             JobQueue.EnsureIndex("Queue");
             JobQueue.EnsureIndex("FetchedAt");
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -96,6 +105,25 @@ namespace Hangfire.LiteDB
                 if (_instance == null)
                 {
                     _instance = new HangfireDbContext(connectionString, prefix);
+                }
+            }
+
+            return _instance;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="repository"></param>
+        /// <param name="prefix"></param>
+        /// <returns></returns>
+        public static HangfireDbContext Instance(LiteRepository repository, string prefix = "hangfire")
+        {
+            if (_instance != null) return _instance;
+            lock (Locker)
+            {
+                if (_instance == null)
+                {
+                    _instance = new HangfireDbContext(repository, prefix);
                 }
             }
 

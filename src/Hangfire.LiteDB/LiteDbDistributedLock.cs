@@ -210,10 +210,12 @@ namespace Hangfire.LiteDB
                 {
                     try
                     {
+#pragma warning disable CA1416 // Validate platform compatibility
                         if (EventWaitHandle.TryOpenExisting(EventWaitHandleName, out EventWaitHandle eventWaitHandler))
                         {
                             eventWaitHandler.Set();
                         }
+#pragma warning restore CA1416 // Validate platform compatibility
                     }
                     catch (PlatformNotSupportedException)
                     {

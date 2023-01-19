@@ -4,6 +4,8 @@ using Hangfire.Logging;
 using Hangfire.Server;
 using Hangfire.States;
 using Hangfire.Storage;
+using LiteDB;
+
 namespace Hangfire.LiteDB
 {
     /// <summary>
@@ -11,17 +13,26 @@ namespace Hangfire.LiteDB
     /// </summary>
     public class LiteDbStorage : JobStorage
     {
-        private readonly string _connectionString;
-
         private readonly LiteDbStorageOptions _storageOptions;
 
         /// <summary>
         /// Constructs Job Storage by database connection string
         /// </summary>
         /// <param name="connectionString">LiteDB connection string</param>
-        public LiteDbStorage(string connectionString)
-            : this(connectionString,  new LiteDbStorageOptions())
+        public LiteDbStorage(string connectionString) : this(connectionString,  new LiteDbStorageOptions())
         {
+        }
+
+        /// <summary>
+        /// Constructs Job Storage by database connection string
+        /// </summary>
+        /// <param name="liteDatabase">LiteDB connection string</param>
+        public LiteDbStorage(LiteRepository liteDatabase) : this(HangfireDbContext.Instance(liteDatabase), new LiteDbStorageOptions())
+        {
+            if (liteDatabase == null)
+            {
+                throw new ArgumentNullException(nameof(liteDatabase));
+            }
         }
 
         /// <summary>
@@ -29,17 +40,26 @@ namespace Hangfire.LiteDB
         /// </summary>
         /// <param name="connectionString">LiteDB connection string</param>
         /// <param name="storageOptions">Storage options</param>
-        public LiteDbStorage(string connectionString, LiteDbStorageOptions storageOptions)
+        public LiteDbStorage(string connectionString, LiteDbStorageOptions storageOptions) : this(HangfireDbContext.Instance(connectionString, storageOptions.Prefix),storageOptions)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new ArgumentNullException(nameof(connectionString));
             }
+        }
+            
 
-            _connectionString = connectionString;
+        /// <summary>
+        /// Constructs Job Storage by database connection string and options
+        /// </summary>
+        /// <param name="connection">LiteDB connection string</param>
+        /// <param name="storageOptions">Storage options</param>
+        private LiteDbStorage(HangfireDbContext connection, LiteDbStorageOptions storageOptions)
+        {
+            //_connectionString = connectionString;
             _storageOptions = storageOptions ?? throw new ArgumentNullException(nameof(storageOptions));
 
-            Connection = HangfireDbContext.Instance(connectionString, storageOptions.Prefix);
+            Connection = connection;
             Connection.Init(_storageOptions);
             var defaultQueueProvider = new LiteDbJobQueueProvider(_storageOptions);
             QueueProviders = new PersistentJobQueueProviderCollection(defaultQueueProvider);
@@ -89,9 +109,7 @@ namespace Hangfire.LiteDB
         /// <returns>Database context</returns>
         public HangfireDbContext CreateAndOpenConnection()
         {
-            return _connectionString != null
-                ? HangfireDbContext.Instance(_connectionString, _storageOptions.Prefix)
-                : null;
+            return Connection;
         }
 
         /// <summary>
@@ -99,7 +117,7 @@ namespace Hangfire.LiteDB
         /// </summary>
         public override string ToString()
         {
-            return $"Connection string: {_connectionString},  prefix: {_storageOptions.Prefix}";
+            return $"prefix: {_storageOptions.Prefix}";
         }
 
         /// <summary>
