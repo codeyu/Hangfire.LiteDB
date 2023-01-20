@@ -1,16 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-    <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
-  </PropertyGroup>
   <PropertyGroup>
     <Version>0.4.1</Version>
     <authors>codeyu</authors>
     <AssemblyName>Hangfire.LiteDB</AssemblyName>
     <PackageId>Hangfire.LiteDB</PackageId>
     <NoWarn>$(NoWarn);CS0618</NoWarn>
+	<TargetFrameworks>net6.0</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
@@ -39,30 +34,9 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="app.config" />
-  </ItemGroup>
-  
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
-    <DefineConstants>$(DefineConstants);NetCore</DefineConstants>
-  </PropertyGroup>
-  
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net451' OR '$(TargetFramework)' == 'net452' ">
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
-    <PackageReference Include="System.Data.Common" Version="4.3.0" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.3.1" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.3.0" />
-  </ItemGroup>
-    
+  </ItemGroup>     
   <ItemGroup>
-    <PackageReference Include="HangFire.Core" Version="1.7.16" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="LiteDB" Version="5.0.9" />
+    <PackageReference Include="HangFire.Core" Version="1.7.32" />
+    <PackageReference Include="LiteDB" Version="5.0.15" />
   </ItemGroup>
 </Project>
